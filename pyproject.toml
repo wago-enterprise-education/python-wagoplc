@@ -8,7 +8,9 @@ authors = [
     { name = "Maik Rehburg", email = "maik.rehburg@wago.com" }
 ]
 requires-python = ">=3.8"
-dependencies = []
+dependencies = [
+    "python-daemon>=3.1.2",
+]
 
 [build-system]
 requires = ["uv_build>=0.8.19,<0.9.0"]
