@@ -3,11 +3,12 @@
 from wagoplc import PLC_PRG
 
 class MyPLC_PRG(PLC_PRG):
-    def setup(self):
+    def __init__(self):
         # This method will be called once when the PLC runtime starts. Use it to initialize any variables or state.
         ...
 
-    def loop(self):
+    @PLC_PRG.task(cycletime=100)
+    def plc_prg(self):
         # This method will be called in a cycle by the PLC runtime. Use it to read the inputs, process the logic, and write the outputs.
 
         di1 = self.digitalread(1)
@@ -16,4 +17,4 @@ class MyPLC_PRG(PLC_PRG):
         self.digitalwrite(1, do1)
 
 if __name__ == '__main__':
-    MyPLC_PRG.run()
+    wagoplc.main()
