@@ -1,16 +1,18 @@
 # Variant, which uses the library to implement a PLC runtime
 
 from wagoplc import App, DigitalInput, DigitalOutput, AnalogOutput
-import wagoplc
 
 app = App(...)
 
-@app.config(...)
+def combine_and(i1: bool, i2: bool) -> bool:
+    return i1 and i2
+
+@app.task(cycletime=100)
 def fb1(di1: DigitalInput(1), di2: DigitalInput(2)) -> DigitalOutput(1):
     # do stuff...
-    return di1 and di2
+    return combine_and(di1, di2)
 
-@app.config(...)
+@app.task(cycletime=10)
 def fb2(di3: DigitalInput(3)) -> (DigitalOutput(2), AnalogOutput(1)):
     return not di3, 42.0
 
