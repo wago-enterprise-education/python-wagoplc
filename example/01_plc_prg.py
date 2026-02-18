@@ -2,7 +2,7 @@
 
 from wagoplc import App, ProcessImageInput, ProcessImageOutput
 
-app = App()
+app = App(...)
 
 @app.prg(...)
 def loop(pii: ProcessImageInput):
