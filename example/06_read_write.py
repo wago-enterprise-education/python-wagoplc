@@ -8,12 +8,17 @@ if __name__ == '__main__':
 
 # The plc_prg.py file could look like this. Will be called by the main function above. (Arduino style)
 
-from wagoplc import digitalread, digitalwrite
+from wagoplc import read, write
 
 def setup():
     ...
 
 def loop():
-    di1 = digitalread(1)
-    di2 = digitalread(2)
-    do1 = digitalwrite(1, di1 and di2)
+    pii = read('di1', 'di2')
+
+    di1 = pii['di1']
+    di2 = pii['di2']
+
+    do1 = write(dict(
+        do1 = di1 and di2
+    ))
