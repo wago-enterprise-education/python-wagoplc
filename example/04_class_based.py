@@ -1,6 +1,6 @@
 # This is an example of a class-based PLC program. The main function will call the setup and loop methods of the MyPLC class.
 
-from wagoplc import PLC_PRG
+from wagoplc import PLC_PRG, main
 
 class MyPLC_PRG(PLC_PRG):
     def __init__(self):
@@ -8,7 +8,7 @@ class MyPLC_PRG(PLC_PRG):
         ...
 
     @PLC_PRG.task(cycletime=100)
-    def plc_prg(self):
+    def __call__(self):
         # This method will be called in a cycle by the PLC runtime. Use it to read the inputs, process the logic, and write the outputs.
 
         di1 = self.digitalread(1)
