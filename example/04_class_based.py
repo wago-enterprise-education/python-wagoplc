@@ -1,20 +1,40 @@
-# This is an example of a class-based PLC program. The main function will call the setup and loop methods of the MyPLC class.
+# This is part of the wagoplc library:
 
-from wagoplc import PLC_PRG, main
+class Task:
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def loop(self) -> None:
+        self.read_inputs()
+        self.__call__() # Calls into the subclass
+        self.write_outputs()
 
-class MyPLC_PRG(PLC_PRG):
-    def __init__(self):
-        # This method will be called once when the PLC runtime starts. Use it to initialize any variables or state.
+    def __call__(self, *args, **kwargs):
         ...
 
-    @PLC_PRG.task(cycletime=100)
-    def __call__(self):
-        # This method will be called in a cycle by the PLC runtime. Use it to read the inputs, process the logic, and write the outputs.
+# This is an example of a class-based PLC program. The main function will call the setup and loop methods of the MyPLC class.
 
-        di1 = self.digitalread(1)
-        di2 = self.digitalread(2)
-        do1 = di1 and di2
-        self.digitalwrite(1, do1)
+from wagoplc import Task, main, config
+
+@config(
+    cycletime=100,
+    controller = '0751-9301',
+    inputs = ['di1', 'di2'],
+    outputs = ['do1', 'ao1']
+)
+class MyPLC_PRG(Task):
+    def __init__(self):
+        # This method will be called once when the PLC runtime starts. Use it to initialize any variables or state.
+        super().__init__()
+
+    def __call__(self, *args, **kwargs):
+        # This method will be called in a cycle by the PLC runtime. 
+        # The inputs are read automatically just before the call and the outputs are written automatically just after the call. 
+        # Use it to process the logic
+        di1 = self.di1
+        di2 = self.di2
+        self.do1 = di1 and di2
+        self.ao1 = 42.0
 
 if __name__ == '__main__':
-    wagoplc.main()
+    main()
