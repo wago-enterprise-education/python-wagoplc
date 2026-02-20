@@ -1,9 +1,30 @@
-import dataclasses
 import time
+import os
 
-from wagoplc.cc100.cc100_9301 import CC100_9301, SYSTEM_PATHS
+from wagoplc.cc100.cc100_9301 import CC100_9301
+from wagoplc.cc100.cc100_9401 import CC100_9401
+from wagoplc.cc100.cc100_9403 import CC100_9403
 
 TEST_DATA = "C:/Users/U0130807/repos/python-wagoplc/test_data"
+
+def get_controller():
+    controller_id = os.getenv("CONTROLLER_ID","751-9301")
+    
+    model,version = controller_id.split("-")
+    model = int(model)
+    version = int(version)
+
+    # print(model)   # 751
+    # print(version)  # 9301
+    
+    if model == 751:
+        if version == 9301:
+            cc_Obj = CC100_9301()
+        elif version == 9401:
+            cc_Obj = CC100_9401()
+        elif version == 9403:
+            cc_Obj = CC100_9403()
+        return cc_Obj
 
 class CycleTimeException(Exception): pass
 
@@ -30,10 +51,10 @@ class Task:
     
     def loop(self):
         """Run the task in cycles."""
-        paths = SYSTEM_PATHS()
+        cc_obj = get_controller()
+        paths = cc_obj.system_paths
         # TODO: filter out files that need only be read once
         read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in paths.get_read_paths()}
-        cc_obj = CC100_9301()
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
         # in write mode.  Otherwise, it would be necessary to use update file mode
