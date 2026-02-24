@@ -29,19 +29,23 @@ def get_controller():
 class CycleTimeException(Exception): pass
 
 class Task:
-    def __init__(self, cycle_func: function = None, cycletime: int = 100):
+    def __init__(self, cycle_func: function = None, cycletime: int = 100, watchdog: int = 400):
         self.cycle_func = cycle_func
         self.cycletime = cycletime
+        self.watchdog = watchdog
 
-    def config(self, func):
-        ...
+    def config(self):
+        def decorator_config(func):
+            ...
 
-    def __call__(self, _func: function = None, *, cycletime: int = 100):
+    def __call__(self, _func: function = None, *, cycletime: int = 100, watchdog: int = 400):
         """Register task.
         
-        cycletime: time in ms, defaults to 100
+        cycletime: cycle time in ms, defaults to 100
+        watchdog: watchdog time in ms, defaults to 400
         """
         self.cycletime = cycletime
+        self.watchdog = watchdog
         def decorator_task(func):
             self.cycle_func = func
             return func
@@ -65,16 +69,13 @@ class Task:
         write_fds = {path: open(TEST_DATA + path.replace(":", "_"), "w") for path in paths.get_write_paths()}
         try:
             while True:
+                # TODO: Implement cycle time and watchdog
                 start = time.time()
                 cc_obj.read_inputs(read_fds)
                 self.cycle_func(cc_obj)
                 cc_obj.write_outputs(write_fds)
                 end = time.time()
                 duration = (end - start) * 1000
-                if duration <= self.cycletime:
-                    time.sleep((self.cycletime - duration) / 1000)
-                else:
-                    raise CycleTimeException("This took too long!!")
         except Exception as e:
             raise
         finally:

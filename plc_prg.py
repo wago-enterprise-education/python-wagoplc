@@ -2,10 +2,10 @@ from wagoplc import main, Task
 
 task = Task()
 
-def setup():
-    ...
-
-@task(cycletime=5)
+@task(
+    cycletime=4,
+    watchdog=10
+)
 def loop(io):
     print(io.digitalRead(1))
     io.digitalWrite(3, True)
