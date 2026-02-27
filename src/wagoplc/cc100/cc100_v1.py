@@ -1,56 +1,38 @@
-
-from dataclasses import dataclass
 from io import TextIOWrapper
 import logging
 import os
 import time
+from wagoplc.cc100.constants import * 
 
 logger = logging.getLogger(__name__)
 
-@dataclass
-class SYSTEM_PATHS:
-    # data paths on CC100
-    DOUT_DATA: str = "/sys/kernel/dout_drv/DOUT_DATA"
-    OUT_VOLTAGE1_POWERDOWN: str = "/sys/bus/iio/devices/iio:device0/out_voltage1_powerdown"
-    OUT_VOLTAGE2_POWERDOWN: str = "/sys/bus/iio/devices/iio:device1/out_voltage2_powerdown"
-    OUT_VOLTAGE1_RAW: str = "/sys/bus/iio/devices/iio:device0/out_voltage1_raw"
-    OUT_VOLTAGE2_RAW: str = "/sys/bus/iio/devices/iio:device1/out_voltage2_raw"
-    DIN: str = "/sys/devices/platform/soc/44009000.spi/spi_master/spi0/spi0.0/din"
-    IN_VOLTAGE3_RAW: str = "/sys/bus/iio/devices/iio:device3/in_voltage3_raw"
-    IN_VOLTAGE0_RAW: str = "/sys/bus/iio/devices/iio:device3/in_voltage0_raw"
-    IN_VOLTAGE13_RAW: str = "/sys/bus/iio/devices/iio:device2/in_voltage13_raw"
-    IN_VOLTAGE1_RAW: str = "/sys/bus/iio/devices/iio:device2/in_voltage1_raw"
-    CALIB_DATA: str = "/etc/calib"
-    OS_VERSION: str = "/etc/os-release"
-    SERIAL_PORT: str = "/dev/ttySTM1"
+
+
+class CC100_v1:
 
     def get_write_paths(self) -> tuple[str]:
         return (
-            self.DOUT_DATA,
-            self.SERIAL_PORT,
-            self.OUT_VOLTAGE1_POWERDOWN,
-            self.OUT_VOLTAGE2_POWERDOWN,
-            self.OUT_VOLTAGE1_RAW,
-            self.OUT_VOLTAGE2_RAW
+            DOUT_DATA,
+            SERIAL_PORT,
+            OUT_VOLTAGE1_POWERDOWN,
+            OUT_VOLTAGE2_POWERDOWN,
+            OUT_VOLTAGE1_RAW,
+            OUT_VOLTAGE2_RAW
         )
     
     def get_read_paths(self) -> tuple[str]:
         return (
-            self.DIN,
-            self.IN_VOLTAGE0_RAW,
-            self.IN_VOLTAGE3_RAW,
-            self.IN_VOLTAGE13_RAW,
-            self.IN_VOLTAGE1_RAW,
-            self.CALIB_DATA,
-            self.OS_VERSION
+            DIN,
+            IN_VOLTAGE0_RAW,
+            IN_VOLTAGE3_RAW,
+            IN_VOLTAGE13_RAW,
+            IN_VOLTAGE1_RAW,
+            CALIB_DATA,
+            OS_VERSION
         )
-
-class CC100_v1:
-
     def __init__(self):
         self.input_image: dict[str, str] = {}
         self.output_image: dict[str, str] = {}
-        self.system_paths = SYSTEM_PATHS()
 
     def digitalWrite(self, output, value):
         """Switch the output to the specified value.
@@ -60,7 +42,7 @@ class CC100_v1:
         Return True if value is written, False if out does not exist.
         """
         # Read the current state to calculate the new value
-        currentValue = int(self.input_image[self.system_paths.DOUT_DATA])
+        currentValue = int(self.input_image[DOUT_DATA])
 
         # Addition or rather subtraction to the current state to switch the corresponding output
         # Least Significant Bit corresponds to digital output 1, the 4th bit corresponds to output 4
@@ -76,7 +58,7 @@ class CC100_v1:
             return False
 
         # Write the calculated value for the new configuration to the output image
-        self.output_image[self.system_paths.DOUT_DATA] = str(currentValue)
+        self.output_image[DOUT_DATA] = str(currentValue)
 
     def analogWrite(self, output, voltage):
         """Switch the output to the specified voltage.
@@ -88,13 +70,13 @@ class CC100_v1:
         voltage: Voltage which the selected output should be set to
         """
         if output == 1:
-            self.output_image[self.system_paths.OUT_VOLTAGE1_POWERDOWN] = "0"
+            self.output_image[OUT_VOLTAGE1_POWERDOWN] = "0"
 
-            output_file = self.system_paths.OUT_VOLTAGE1_RAW
+            output_file = OUT_VOLTAGE1_RAW
         elif output == 2:
-            self.output_image[self.system_paths.OUT_VOLTAGE2_POWERDOWN] = "0"
+            self.output_image[OUT_VOLTAGE2_POWERDOWN] = "0"
 
-            output_file = self.system_paths.OUT_VOLTAGE2_RAW
+            output_file = OUT_VOLTAGE2_RAW
         else:
             logger.warning("Analog output does not exist")
             return False
@@ -119,7 +101,7 @@ class CC100_v1:
             return False
         
         # Read the state of the digital inputs on the CC100
-        value = self.input_image[self.system_paths.DIN]
+        value = self.input_image[DIN]
 
         # Format the current state into an 8-digit binary code
         value = int(value)
@@ -225,7 +207,7 @@ class CC100_v1:
     def readCalibrationData(self):
         """Read out calibration data from the CC100 and save it in global variable calib_data."""
         global calib_data
-        calib_data = self.input_image[self.system_paths.CALIB_DATA]
+        calib_data = self.input_image[CALIB_DATA]
 
     def getCalibrationData(value):
         """Return the calibration data for the required row of the table.

@@ -1,4 +1,4 @@
-from wagoplc.cc100.cc100_v1 import CC100_v1, SYSTEM_PATHS
+from wagoplc.cc100.cc100_v1 import CC100_v1
 
 class CC100_9301(CC100_v1):
 
