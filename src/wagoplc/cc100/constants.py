@@ -1,3 +1,4 @@
+# data paths on CC100 751-9301 (V1)
 DOUT_DATA ="/sys/kernel/dout_drv/DOUT_DATA"
 OUT_VOLTAGE1_POWERDOWN = "/sys/bus/iio/devices/iio:device0/out_voltage1_powerdown"
 OUT_VOLTAGE2_POWERDOWN = "/sys/bus/iio/devices/iio:device1/out_voltage2_powerdown"

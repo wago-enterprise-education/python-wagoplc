@@ -5,12 +5,12 @@ from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
 
-TEST_DATA = "C:/Users/U0130807/repos/python-wagoplc/test_data"
+TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
 def get_controller():
-    controller_id = os.getenv("CONTROLLER_ID","751-9301")
+    controller_id = os.getenv("CONTROLLER_ID", "751-9301")
     
-    model,version = controller_id.split("-")
+    model, version = controller_id.split("-")
     model = int(model)
     version = int(version)
 
@@ -56,17 +56,17 @@ class Task:
     def loop(self):
         """Run the task in cycles."""
         cc_obj = get_controller()
-        paths = cc_obj.system_paths
         # TODO: filter out files that need only be read once
-        read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in paths.get_read_paths()}
+        read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in cc_obj.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
         # in write mode.  Otherwise, it would be necessary to use update file mode
         # (r+), which is too costly.
-        with open(TEST_DATA + paths.DOUT_DATA, "r") as f:
-            cc_obj.input_image[paths.DOUT_DATA] = f.read()
+        for path in cc_obj.get_read_once_paths():
+            with open(TEST_DATA + path, "r") as f:
+                cc_obj.input_image[path] = f.read()
 
-        write_fds = {path: open(TEST_DATA + path.replace(":", "_"), "w") for path in paths.get_write_paths()}
+        write_fds = {path: open(TEST_DATA + path.replace(":", "_"), "w") for path in cc_obj.get_write_paths()}
         try:
             while True:
                 # TODO: Implement cycle time and watchdog
