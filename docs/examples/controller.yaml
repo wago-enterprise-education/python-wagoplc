@@ -1,0 +1,5 @@
+io:
+  inputs:
+    di1: xEndlageS1
+  outputs:
+    do1: xLuefter
