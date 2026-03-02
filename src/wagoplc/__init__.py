@@ -1,7 +1,7 @@
 import importlib
 import sys
 
-from wagoplc.task import Task
+from wagoplc.plc import PLC, DI, DO, AI, AO
 
 def main():
     """
@@ -9,5 +9,5 @@ def main():
     """
     #sys.path.append("/home/user/python_bootapplication/")
     plc_prg = importlib.import_module("plc_prg")
-    task = plc_prg.task
-    task.loop()
+    plc = plc_prg.plc
+    plc.run_tasks()

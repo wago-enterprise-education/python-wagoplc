@@ -1,6 +1,6 @@
 # Discussion of the implementation proposals
 
-## Arduino-style
+## #1: Arduino-style
 
 ### Pros
 
@@ -14,7 +14,7 @@
 * does not correspond with structure of cyclic program
 * autocompletion not possible
 
-## Variables
+## #2: Variables
 
 ### Pros
 
@@ -29,7 +29,7 @@
 * task variables need to be added as parameters
 * not applicable for larger systems (e.g. PFC200)
 
-## Variables with mapping in config file
+## #3: Variables with mapping in config file
 
 ### Pros
 
@@ -46,4 +46,6 @@
 
 # Design decision
 
-To be done.
+Implement support for design #2 and basic support for design #3 (to be extended in the future).
+Variables defined directly in the Python script should take precedence over variables in the
+configuration file.

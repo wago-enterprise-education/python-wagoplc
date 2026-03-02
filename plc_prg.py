@@ -1,15 +1,22 @@
-from wagoplc import main, Task
+from wagoplc import main, PLC, DI, DO
 
-task = Task()
+plc = PLC()
 
-@task(
-    cycletime=4,
-    watchdog=10
-)
-def loop(io):
-    print(io.digitalRead(1))
-    io.digitalWrite(3, True)
-    io.digitalWrite(4, True)
+@plc.setup
+def setup():
+    xEndlageS1 = DI(1)
+    xEndlageS2 = DI(2)
+    xMotor = DO(1)
+
+    return locals()
+
+@plc.task(cycle_time=5)
+def loop(xEndlageS1):
+        xMotor = True
+        if xEndlageS1:
+            xMotor = False
+
+        return locals()
 
 if __name__ == "__main__":
     main()

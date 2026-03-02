@@ -7,6 +7,18 @@ from wagoplc.cc100.constants import *
 
 logger = logging.getLogger(__name__)
 
+class IO:
+    def __init__(self, id):
+        self.id = id
+
+class DI(IO): pass
+
+class DO(IO): pass
+
+class AI(IO): pass
+
+class AO(IO): pass
+
 class CC100_v1:
 
     def __init__(self):
@@ -274,20 +286,32 @@ class CC100_v1:
         #Return the calculated value in °C
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
-    def read_inputs(self, file_descriptors: dict[str, TextIOWrapper]):
+    def read_inputs(self, fds: dict[str, TextIOWrapper], io_mapping: dict[str, IO]) -> dict[str, bool | int | str]:
         """Read compact controller inputs and write input image."""
-        for path, file in file_descriptors.items():
+        input_image = {}
+        if not io_mapping:
+            return {}
+        # Fill database
+        for path, file in fds.items():
             self.input_image[path] = file.read()
             file.seek(0)
 
-    def write_outputs(self, file_descriptors: dict[str, TextIOWrapper]):
+        # Map variables to values    
+        for var, io in io_mapping:
+            if isinstance(io, DI):
+                input_image[var] = self.digitalRead(io.id)
+            elif isinstance(io, AI):
+                input_image[var] = self.analogRead(io.id)
+        return input_image
+
+    def write_outputs(self, fds: dict[str, TextIOWrapper]):
         """Write compact controller outputs from output image.
         
         Also set the input image to the new value to avoid reading every
         new cycle.
         """
         for path, value in self.output_image.items():
-            file = file_descriptors[path]
+            file = fds[path]
             file.write(value)
             file.seek(0)
             self.input_image[path] = value
