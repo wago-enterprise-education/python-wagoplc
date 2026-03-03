@@ -35,7 +35,11 @@ class PLC:
     def __init__(self):
         self.tasks = []
         self.cc_obj = get_controller()
-        self.config = read_config()
+        tasks, self.config = read_config()
+        for task in tasks:
+            Task(**task)
+            self.tasks.append
+            
     def setup(self, func):
         def decorator_setup(func):
             self.config.update(func())
@@ -90,13 +94,30 @@ class PLC:
 
 class Task:
 
-    def __init__(self, cc_obj, io_mapping: dict[str, str], cycle_func: function = None,
-                 cycle_time: int = 100, watchdog_time: int = 400):
+    def __init__(self, cc_obj, io_mapping: dict[str, str],
+        name: str,
+        cycle_ms: int = 100,
+        priority: int = 15,
+        entry: function = None,
+        watchdog_ms: int = 400000,      
+        sensitivity: int = 0 ):
+
+        self.name = name
+        self.cycle_time = cycle_ms
+        self.priority = priority
+        self.cycle_func = entry
+        self.watchdog_time = watchdog_ms
+        self.sensitivity = sensitivity
         self.cc_obj = cc_obj
-        self.cycle_func = cycle_func
-        self.cycle_time = cycle_time
-        self.watchdog_time = watchdog_time
         self.io_mapping = self._filter_params(io_mapping)
+        """
+        name:        task name
+        cycle_ms:    call cycle time in ms
+        priority:    a priority from 1 (highest) to 15
+        function:    name of function
+        watchdog_ms: maximum runtime in ms before watchdog interrupts
+        sensitivity: sensitivity from 0 (highest) to 10
+        """
 
     def _filter_params(self):
         """Compare defined and actual parameters and update mapping.
