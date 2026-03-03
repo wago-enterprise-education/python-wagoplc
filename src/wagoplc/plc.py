@@ -9,7 +9,7 @@ from wagoplc.read_config import read_config
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
 class WAGOPlcError(Exception): pass
-class NotDefinedError(Exception): pass
+class NotDefinedError(WAGOPlcError): pass
 
 def get_controller():
     controller_id = os.getenv("CONTROLLER_ID", "751-9301")
@@ -76,16 +76,15 @@ class PLC:
         write_fds = {path: open(TEST_DATA + path.replace(":", "_"), "w") for path in self.cc_obj.get_write_paths()}
 
         # TODO: Integrate cycle time and watchdog implementation
-        while True:
-            try:
-                # Run task cycle
-                self.tasks[0].cycle()
-            except Exception as e:
-                raise
-            finally:
-                print("Closing file descriptors...")
-                (file.close() for file in read_fds.values())
-                (file.close() for file in write_fds.values())
+        try:
+            # Run task cycle
+            self.tasks[0].cycle(read_fds, write_fds)
+        except Exception as e:
+            raise
+        finally:
+            print("Closing file descriptors...")
+            (file.close() for file in read_fds.values())
+            (file.close() for file in write_fds.values())
 
 
 class Task:
@@ -96,15 +95,17 @@ class Task:
         self.cycle_func = cycle_func
         self.cycle_time = cycle_time
         self.watchdog_time = watchdog_time
-        self.io_mapping = self._filter_params(io_mapping)
+        
+        self.inputs = self._get_inputs(io_mapping)
+        self.outputs = self._get_outputs(io_mapping)
 
-    def _filter_params(self):
+    def _get_inputs(self, io_mapping):
         """Compare defined and actual parameters and update mapping.
         
         Raise NotDefinedError if a parameter is not defined as a variable. 
         """
         func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
-        vars = self.io_mapping.keys()
+        vars = io_mapping.keys()
         if not_defined := list(filter(lambda p: p not in vars, func_params)):
             raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
         def filter_used(pair):
@@ -112,13 +113,21 @@ class Task:
             if k in func_params:
                 return True
             return False
-        return dict(filter(filter_used, self.io_mapping.items()))
+        return dict(filter(filter_used, io_mapping.items()))
+    
+    def _get_outputs(self, io_mapping):
+        return dict(
+            filter(
+                lambda map: isinstance(map[1], (DO, AO)), 
+                io_mapping.items()
+            )
+        )
 
     def cycle(self, read_fds, write_fds):
         """Run one task cycle."""
         # Get input image (variables mapped to values)
-        input_image = self.cc_obj.read_inputs(read_fds, self.io_mapping)
+        input_image = self.cc_obj.read_inputs(read_fds, self.inputs)
         # Get output image (variables mapped to values)
         output_image = self.cycle_func(**input_image)
         # Actually write outputs
-        self.cc_obj.write_outputs(write_fds, output_image)
+        self.cc_obj.write_outputs(write_fds, output_image, self.outputs)

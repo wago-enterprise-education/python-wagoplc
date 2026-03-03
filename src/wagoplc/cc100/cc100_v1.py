@@ -8,16 +8,27 @@ from wagoplc.cc100.constants import *
 logger = logging.getLogger(__name__)
 
 class IO:
-    def __init__(self, id):
+    """Generic I/O superclass to store interface id."""
+    def __init__(self, id: int):
+        if not isinstance(id, int):
+            raise ValueError("Expected and integer id.")
         self.id = id
 
-class DI(IO): pass
+class DI(IO):
+    def read(self, cc_obj) -> bool:
+        return cc_obj.digitalRead(self.id)
 
-class DO(IO): pass
+class DO(IO):
+    def write(self, cc_obj, value) -> bool:
+        return cc_obj.digitalWrite(self.id, value)
 
-class AI(IO): pass
+class AI(IO):
+    def read(self, cc_obj) -> int:
+        return cc_obj.analogRead(self.id)
 
-class AO(IO): pass
+class AO(IO):
+    def write(self, cc_obj, value: int) -> bool:
+        return cc_obj.analogWrite(self.id, value)
 
 class CC100_v1:
 
@@ -51,7 +62,7 @@ class CC100_v1:
             OS_VERSION
         )
 
-    def digitalWrite(self, output, value):
+    def digitalWrite(self, output, value) -> bool:
         """Switch the output to the specified value.
 
         output: Digital output to be switched
@@ -76,8 +87,9 @@ class CC100_v1:
 
         # Write the calculated value for the new configuration to the output image
         self.output_image[DOUT_DATA] = str(currentValue)
+        return True
 
-    def analogWrite(self, output, voltage):
+    def analogWrite(self, output, voltage) -> bool:
         """Switch the output to the specified voltage.
 
         Return False if analog output does not exist,
@@ -107,6 +119,7 @@ class CC100_v1:
         # for the voltage to the file for the output
         # When turning off, zero is written to the file
         self.output_image[output_file] = voltage
+        return True
         
     def digitalRead(self, input):
         """Read the specified digital input and return the value as boolean.
@@ -297,22 +310,27 @@ class CC100_v1:
             file.seek(0)
 
         # Map variables to values    
-        for var, io in io_mapping:
-            if isinstance(io, DI):
-                input_image[var] = self.digitalRead(io.id)
-            elif isinstance(io, AI):
-                input_image[var] = self.analogRead(io.id)
+        for var, io in io_mapping.items():
+            input_image[var] = io.read(self)
         return input_image
 
-    def write_outputs(self, fds: dict[str, TextIOWrapper]):
+    def write_outputs(self, fds: dict[str, TextIOWrapper], output_image: dict[str, bool | int | str], outputs: dict[str, IO]):
         """Write compact controller outputs from output image.
         
         Also set the input image to the new value to avoid reading every
         new cycle.
         """
+        output_image = dict(
+            filter(lambda map: map[0] in outputs.keys(),
+                   output_image.items()
+            )
+        )
+        for var, value in output_image.items():
+            io = outputs[var]
+            io.write(self, value)
+
         for path, value in self.output_image.items():
             file = fds[path]
             file.write(value)
             file.seek(0)
             self.input_image[path] = value
-        
