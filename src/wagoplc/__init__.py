@@ -10,4 +10,5 @@ def main():
     #sys.path.append("/home/user/python_bootapplication/")
     plc_prg = importlib.import_module("plc_prg")
     plc = plc_prg.plc
+    task = plc.tasks[0]
     plc.run_tasks()
