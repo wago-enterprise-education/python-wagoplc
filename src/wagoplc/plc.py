@@ -5,7 +5,7 @@ from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
-
+from wagoplc.read_config import read_config
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
 class WAGOPlcError(Exception): pass
@@ -34,12 +34,11 @@ class PLC:
     
     def __init__(self):
         self.tasks = []
-        self.io_mapping = {}
         self.cc_obj = get_controller()
-
+        self.config = read_config()
     def setup(self, func):
         def decorator_setup(func):
-            self.io_mapping = func()
+            self.config.update(func())
         return decorator_setup(func)
     
     def task(self, _func: function = None, *, cycle_time: int = 100, watchdog_time: int = 400):

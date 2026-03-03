@@ -12,3 +12,6 @@ IN_VOLTAGE1_RAW = "/sys/bus/iio/devices/iio:device2/in_voltage1_raw"
 CALIB_DATA = "/etc/calib"
 OS_VERSION = "/etc/os-release"
 SERIAL_PORT = "/dev/ttySTM1"
+
+#path of controller configuration
+YAML_CONFIG = "controller.yaml"
