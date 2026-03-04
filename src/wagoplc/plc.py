@@ -24,43 +24,41 @@ class WatchdogTimeout(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
-def get_controller():
-    controller_id = os.getenv("CONTROLLER_ID")
-    
-    model, version = controller_id.split("-")
-    model = int(model)
-    version = int(version)
-    
-    if model == 751:
-        if version == 9301:
-            cc_obj = CC100_9301()
-        elif version == 9401:
-            cc_obj = CC100_9401()
-        elif version == 9403:
-            cc_obj = CC100_9403()
-        return cc_obj
-
 class PLC:
     """Represent a programmable logic controller (PLC)."""
     
     def __init__(self):
         self.tasks = []
-        self.cc_obj = get_controller()
         self.config = {}
-
+    
     def configure(self):
         """Read the configuration file.
 
         Can not be executed inside the constructor due to
         a circular import.
         """
-        tasks, config = read_config()
+        tasks, config, controller_id = read_config()
         config.update(self.config)
         self.config = config
+        self.cc_obj = self._get_controller(controller_id)
         for task in tasks:
             self.tasks.append(Task(self.cc_obj, self.config, **task))
+        
+    def _get_controller(self, controller_id: str): 
+        model, version = controller_id.split("-")
+        model = int(model)
+        version = int(version)
+        
+        if model == 751:
+            if version == 9301:
+                cc_obj = CC100_9301()
+            elif version == 9401:
+                cc_obj = CC100_9401()
+            elif version == 9403:
+                cc_obj = CC100_9403()
+            return cc_obj
 
-    def setup(self, func):
+    def setup(self, func: callable):
         def decorator_setup(func):
             self.config = func()
         return decorator_setup(func)
@@ -71,7 +69,7 @@ class PLC:
         cycle_ms: cycle time in ms, defaults to 100
         watchdog_ms: watchdog time in ms, defaults to 400000
         """
-        def decorator_task(func):
+        def decorator_task(func: callable):
             self.tasks.append(
                 Task(
                     name=name,
@@ -201,10 +199,10 @@ class Task:
 
         self.next_run: float = time.time()
     
-    def __lt__(self, other: Task):
+    def __lt__(self, other: Task)-> bool:
         return self.priority < other.priority
 
-    def _get_inputs(self, io_mapping):
+    def _get_inputs(self, io_mapping: dict[str, any]) -> dict[str, any]:
         """Compare defined and actual parameters and update mapping.
         
         Raise NotDefinedError if a parameter is not defined as a variable. 
@@ -220,7 +218,7 @@ class Task:
             return False
         return dict(filter(filter_used, io_mapping.items()))
     
-    def _get_outputs(self, io_mapping):
+    def _get_outputs(self, io_mapping: dict[str, any])-> dict[str, any]:
         return dict(
             filter(
                 lambda map: isinstance(map[1], (DO, AO)), 
@@ -228,7 +226,7 @@ class Task:
             )
         )
 
-    def cycle(self, read_fds, write_fds):
+    def cycle(self, read_fds: dict[str, any], write_fds: dict[str, any]) -> None:
         """Run one task cycle."""
         # Get input image (variables mapped to values)
         input_image = self.cc_obj.read_inputs(read_fds, self.inputs)

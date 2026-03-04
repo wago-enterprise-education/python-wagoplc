@@ -27,4 +27,4 @@ def read_config():
                 elif interface == "ao":
                     result[value] = AO(index)
 
-    return config["tasks"], result
+    return config["tasks"], result,config["itemNumber"]
