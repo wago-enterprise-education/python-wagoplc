@@ -62,7 +62,7 @@ class CC100_v1:
             OS_VERSION
         )
 
-    def digitalWrite(self, output, value) -> bool:
+    def digitalWrite(self, output: int, value: int) -> bool:
         """Switch the output to the specified value.
 
         output: Digital output to be switched
@@ -89,7 +89,7 @@ class CC100_v1:
         self.output_image[DOUT_DATA] = str(currentValue)
         return True
 
-    def analogWrite(self, output, voltage) -> bool:
+    def analogWrite(self, output: int, voltage: int) -> bool:
         """Switch the output to the specified voltage.
 
         Return False if analog output does not exist,
@@ -121,7 +121,7 @@ class CC100_v1:
         self.output_image[output_file] = voltage
         return True
         
-    def digitalRead(self, input):
+    def digitalRead(self, input: int)-> int:
         """Read the specified digital input and return the value as boolean.
 
         input: Digital input to be read
@@ -145,7 +145,7 @@ class CC100_v1:
         return int(value0B[inputBit]) == 1
         
     
-    def digitalReadWait(self, input, value):
+    def digitalReadWait(self, input: int, value: int)-> bool:
         """Read specified input until desired state is reached, then return True.
 
         Return False if digital input does not exist.
@@ -166,7 +166,7 @@ class CC100_v1:
                 break
         return True
     
-    def analogRead(self, input):
+    def analogRead(self, input: int)-> int|bool:
         """Read analog input and return calibrated value in mV.
 
         Return False if analog input does not exist.
@@ -186,11 +186,11 @@ class CC100_v1:
 
         return(self.calibrateIn(voltage, input))
     
-    def delay(self, iTime):
+    def delay(self, iTime: float):
         iTime = iTime/1000
         time.sleep(iTime)
 
-    def tempRead(self, input):
+    def tempRead(self, input: int)-> int:
         """Read PT input and return calibrated value in °C.
 
         input: PT input to be read
@@ -205,14 +205,14 @@ class CC100_v1:
         # Calibrate the value and returns it
         return(self.calibrateTemp(voltage, input))
     
-    def serialReadLine(self):
+    def serialReadLine(self)-> str:
         """Read incoming message on RS485 Port till eol and return data."""
         data = ""
         with open(SERIAL_PORT) as ser:
             data = ser.readline()
         return data
         
-    def serialReadBytes(self,n):
+    def serialReadBytes(self,n: int)-> str:
         """Read a specified number of bytes in RS485 port and return data.
 
         n: number of bytes to read
@@ -222,7 +222,7 @@ class CC100_v1:
             data = ser.read(n)
         return data
 
-    def serialWrite(self,message):
+    def serialWrite(self,message: str)-> int:
         """Write message to RS485 serial interface and return number of written bytes.
 
         message: String to write
@@ -233,14 +233,14 @@ class CC100_v1:
         return written
 
     # Output calibration from: https://github.com/WAGO/cc100-howtos/blob/main/HowTo_Access_Onboard_IO/accessIO_CC100.py
-    def getCalibrationData(self, value):
+    def getCalibrationData(self, value: int)-> list[str]:
         """Return the calibration data for the required row of the table.
 
         value: the row to read
         """
         return self.input_image[CALIB_DATA][value].rstrip().split(' ', 4)
 
-    def calcCalibrate(self, val_uncal, calib):
+    def calcCalibrate(self, val_uncal: int, calib: int)-> int:
         """Calculate the value of the voltage for the required output.
 
         val_uncal: uncalibrated value
@@ -257,7 +257,7 @@ class CC100_v1:
 
         return int(val_cal)
     
-    def calibrateOut(self, voltage, output):
+    def calibrateOut(self, voltage: int, output: int)-> int:
         """Calibrate and return voltage to be applied to analog output.
         
         voltage: Voltage to be applied to the output.
@@ -272,7 +272,7 @@ class CC100_v1:
         return self.calcCalibrate(voltage, cal_ao)
 
     
-    def calibrateIn(self,value, input):
+    def calibrateIn(self,value: int, input: int)-> int:
         """Convert value read at analog input to mV and return it.
 
         value: Value given for the file from the output
@@ -286,7 +286,7 @@ class CC100_v1:
         return self.calcCalibrate(value, cal_ai)
     
     
-    def calibrateTemp(self, value, input):
+    def calibrateTemp(self, value: int, input: int)-> float:
         """Calibrate and return temperature read at PT input in °C.
 
         value: Value given for the file from the output
