@@ -86,7 +86,7 @@ class PLC:
         if _func is None:
             return decorator_task
         return decorator_task(_func)
-            
+
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
         read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in self.cc_obj.get_read_paths()}
@@ -100,10 +100,39 @@ class PLC:
 
         write_fds = {path: open(TEST_DATA + path.replace(":", "_"), "w") for path in self.cc_obj.get_write_paths()}
 
-        # TODO: Integrate cycle time and watchdog implementation
         try:
-            # Run task cycle
-            self.tasks[0].cycle(read_fds, write_fds)
+            if not self.tasks:
+                return
+
+            now = time.time()
+            for t in self.tasks:
+                t.next_run = now
+
+            while True:
+                now = time.time()
+                ready = []
+
+                for t in self.tasks:
+                    if now >= t.next_run:
+                        heapq.heappush(ready, t)
+
+                while ready:
+                    task = heapq.heappop(ready)
+
+                    start_perf = time.perf_counter()
+                    # Run task cycle
+                    task.cycle(read_fds, write_fds)
+                    duration_ms = (time.perf_counter() - start_perf) * 1000.0
+
+                    if duration_ms > task.watchdog_ms:
+                        raise WatchdogTimeout(
+                            f"Task '{task.name}' has been caught by the watchdog: "
+                            f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
+                        )
+
+                    task.next_run += task._cycle_s
+
+                time.sleep(0.0005)
         except Exception as e:
             raise
         finally:
@@ -134,7 +163,6 @@ class Task:
         """
         self.name = name
         self.cycle_time = cycle_ms
-        self.priority = priority
         if callable(entry):
             self.cycle_func = entry
         else:
@@ -144,11 +172,8 @@ class Task:
                 self.cycle_func = getattr(module, func_name)
             except AttributeError:
                 raise NotDefinedError(f"Function {entry} for task {name} not defined!")
-        self.watchdog_time = watchdog_ms
-        self.sensitivity = sensitivity
+        
         self.cc_obj = cc_obj
-        self.name = name
-
         if cycle_ms < 1:
             cycle_ms = 1
         elif cycle_ms > 10000:
@@ -159,8 +184,6 @@ class Task:
         if priority not in range(1, 16):
             raise ValueError("priority must be between 1 and 15.")
         self.priority = priority
-
-        self.cycle_func = entry
 
         if watchdog_ms < 0:
             watchdog_ms = 0
@@ -178,7 +201,7 @@ class Task:
 
         self.next_run: float = time.time()
     
-    def __lt__(self, other:"Task"):
+    def __lt__(self, other: Task):
         return self.priority < other.priority
 
     def _get_inputs(self, io_mapping):
@@ -213,39 +236,3 @@ class Task:
         output_image = self.cycle_func(**input_image)
         # Actually write outputs
         self.cc_obj.write_outputs(write_fds, output_image, self.outputs)
-
-    def scheduler(tasks: list[Task], read_fds, write_fds):
-        if not tasks:
-            return
-
-        now = time.time()
-        for t in tasks:
-            t.next_run = now
-
-        while True:
-            now = time.time()
-            ready = []
-
-            for t in tasks:
-                if now >= t.next_run:
-                    heapq.heappush(ready, t)
-
-            while ready:
-                task = heapq.heappop(ready)
-
-                start_perf = time.perf_counter()
-
-                try:
-                    task.cycle(read_fds, write_fds)
-                finally:
-                    duration_ms = (time.perf_counter() - start_perf) * 1000.0
-
-                    if duration_ms > task.watchdog_ms:
-                        raise WatchdogTimeout(
-                            f"Task '{task.name}' exceeded watchdog: "
-                            f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
-                        )
-
-                    task.next_run += task._cycle_s
-
-            time.sleep(0.0005)

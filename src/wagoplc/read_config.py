@@ -1,8 +1,11 @@
 import yaml
-
+import os
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO
 from wagoplc.cc100.constants import YAML_CONFIG
+
 def read_config():
+    if not os.path.exists(YAML_CONFIG):
+        return (), {}
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
 

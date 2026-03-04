@@ -6,6 +6,8 @@ readme = "README.md"
 authors = [
     { name = "Andre Alexander Bell", email = "andre.bell@wago.com" },
     { name = "Maik Rehburg", email = "maik.rehburg@wago.com" }
+    { name = "Johann Timm", email = "" }
+    { name = "Kilian Romberg", email = "" }
 ]
 requires-python = ">=3.8"
 dependencies = [
