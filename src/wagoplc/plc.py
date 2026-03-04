@@ -4,7 +4,7 @@ import os
 import time
 import heapq
 
-from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO
+from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
@@ -24,14 +24,15 @@ class WatchdogTimeout(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
+class InvalidConfig(WAGOPlcError):
+    """Throw when an invalid configuration was given."""
+    pass
+
 class PLC:
     """Represent a programmable logic controller (PLC)."""
     
-class InvalidConfig(WAGOPlcError):
-    """Throw when an invalid configuration was given."""
-    
     def __init__(self):
-        self.tasks = []
+        self.tasks: list[Task] = []
         self.config = {}
     
     def configure(self):
@@ -49,7 +50,7 @@ class InvalidConfig(WAGOPlcError):
         
     def _get_controller(self, controller_id: str):
         if not controller_id:
-            raise InvalidConfig("The given controller_id is not valid.")
+            raise InvalidConfig(f"The given item number '{controller_id}' is not valid.")
         model, version = controller_id.split("-")
         model = int(model)
         version = int(version)
@@ -121,6 +122,7 @@ class InvalidConfig(WAGOPlcError):
 
                 while ready:
                     task = heapq.heappop(ready)
+                    print(f"Running task {task.name} with priority {task.priority} (every {task.cycle_ms} ms)")
 
                     start_perf = time.perf_counter()
                     # Run task cycle
@@ -217,7 +219,9 @@ class Task:
         if not_defined := list(filter(lambda p: p not in vars, func_params)):
             raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
         def filter_used(pair):
-            k, _ = pair
+            k, v = pair
+            if not isinstance(v, IO):
+                raise ValueError("Variables must be mapped to I/O objects!")
             if k in func_params:
                 return True
             return False

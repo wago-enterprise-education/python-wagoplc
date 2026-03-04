@@ -58,8 +58,7 @@ class CC100_v1:
     def get_read_once_paths(self) -> tuple[str]:
         return (
             CALIB_DATA,
-            DOUT_DATA,
-            OS_VERSION
+            DOUT_DATA
         )
 
     def digitalWrite(self, output, value) -> bool:
@@ -118,7 +117,7 @@ class CC100_v1:
         # Write the voltage, taken from the calibration for the corresponding output,
         # for the voltage to the file for the output
         # When turning off, zero is written to the file
-        self.output_image[output_file] = voltage
+        self.output_image[output_file] = str(voltage)
         return True
         
     def digitalRead(self, input):
@@ -238,7 +237,8 @@ class CC100_v1:
 
         value: the row to read
         """
-        return self.input_image[CALIB_DATA][value].rstrip().split(' ', 4)
+        calib_data = self.input_image[CALIB_DATA].strip().split("\n")[1:]
+        return calib_data[value].rstrip().split(' ', 4)
 
     def calcCalibrate(self, val_uncal, calib):
         """Calculate the value of the voltage for the required output.
@@ -299,26 +299,38 @@ class CC100_v1:
         #Return the calculated value in °C
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
-    def read_inputs(self, fds: dict[str, TextIOWrapper], io_mapping: dict[str, IO]) -> dict[str, bool | int | str]:
-        """Read compact controller inputs and write input image."""
+    def read_inputs(self, fds: dict[str, TextIOWrapper],
+                    io_mapping: dict[str, IO] = {}) -> dict[str, bool | int | str]:
+        """Read compact controller inputs and write input image.
+        
+        fds: read system file descriptors
+        io_mapping: variables mapped to input interface objects
+        """
         input_image = {}
-        if not io_mapping:
-            return {}
         # Fill database
         for path, file in fds.items():
             self.input_image[path] = file.read()
             file.seek(0)
 
+        if not io_mapping:
+            return {}
+        
         # Map variables to values    
         for var, io in io_mapping.items():
             input_image[var] = io.read(self)
         return input_image
 
-    def write_outputs(self, fds: dict[str, TextIOWrapper], output_image: dict[str, bool | int | str], outputs: dict[str, IO]):
+    def write_outputs(self, fds: dict[str, TextIOWrapper],
+                      output_image: dict[str, bool | int | str] = {},
+                      outputs: dict[str, IO] = {}):
         """Write compact controller outputs from output image.
         
         Also set the input image to the new value to avoid reading every
         new cycle.
+
+        fds: write system file descriptors
+        output_image: unfiltered local variables from the cycle function
+        outputs: variables mapped to output interfaces
         """
         output_image = dict(
             filter(lambda map: map[0] in outputs.keys(),
