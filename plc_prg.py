@@ -13,7 +13,7 @@ def setup():
 
 @plc.task(
         name = "start the motor",
-        cycle_time = 5
+        cycle_ms = 5
 )
 def start_motor(xEndlageS1):
     xMotor = True
