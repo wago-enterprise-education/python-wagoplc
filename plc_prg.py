@@ -11,7 +11,10 @@ def setup():
 
     return locals()
 
-@plc.task(cycle_time=5)
+@plc.task(
+        name = "start the motor",
+        cycle_time = 5
+)
 def start_motor(xEndlageS1):
     xMotor = True
     if xEndlageS1:
