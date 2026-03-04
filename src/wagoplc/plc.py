@@ -1,5 +1,7 @@
 import inspect
 import os
+import time
+import heapq
 
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO
 from wagoplc.cc100.cc100_9301 import CC100_9301
@@ -8,18 +10,24 @@ from wagoplc.cc100.cc100_9403 import CC100_9403
 from wagoplc.read_config import read_config
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
-class WAGOPlcError(Exception): pass
-class NotDefinedError(WAGOPlcError): pass
+class WAGOPlcError(Exception):
+    """Base class for WAGO PLC related errors."""
+    pass
+
+class NotDefinedError(WAGOPlcError):
+    """Raised when a variable in a task function is not defined in IO mapping."""
+    pass
+
+class WatchdogTimeout(RuntimeError):
+    """Throw when task cycle exceeds maximum allowed time."""
+    pass
 
 def get_controller():
-    controller_id = os.getenv("CONTROLLER_ID", "751-9301")
+    controller_id = os.getenv("CONTROLLER_ID")
     
     model, version = controller_id.split("-")
     model = int(model)
     version = int(version)
-
-    # print(model)   # 751
-    # print(version)  # 9301
     
     if model == 751:
         if version == 9301:
@@ -44,11 +52,11 @@ class PLC:
             self.config.update(func())
         return decorator_setup(func)
     
-    def task(self, _func: function = None, *, cycle_time: int = 100, watchdog_time: int = 400):
+    def task(self, _func: function = None, *, cycle_time: int = 100, watchdog_time: int = 400000):
         """Register task.
         
         cycle_time: cycle time in ms, defaults to 100
-        watchdog: watchdog time in ms, defaults to 400
+        watchdog: watchdog time in ms, defaults to 400000
         """
         def decorator_task(func):
             self.tasks.append(
@@ -110,15 +118,40 @@ class Task:
         sensitivity: sensitivity from 0 (highest) to 10
         """
 
-        self.name = name
-        self.cycle_time = cycle_ms
-        self.priority = priority
-        self.cycle_func = entry
-        self.watchdog_time = watchdog_ms
-        self.sensitivity = sensitivity
         self.cc_obj = cc_obj
+        self.name = name
+
+        if cycle_ms < 1:
+            cycle_ms = 1
+        elif cycle_ms > 10000:
+            cycle_ms = 10000
+        self.cycle_ms = cycle_ms
+        self._cycle_s = cycle_ms / 1000.0
+
+        if priority not in range(1, 16):
+            raise ValueError("priority must be between 1 and 15.")
+        self.priority = priority
+
+        self.cycle_func = entry
+
+        if watchdog_ms < 0:
+            watchdog_ms = 0
+        elif watchdog_ms > 400000:
+            watchdog_ms = 400000
+
+        if sensitivity not in range(0, 11):
+            raise ValueError("sensitivity must be between 0 and 10.")
+        self.sensitivity = sensitivity
+
+        self.watchdog_ms = watchdog_ms * (self.sensitivity * 0.05 + 1.0)
+
         self.inputs = self._get_inputs(io_mapping)
         self.outputs = self._get_outputs(io_mapping)
+
+        self.next_run: float = time.time()
+    
+    def __lt__(self, other:"Task"):
+        return self.priority < other.priority
 
     def _get_inputs(self, io_mapping):
         """Compare defined and actual parameters and update mapping.
@@ -152,3 +185,39 @@ class Task:
         output_image = self.cycle_func(**input_image)
         # Actually write outputs
         self.cc_obj.write_outputs(write_fds, output_image, self.outputs)
+
+    def scheduler(tasks: list[Task], read_fds, write_fds):
+        if not tasks:
+            return
+
+        now = time.time()
+        for t in tasks:
+            t.next_run = now
+
+        while True:
+            now = time.time()
+            ready = []
+
+            for t in tasks:
+                if now >= t.next_run:
+                    heapq.heappush(ready, t)
+
+            while ready:
+                task = heapq.heappop(ready)
+
+                start_perf = time.perf_counter()
+
+                try:
+                    task.cycle(read_fds, write_fds)
+                finally:
+                    duration_ms = (time.perf_counter() - start_perf) * 1000.0
+
+                    if duration_ms > task.watchdog_ms:
+                        raise WatchdogTimeout(
+                            f"Task '{task.name}' exceeded watchdog: "
+                            f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
+                        )
+
+                    task.next_run += task._cycle_s
+
+            time.sleep(0.0005)
