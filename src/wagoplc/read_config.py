@@ -5,12 +5,11 @@ from wagoplc.cc100.constants import YAML_CONFIG
 
 def read_config():
     if not os.path.exists(YAML_CONFIG):
-        return (), {}
+        raise FileNotFoundError("Configfile does not exist.")
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
-
     io_mapping = config["io_mapping"]
-
+    
     result = {}
     for section in io_mapping.values():           
         for full_key, value in section.items():   
