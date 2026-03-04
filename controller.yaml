@@ -30,18 +30,9 @@ io_mapping:
 
 #("slow", cycle_ms=100, priority=15, function=slow_task, watchdog_ms=80, sensitivity=1)
 tasks:
-  - name: loop
-    src: src
-    entry: "main.loop"
-    cycle_ms:
-    priority:
-    watchdog_ms:
-    sensitivity:
-
-  - name: loop2
-    src: src
-    entry: "main.loop"
-    cycle_ms:
-    priority:
-    watchdog_ms:
-    sensitivity:
+  - name: start fan
+    entry: "plc_prg.fan"
+    cycle_ms: 100
+    priority: 15
+    watchdog_ms: 80
+    sensitivity: 1

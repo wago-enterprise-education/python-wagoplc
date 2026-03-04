@@ -1,3 +1,4 @@
+import importlib
 import inspect
 import os
 import time
@@ -8,6 +9,7 @@ from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
 from wagoplc.read_config import read_config
+
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
 class WAGOPlcError(Exception):
@@ -18,7 +20,7 @@ class NotDefinedError(WAGOPlcError):
     """Raised when a variable in a task function is not defined in IO mapping."""
     pass
 
-class WatchdogTimeout(RuntimeError):
+class WatchdogTimeout(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
@@ -39,33 +41,45 @@ def get_controller():
         return cc_obj
 
 class PLC:
+    """Represent a programmable logic controller (PLC)."""
     
     def __init__(self):
         self.tasks = []
         self.cc_obj = get_controller()
-        tasks, self.config = read_config()
+        self.config = {}
+
+    def configure(self):
+        """Read the configuration file.
+
+        Can not be executed inside the constructor due to
+        a circular import.
+        """
+        tasks, config = read_config()
+        config.update(self.config)
+        self.config = config
         for task in tasks:
-            self.tasks.append(Task(**task))
-            
+            self.tasks.append(Task(self.cc_obj, self.config, **task))
+
     def setup(self, func):
         def decorator_setup(func):
-            self.config.update(func())
+            self.config = func()
         return decorator_setup(func)
     
-    def task(self, _func: function = None, *, cycle_time: int = 100, watchdog_time: int = 400000):
+    def task(self, _func: function = None, *, name: str = "", cycle_time: int = 100, watchdog_time: int = 400000):
         """Register task.
         
-        cycle_time: cycle time in ms, defaults to 100
-        watchdog: watchdog time in ms, defaults to 400000
+        cycle_ms: cycle time in ms, defaults to 100
+        watchdog_ms: watchdog time in ms, defaults to 400000
         """
         def decorator_task(func):
             self.tasks.append(
                 Task(
-                    self.cc_obj,
-                    io_mapping=self.io_mapping,
-                    cycle_func=func,
-                    cycle_time=cycle_time,
-                    watchdog_time=watchdog_time
+                    name=name,
+                    cc_obj=self.cc_obj,
+                    io_mapping=self.config,
+                    entry=func,
+                    cycle_ms=cycle_time,
+                    watchdog_ms=watchdog_time
                 )
             )
             return func
@@ -99,6 +113,7 @@ class PLC:
 
 
 class Task:
+    """Represent a PLC task."""
 
     def __init__(self,
         cc_obj,
@@ -106,7 +121,7 @@ class Task:
         name: str,
         cycle_ms: int = 100,
         priority: int = 15,
-        entry: function = None,
+        entry: function | str = None,
         watchdog_ms: int = 400000,      
         sensitivity: int = 0):
         """
@@ -117,7 +132,20 @@ class Task:
         watchdog_ms: maximum runtime in ms before watchdog interrupts
         sensitivity: sensitivity from 0 (highest) to 10
         """
-
+        self.name = name
+        self.cycle_time = cycle_ms
+        self.priority = priority
+        if callable(entry):
+            self.cycle_func = entry
+        else:
+            module_name, func_name = entry.rsplit(".")
+            try:
+                module = importlib.import_module(module_name)
+                self.cycle_func = getattr(module, func_name)
+            except AttributeError:
+                raise NotDefinedError(f"Function {entry} for task {name} not defined!")
+        self.watchdog_time = watchdog_ms
+        self.sensitivity = sensitivity
         self.cc_obj = cc_obj
         self.name = name
 

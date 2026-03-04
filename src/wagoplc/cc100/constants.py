@@ -15,3 +15,6 @@ SERIAL_PORT = "/dev/ttySTM1"
 
 #path of controller configuration
 YAML_CONFIG = "controller.yaml"
+
+# main PLC script
+PLC_SCRIPT = "plc_prg"

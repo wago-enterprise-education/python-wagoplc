@@ -9,7 +9,6 @@ def read_config():
     io_mapping = config["io_mapping"]
 
     result = {}
-
     for section in io_mapping.values():           
         for full_key, value in section.items():   
             if value:                             
@@ -25,13 +24,4 @@ def read_config():
                 elif interface == "ao":
                     result[value] = AO(index)
 
-
-
-    return config["tasks"],result
-
-
-r= read_config()
-print(r)
-    
-    
-    
+    return config["tasks"], result
