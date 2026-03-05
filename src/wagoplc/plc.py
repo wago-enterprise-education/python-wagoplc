@@ -24,10 +24,6 @@ class WatchdogTimeout(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
-class InvalidConfig(WAGOPlcError):
-    """Throw when an invalid configuration was given."""
-    pass
-
 class PLC:
     """Represent a programmable logic controller (PLC)."""
     
@@ -49,8 +45,6 @@ class PLC:
             self.tasks.append(Task(self.cc_obj, self.config, **task))
         
     def _get_controller(self, controller_id: str):
-        if not controller_id:
-            raise InvalidConfig(f"The given item number '{controller_id}' is not valid.")
         model, version = controller_id.split("-")
         model = int(model)
         version = int(version)
