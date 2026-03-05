@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import importlib
 import inspect
 import os
@@ -28,23 +30,19 @@ class PLC:
     """Represent a programmable logic controller (PLC)."""
     
     def __init__(self):
+        # List of PLC tasks
         self.tasks: list[Task] = []
-        self.config = {}
-    
-    def configure(self):
-        """Read the configuration file.
+        # Map of variables and interfaces
+        self.map: dict[str, IO] = {}
 
-        Can not be executed inside the constructor due to
-        a circular import.
-        """
-        tasks, config, controller_id = read_config()
-        config.update(self.config)
-        self.config = config
+        self.tasks_config, self.map, controller_id = read_config()
         self.cc_obj = self._get_controller(controller_id)
-        for task in tasks:
-            self.tasks.append(Task(self.cc_obj, self.config, **task))
         
     def _get_controller(self, controller_id: str):
+        """Get controller object by item number.
+        
+        controller_id: item number
+        """
         model, version = controller_id.split("-")
         model = int(model)
         version = int(version)
@@ -58,26 +56,45 @@ class PLC:
                 cc_obj = CC100_9403()
             return cc_obj
 
-    def setup(self, func: callable):
+    def setup(self, func: Callable[[], dict[str, IO]]) -> None:
+        """Retrieve variables from function in script.
+        
+        func: a function that returns all variables as a dict
+        """
         def decorator_setup(func):
-            self.config = func()
+            self.map.update(func())
         return decorator_setup(func)
     
-    def task(self, _func: function = None, *, name: str = "", cycle_time: int = 100, watchdog_time: int = 400000):
+    def task(
+            self,
+            _func: Callable[..., dict[str, str | int | bool]] | str = None,
+            name: str = "",
+            cycle_ms: int = 100,
+            watchdog_ms: int = 400000,
+            priority: int = 15,
+            sensitivity: int = 0):
         """Register task.
         
-        cycle_ms: cycle time in ms, defaults to 100
-        watchdog_ms: watchdog time in ms, defaults to 400000
+        name:        task name
+        cycle_ms:    call cycle time in ms
+        priority:    a priority from 1 (highest) to 15
+        entry:       task function
+        watchdog_ms: maximum runtime in ms before watchdog interrupts
+        sensitivity: sensitivity from 0 (highest) to 10
         """
-        def decorator_task(func: callable):
+        if self.cc_obj is None:
+            self.configure()
+        def decorator_task(func: Callable[...]):
             self.tasks.append(
                 Task(
                     name=name,
                     cc_obj=self.cc_obj,
-                    io_mapping=self.config,
+                    io_mapping=self.map,
                     entry=func,
-                    cycle_ms=cycle_time,
-                    watchdog_ms=watchdog_time
+                    cycle_ms=cycle_ms,
+                    priority=priority,
+                    watchdog_ms=watchdog_ms,
+                    sensitivity=sensitivity
                 )
             )
             return func
@@ -87,6 +104,10 @@ class PLC:
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
+        # Add tasks defined in config file here to avoid circular import
+        for task in self.tasks_config:
+            self.tasks.append(Task(self.cc_obj, self.map, **task))
+
         read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in self.cc_obj.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
@@ -135,6 +156,8 @@ class PLC:
         except Exception as e:
             raise
         finally:
+            print("Resetting outputs...")
+            self.cc_obj.reset_outputs(write_fds)
             print("Closing file descriptors...")
             (file.close() for file in read_fds.values())
             (file.close() for file in write_fds.values())
@@ -143,20 +166,21 @@ class PLC:
 class Task:
     """Represent a PLC task."""
 
-    def __init__(self,
+    def __init__(
+        self,
         cc_obj,
-        io_mapping: dict[str, str],
+        io_mapping: dict[str, IO],
         name: str,
         cycle_ms: int = 100,
         priority: int = 15,
-        entry: function | str = None,
+        entry: Callable[..., dict[str, str | int | bool]] | str = None,
         watchdog_ms: int = 400000,      
         sensitivity: int = 0):
         """
         name:        task name
         cycle_ms:    call cycle time in ms
         priority:    a priority from 1 (highest) to 15
-        function:    name of function
+        function:    task function
         watchdog_ms: maximum runtime in ms before watchdog interrupts
         sensitivity: sensitivity from 0 (highest) to 10
         """
@@ -165,6 +189,8 @@ class Task:
         if callable(entry):
             self.cycle_func = entry
         else:
+            # entry point is string identifier
+            # read from config
             module_name, func_name = entry.rsplit(".")
             try:
                 module = importlib.import_module(module_name)
@@ -200,28 +226,34 @@ class Task:
 
         self.next_run: float = time.time()
     
-    def __lt__(self, other: Task)-> bool:
+    def __lt__(self, other: Task) -> bool:
         return self.priority < other.priority
 
-    def _get_inputs(self, io_mapping: dict[str, any]) -> dict[str, any]:
-        """Compare defined and actual parameters and update mapping.
+    def _get_inputs(self, io_mapping: dict[str, IO]) -> dict[str, AO | DO]:
+        """Compare defined and actual parameters and return input mapping.
         
-        Raise NotDefinedError if a parameter is not defined as a variable. 
+        Raise NotDefinedError if a parameter is not defined as a variable.
+
+        io_mapping: map of user-defined variables 
         """
         func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
         vars = io_mapping.keys()
         if not_defined := list(filter(lambda p: p not in vars, func_params)):
             raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
-        def filter_used(pair):
+        def is_input(pair):
             k, v = pair
             if not isinstance(v, IO):
                 raise ValueError("Variables must be mapped to I/O objects!")
             if k in func_params:
                 return True
             return False
-        return dict(filter(filter_used, io_mapping.items()))
+        return dict(filter(is_input, io_mapping.items()))
     
     def _get_outputs(self, io_mapping: dict[str, any])-> dict[str, any]:
+        """Get output variables from mapping.
+        
+        io_mapping: map of user-defined variables
+        """
         return dict(
             filter(
                 lambda map: isinstance(map[1], (DO, AO)), 

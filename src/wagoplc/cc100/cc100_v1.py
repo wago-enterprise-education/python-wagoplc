@@ -346,3 +346,12 @@ class CC100_v1:
             file.write(value)
             file.seek(0)
             self.input_image[path] = value
+
+    def reset_outputs(self, fds: dict[str, TextIOWrapper]) -> None:
+        """Reset the output interfaces to null.
+        
+        fds: write system file descriptors
+        """
+        for path in self.output_image:
+            self.output_image[path] = "0"
+        self.write_outputs(fds)
