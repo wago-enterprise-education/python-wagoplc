@@ -3,7 +3,7 @@ import unittest
 
 from pyfakefs import fake_filesystem_unittest
 
-from wagoplc.cc100.cc100_v1 import CC100_v1
+from wagoplc.cc100.cc100_v1 import CC100_v1, DI, DO
 from wagoplc.cc100.constants import DOUT_DATA, DIN, CALIB_DATA
 
 TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02
@@ -40,7 +40,7 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         cls.write_fds = {path: open(path, "w") for path in cc.get_write_paths()}
 
         # Initially read inputs
-        cc.read_inputs(cls.read_fds, {})
+        cc.read_inputs(cls.read_fds)
 
     def test_non_existing_output(self):
         with self.assertLogs(level="WARNING") as cm:
@@ -55,7 +55,7 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         )
 
     def test_digital_write(self):
-        # set every digital output to True and False
+        # set every digital output to False and True
         dout_content = 0
         for i in range(1, 5):
             for j in range(2):
@@ -94,9 +94,39 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     def test_analog_read(self):
         for i in range(1,2):
             cc.analogRead(i)
+
+    def test_read_inputs(self):
+        inputs = {"di1": DI(1)}
+        input_image = {"di1": True}
+        with open(DIN, "w") as din:
+            din.write("1")
+        self.assertDictEqual(
+            cc.read_inputs(fds=self.read_fds, io_mapping=inputs),
+            input_image
+        )
+        self.assertEqual(cc.input_image[DIN], "1")
+
+    def test_write_outputs(self):
+        outputs = {"do1": DO(1)}
+        output_image = {"do1": True, "di1": True}
+        # reset input value
+        cc.input_image[DOUT_DATA] = "0"
+
+        cc.digitalWrite(1, True)
+        cc.write_outputs(
+            fds=self.write_fds,
+            output_image=output_image,
+            outputs=outputs
+        )
+        # value was directly written to input image
+        self.assertEqual(cc.input_image[DOUT_DATA], "1")
         
     def test_temp_read(self):
         pass
+
+    def test_reset_outputs(self):
+        cc.reset_outputs(self.write_fds)
+        self.assertTrue(all(out == "0" for out in cc.output_image.values()))
 
 if __name__ == '__main__':
     unittest.main()

@@ -162,7 +162,8 @@ class PLC:
         except Exception as e:
             raise
         finally:
-            # TODO: Also reset the outputs
+            print("Resetting outputs...")
+            self.cc_obj.reset_outputs(write_fds)
             print("Closing file descriptors...")
             (file.close() for file in read_fds.values())
             (file.close() for file in write_fds.values())
