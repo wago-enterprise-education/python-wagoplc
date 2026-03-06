@@ -159,6 +159,15 @@ class Test_Task(unittest.TestCase):
     def test_sensitivity_out_of_range(self):
         with self.assertRaises(ValueError):
             Task(CC100_9301(), {}, "BadSens", entry=lambda: None, sensitivity=11)
+ 
+    def test_cycle_raises_if_cycle_func_returns_none(self):
+
+        def cycle_func_returns_none():
+            return None
+        t = Task(CC100_9301,io_mapping=dict(),name="test",entry=cycle_func_returns_none)
+        
+        with self.assertRaises(NotDefinedError):
+            t.cycle(read_fds={},write_fds={})
 
 if __name__ == '__main__':
         unittest.main()
