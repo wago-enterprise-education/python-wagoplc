@@ -1,14 +1,12 @@
 import os
 import unittest
 import yaml
-import types
-import importlib
 from unittest.mock import Mock, patch
 from unittest import mock
 
 
-from wagoplc.plc import NotDefinedError, Task, PLC, CC100_9301
-from wagoplc.read_config import read_config,InvalidConfig
+from wagoplc.plc import CC100_9301, NotDefinedError, PLC, Task, Tasks
+from wagoplc.read_config import read_config, InvalidConfig
 from wagoplc import DI, DO, AI, AO
 
 class Test_config(unittest.TestCase):
@@ -24,9 +22,10 @@ class Test_config(unittest.TestCase):
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
     def test_read_yaml(self):
         data = {"itemNumber": "751-9301", "tasks": [
-                {"name":"task1","entry":"plc.py","cycle_ms":None,"priority":None,"watchdog_ms":None,"sensitivity":None},
-                {"name":"task2","entry":"plc2.py","cycle_ms":None,"priority":None,"watchdog_ms":None,"sensitivity":None}
-                ]}
+                {"name": "task1", "entry": "plc.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None},
+                {"name": "task2", "entry": "plc2.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
+                ]
+        }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
         with open(self.filename, "r") as f:
@@ -40,18 +39,20 @@ class Test_config(unittest.TestCase):
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
     def test_invalid_config(self):
         data = {"itemNumber": "751-9301", "tasks": [
-                {"name":"task1","entry":"plc.py","cycle_ms":None},
-                {"name":"task2","entry":"plc2.py","cycle_ms":None,"priority":None,"watchdog_ms":None,"sensitivity":None}
-                ]}
+                {"name": "task1", "entry": "plc.py", "cycle_ms": None},
+                {"name": "task2", "entry": "plc2.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
+                ]
+        }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
         with self.assertRaises(InvalidConfig):
             read_config()
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
     def test_no_itemNumber(self):
-        data = {"tasks":[
-                {"name":"task2","entry":"plc2.py","cycle_ms":None,"priority":None,"watchdog_ms":None,"sensitivity":None}
-                ]}
+        data = {"tasks": [
+                {"name": "task2", "entry": "plc2.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
+                ]
+        }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
         with self.assertRaises(InvalidConfig):
@@ -62,32 +63,48 @@ class Test_config(unittest.TestCase):
         os.remove(cls.filename)
 
 
-class Test_plc(unittest.TestCase):
+class Test_PLC(unittest.TestCase):
     
     def test_get_controller(self):
         pass
-
-    def test_setup(self):
-        pass
-
-    def test_task(self):
-        pass
         
 
+class Test_Tasks(unittest.TestCase):
+
+    def test_setup_error_on_missing_return(self):
+        tasks = Tasks()
+        def setup():
+            xFan = DO(1)
+
+        with self.assertRaises(
+            InvalidConfig,
+            msg="Expected setup function to return a dictionary of variables!"):
+            tasks.setup(setup)
+
+    def test_task_register(self):
+        tasks = Tasks()
+        @tasks.register(name="foo")
+        def foo():
+            pass
+
+        self.assertEqual(tasks.task.cycle_func, foo)
+        self.assertEqual(tasks.task.name, "foo")
+
+        with self.assertRaises(InvalidConfig, msg="Only one task per program allowed!"):
+            @tasks.register
+            def bar(foo):
+                print(foo)
+
+    def test_task_register_no_config(self):
+        tasks = Tasks()
+        @tasks.register
+        def foo(bar):
+            pass
+
+        self.assertDictEqual(tasks.task_func, {"foo": foo})
+
+
 class Test_Task(unittest.TestCase):
-    
-    def test_get_inputs(self):
-        pass
-
-    def test_get_outputs(self):
-        pass
-
-    def test_init(self):
-        pass
-        #Task.__init__(self,cc_obj=CC100_9301,io_mapping=dict(),name="test",)
-
-
-    
     
     def test_init_with_callable(self):
             def dummy_func(a, b):
@@ -119,13 +136,13 @@ class Test_Task(unittest.TestCase):
         def f(a, b):
             return {}
 
-        io_map = {"a": DO(1)}  # b fehlt
+        io_map = {"a": DO(1)}  # b missing
         cc_obj = CC100_9301()
 
         with self.assertRaises(NotDefinedError):
             Task(cc_obj, io_map, "BadTask", entry=f)
 
-    def test_get_outputs_filters_correctly(self):
+    def test_get_outputs(self):
         io_map = {
             "a": DO(1),
             "b": DO(2),
@@ -140,7 +157,7 @@ class Test_Task(unittest.TestCase):
             entry=lambda a, b: {"b": 1}
         )
 
-        self.assertSetEqual(set(t.outputs.keys()), {"a","b", "c"})
+        self.assertSetEqual(set(t.outputs.keys()), {"a", "b", "c"})
 
     def test_priority_compare(self):
         t1 = Task(Mock(), {}, "T1", entry=lambda: None, priority=5)

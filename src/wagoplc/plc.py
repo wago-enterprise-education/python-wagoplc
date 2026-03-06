@@ -61,7 +61,7 @@ class Tasks:
             logger.debug(f"Reading configuration from script function '{func.__name__}'")
             self.map = func()
             if not isinstance(self.map, dict):
-                return InvalidConfig("Expected setup function to return a dictionary of variables!")
+                raise InvalidConfig("Expected setup function to return a dictionary of variables!")
 
         return decorator_setup(func)
     
