@@ -2,6 +2,7 @@ from collections.abc import Callable
 
 import importlib
 import inspect
+import logging
 import os
 import time
 import heapq
@@ -10,7 +11,15 @@ from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
-from wagoplc.read_config import read_config
+from wagoplc.cc100.constants import PLC_SCRIPT
+from wagoplc.read_config import read_config, InvalidConfig
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="wagoplc.log",
+    format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
+    level=logging.DEBUG
+)
 
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
@@ -26,17 +35,119 @@ class WatchdogTimeout(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
+
+class Tasks:
+    """Manage task registration.
+    
+    This class collects all variables, the task function and,
+    if, given, its configuration. It should be instantiated in every
+    program.
+    """
+
+    def __init__(self):
+        self.task: Task = None
+        # Map of variables and interfaces
+        self.map: dict[str, IO] = {}
+        # Functions of tasks defined in the configuration file
+        # Entry point names are mapped to functions
+        self.task_func: dict[str, Callable[..., dict[str, str | int | bool]]] = {}
+
+    def setup(self, func: Callable[[], dict[str, IO]]) -> None:
+        """Retrieve variables from function in script.
+        
+        func: a function that returns all variables as a dict
+        """
+        def decorator_setup(func):
+            logger.debug(f"Reading configuration from script function '{func.__name__}'")
+            self.map = func()
+        return decorator_setup(func)
+    
+    def register(
+            self,
+            _func: Callable[..., dict[str, str | int | bool]] = None,
+            name: str = "",
+            cycle_ms: int = 100,
+            watchdog_ms: int = 400000,
+            priority: int = 15,
+            sensitivity: int = 0):
+        """Register task.
+        
+        name:        task name
+        cycle_ms:    call cycle time in ms
+        priority:    a priority from 1 (highest) to 15
+        entry:       task function
+        watchdog_ms: maximum runtime in ms before watchdog interrupts
+        sensitivity: sensitivity from 0 (highest) to 10
+        """
+        if self.task or self.task_func:
+            raise InvalidConfig("Only one task per program allowed!")
+        def decorator_task(func: Callable[...]):
+            self.task = Task(
+                name=name,
+                cc_obj=None,
+                io_mapping=self.map,
+                entry=func,
+                cycle_ms=cycle_ms,
+                priority=priority,
+                watchdog_ms=watchdog_ms,
+                sensitivity=sensitivity
+            )
+            logger.debug(f"Task '{name}' with script entry point '{func.__name__}' registered")
+            return func
+        
+        if _func is None:
+            return decorator_task
+        
+        # Task is (likely) defined in the config file
+        # save it for later
+        self.task_func[_func.__name__] = _func
+        return _func
+
+
 class PLC:
     """Represent a programmable logic controller (PLC)."""
     
-    def __init__(self):
+    def __init__(self, tasks_object: Tasks):
         # List of PLC tasks
         self.tasks: list[Task] = []
         # Map of variables and interfaces
-        self.map: dict[str, IO] = {}
+        self.map: dict[str, IO] = tasks_object.map
 
-        self.tasks_config, self.map, controller_id = read_config()
+        self.tasks_config, config_map, controller_id = read_config()
+        config_map.update(self.map)
+        self.map = config_map
         self.cc_obj = self._get_controller(controller_id)
+        self._read_tasks(tasks_object)
+
+    def _read_tasks(self, tasks_object: Tasks):
+        """Read tasks from configuration and tasks object in script.
+        
+        tasks_object: task registrator passed from script
+        """
+        # Add decorated task
+        if task := tasks_object.task:
+            task.cc_obj = self.cc_obj
+            self.tasks.append(task)
+
+        # Get task definition from config
+        for task in self.tasks_config:
+            entry: str = task["entry"]
+            module_name, func_name = entry.rsplit(".")
+            try:
+                if module_name == PLC_SCRIPT:
+                    # Function defined in main script
+                    task["entry"] = tasks_object.task_func[func_name]
+                else:
+                    # Try to import
+                    module = importlib.import_module(module_name)
+                    task["entry"] = module.tasks.task_func[func_name]
+                
+                self.tasks.append(Task(self.cc_obj, self.map, **task))
+                logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
+
+            except KeyError, ModuleNotFoundError:
+                raise NotDefinedError(f"Function '{entry}' for task '{task["name"]}' not defined!")
+
         
     def _get_controller(self, controller_id: str):
         """Get controller object by item number.
@@ -54,60 +165,11 @@ class PLC:
                 cc_obj = CC100_9401()
             elif version == 9403:
                 cc_obj = CC100_9403()
+            logger.info(f"Using controller with item number '{controller_id}'")
             return cc_obj
-
-    def setup(self, func: Callable[[], dict[str, IO]]) -> None:
-        """Retrieve variables from function in script.
-        
-        func: a function that returns all variables as a dict
-        """
-        def decorator_setup(func):
-            self.map.update(func())
-        return decorator_setup(func)
-    
-    def task(
-            self,
-            _func: Callable[..., dict[str, str | int | bool]] | str = None,
-            name: str = "",
-            cycle_ms: int = 100,
-            watchdog_ms: int = 400000,
-            priority: int = 15,
-            sensitivity: int = 0):
-        """Register task.
-        
-        name:        task name
-        cycle_ms:    call cycle time in ms
-        priority:    a priority from 1 (highest) to 15
-        entry:       task function
-        watchdog_ms: maximum runtime in ms before watchdog interrupts
-        sensitivity: sensitivity from 0 (highest) to 10
-        """
-        if self.cc_obj is None:
-            self.configure()
-        def decorator_task(func: Callable[...]):
-            self.tasks.append(
-                Task(
-                    name=name,
-                    cc_obj=self.cc_obj,
-                    io_mapping=self.map,
-                    entry=func,
-                    cycle_ms=cycle_ms,
-                    priority=priority,
-                    watchdog_ms=watchdog_ms,
-                    sensitivity=sensitivity
-                )
-            )
-            return func
-        if _func is None:
-            return decorator_task
-        return decorator_task(_func)
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
-        # Add tasks defined in config file here to avoid circular import
-        for task in self.tasks_config:
-            self.tasks.append(Task(self.cc_obj, self.map, **task))
-
         read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in self.cc_obj.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
@@ -122,11 +184,13 @@ class PLC:
         try:
             if not self.tasks:
                 return
+            logging.info(f"Found tasks {", ".join(t.name for t in self.tasks)}")
 
             now = time.time()
             for t in self.tasks:
                 t.next_run = now
 
+            logger.info("Starting tasks execution")
             while True:
                 now = time.time()
                 ready = []
@@ -156,9 +220,9 @@ class PLC:
         except Exception as e:
             raise
         finally:
-            print("Resetting outputs...")
+            logger.info("Resetting outputs...")
             self.cc_obj.reset_outputs(write_fds)
-            print("Closing file descriptors...")
+            logger.debug("Closing file descriptors...")
             (file.close() for file in read_fds.values())
             (file.close() for file in write_fds.values())
 
@@ -173,7 +237,7 @@ class Task:
         name: str,
         cycle_ms: int = 100,
         priority: int = 15,
-        entry: Callable[..., dict[str, str | int | bool]] | str = None,
+        entry: Callable[..., dict[str, str | int | bool]] = None,
         watchdog_ms: int = 400000,      
         sensitivity: int = 0):
         """
@@ -186,18 +250,7 @@ class Task:
         """
         self.name = name
         self.cycle_time = cycle_ms
-        if callable(entry):
-            self.cycle_func = entry
-        else:
-            # entry point is string identifier
-            # read from config
-            module_name, func_name = entry.rsplit(".")
-            try:
-                module = importlib.import_module(module_name)
-                self.cycle_func = getattr(module, func_name)
-            except AttributeError:
-                raise NotDefinedError(f"Function {entry} for task {name} not defined!")
-        
+        self.cycle_func = entry
         self.cc_obj = cc_obj
         if cycle_ms < 1:
             cycle_ms = 1

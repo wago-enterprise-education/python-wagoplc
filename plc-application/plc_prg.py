@@ -1,17 +1,15 @@
-from wagoplc import main, PLC, DI, DO
+from wagoplc import main, Tasks, DI, DO
 
-plc = PLC()
+tasks = Tasks()
 
-@plc.setup
+@tasks.setup
 def setup():
     xEndlageS1 = DI(1)
-    xTaster = DI(2)
     xMotor = DO(1)
-    xLuefter = DO(2)
 
     return locals()
 
-@plc.task(
+@tasks.register(
         name = "start the motor",
         cycle_ms = 5
 )
@@ -22,14 +20,5 @@ def start_motor(xEndlageS1):
 
     return locals()
 
-def fan(xTaster):
-    if xTaster:
-        if xLuefter:
-            xLuefter = False
-        else:
-            xLuefter = True
-
-    return locals()
-
 if __name__ == "__main__":
-    main()
+    main(tasks)

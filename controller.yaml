@@ -9,8 +9,8 @@ netmask: 255.255.255.0
 gateway: undefined
 io_mapping:
   pii:
-    x12.di1: endschalter
-    x12.di2: di2
+    x12.di1:
+    x12.di2: xTaster
     x12.di3:
     x12.di4:
     x12.di5:
@@ -22,17 +22,16 @@ io_mapping:
     x14.ai1: 
     x14.ai2: 
   piq:
-    x5.do1: motor
-    x5.do2: do2
+    x5.do1:
+    x5.do2: xLuefter
     x5.do3:
     x5.do4:
-    x6.ao1: voltage
+    x6.ao1:
     x6.ao2:
 
-#("slow", cycle_ms=100, priority=15, function=slow_task, watchdog_ms=80, sensitivity=1)
 tasks:
   - name: start fan
-    entry: "plc_prg.fan"
+    entry: "ventilator.fan"
     cycle_ms: 100
     priority: 15
     watchdog_ms: 80
