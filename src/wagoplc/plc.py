@@ -60,6 +60,9 @@ class Tasks:
         def decorator_setup(func):
             logger.debug(f"Reading configuration from script function '{func.__name__}'")
             self.map = func()
+            if not isinstance(self.map, dict):
+                return InvalidConfig("Expected setup function to return a dictionary of variables!")
+
         return decorator_setup(func)
     
     def register(
@@ -115,6 +118,12 @@ class PLC:
 
         self.tasks_config, config_map, controller_id = read_config()
         config_map.update(self.map)
+        # Catch duplicate mappings
+        ios = list(config_map.values())
+        duplicates = {name: str(io) for name, io in config_map.items() if ios.count(io) > 1}
+        if duplicates:
+            dups_sorted = dict(sorted(duplicates.items(), key=lambda item: item[1]))
+            raise InvalidConfig(f"Duplicate I/O mappings in configuration: {dups_sorted}")
         self.map = config_map
         self.cc_obj = self._get_controller(controller_id)
         self._read_tasks(tasks_object)
@@ -320,5 +329,7 @@ class Task:
         input_image = self.cc_obj.read_inputs(read_fds, self.inputs)
         # Get output image (variables mapped to values)
         output_image = self.cycle_func(**input_image)
+        if not isinstance(output_image, dict):
+            raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
         # Actually write outputs
         self.cc_obj.write_outputs(write_fds, output_image, self.outputs)

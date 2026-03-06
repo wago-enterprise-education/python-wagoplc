@@ -14,6 +14,13 @@ class IO:
             raise ValueError("Expected and integer id.")
         self.id = id
 
+    def __eq__(self, other):
+        return isinstance(self, other.__class__) and self.id == other.id
+    
+    def __str__(self):
+        return f"{type(self).__name__}({self.id})"
+
+
 class DI(IO):
     def read(self, cc_obj) -> bool:
         return cc_obj.digitalRead(self.id)
