@@ -71,7 +71,7 @@ class Test_PLC(unittest.TestCase):
         pass
     
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
-    def test_read_task(self):
+    def test_read_task_config(self):
         data = {"itemNumber": "751-9301", "tasks": [
             {"name": "foo", "entry": "foo.bar", "cycle_ms": 10, "priority": 1, "sensitivity": None, "watchdog_ms": None}
         ]}
@@ -105,7 +105,24 @@ def bar():
 
         os.remove("test_controller.yaml")
         os.remove("foo.py")
-        
+
+    @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
+    def test_multiple_io_assignment_exception(self):
+        data = {"itemNumber": "751-9301"}
+        with open("test_controller.yaml", "w") as f:
+            yaml.dump(data, f)
+
+        tasks = Tasks()
+        @tasks.setup
+        def setup():
+            di1 = DI(1)
+            di2 = DI(1)
+            return locals()
+
+        with self.assertRaises(
+            InvalidConfig,
+            msg="Duplicate I/O mappings in configuration: {'di1': 'DI(1)', 'di2': 'DI(1)'}"):
+            PLC(tasks)
 
 class Test_Tasks(unittest.TestCase):
 
