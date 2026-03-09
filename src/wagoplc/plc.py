@@ -11,7 +11,6 @@ from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
-from wagoplc.cc100.constants import PLC_SCRIPT
 from wagoplc.read_config import read_config, InvalidConfig
 
 logger = logging.getLogger(__name__)
@@ -37,20 +36,17 @@ class WatchdogTimeout(WAGOPlcError):
 
 
 class Tasks:
-    """Manage task registration.
+    """Manage task registration per program.
     
     This class collects all variables, the task function and,
-    if, given, its configuration. It should be instantiated in every
-    program.
+    if, given, its configuration. It can be instantiated in the main
+    script.
     """
 
     def __init__(self):
         self.task: Task = None
         # Map of variables and interfaces
         self.map: dict[str, IO] = {}
-        # Functions of tasks defined in the configuration file
-        # Entry point names are mapped to functions
-        self.task_func: dict[str, Callable[..., dict[str, str | int | bool]]] = {}
 
     def setup(self, func: Callable[[], dict[str, IO]]) -> None:
         """Retrieve variables from function in script.
@@ -73,7 +69,7 @@ class Tasks:
             watchdog_ms: int = 400000,
             priority: int = 15,
             sensitivity: int = 0):
-        """Register task.
+        """Register a task. Only one is currently allowed.
         
         name:        task name
         cycle_ms:    call cycle time in ms
@@ -82,7 +78,7 @@ class Tasks:
         watchdog_ms: maximum runtime in ms before watchdog interrupts
         sensitivity: sensitivity from 0 (highest) to 10
         """
-        if self.task or self.task_func:
+        if self.task:
             raise InvalidConfig("Only one task per program allowed!")
         def decorator_task(func: Callable[...]):
             self.task = Task(
@@ -100,24 +96,21 @@ class Tasks:
         
         if _func is None:
             return decorator_task
-        
-        # Task is (likely) defined in the config file
-        # save it for later
-        self.task_func[_func.__name__] = _func
-        return _func
+        return decorator_task(_func)
 
 
 class PLC:
     """Represent a programmable logic controller (PLC)."""
     
-    def __init__(self, tasks_object: Tasks):
+    def __init__(self, tasks_object: Tasks | None):
         # List of PLC tasks
         self.tasks: list[Task] = []
         # Map of variables and interfaces
-        self.map: dict[str, IO] = tasks_object.map
+        self.map: dict[str, IO]
 
         self.tasks_config, config_map, controller_id = read_config()
-        config_map.update(self.map)
+        if tasks_object is not None:
+            config_map.update(tasks_object.map)
         # Catch duplicate mappings
         ios = list(config_map.values())
         duplicates = {name: str(io) for name, io in config_map.items() if ios.count(io) > 1}
@@ -128,33 +121,27 @@ class PLC:
         self.cc_obj = self._get_controller(controller_id)
         self._read_tasks(tasks_object)
 
-    def _read_tasks(self, tasks_object: Tasks):
+    def _read_tasks(self, tasks_object: Tasks | None):
         """Read tasks from configuration and tasks object in script.
         
         tasks_object: task registrator passed from script
         """
         # Add decorated task
-        if task := tasks_object.task:
-            task.cc_obj = self.cc_obj
-            self.tasks.append(task)
+        if tasks_object is not None:
+            if task := tasks_object.task:
+                task.cc_obj = self.cc_obj
+                self.tasks.append(task)
 
-        # Get task definition from config
+        # Get task definitions from config and retrieve the task function
         for task in self.tasks_config:
             entry: str = task["entry"]
             module_name, func_name = entry.rsplit(".")
             try:
-                if module_name == PLC_SCRIPT:
-                    # Function defined in main script
-                    task["entry"] = tasks_object.task_func[func_name]
-                else:
-                    # Try to import
-                    module = importlib.import_module(module_name)
-                    task["entry"] = module.tasks.task_func[func_name]
-                
+                module = importlib.import_module(module_name)
+                task["entry"] = getattr(module, func_name)                
                 self.tasks.append(Task(self.cc_obj, self.map, **task))
                 logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
-
-            except KeyError, ModuleNotFoundError:
+            except ModuleNotFoundError, AttributeError:
                 raise NotDefinedError(f"Function '{entry}' for task '{task["name"]}' not defined!")
 
         
@@ -193,7 +180,7 @@ class PLC:
         try:
             if not self.tasks:
                 return
-            logging.info(f"Found tasks {", ".join(t.name for t in self.tasks)}")
+            logger.info(f"Found tasks {", ".join(t.name for t in self.tasks)}")
 
             now = time.time()
             for t in self.tasks:

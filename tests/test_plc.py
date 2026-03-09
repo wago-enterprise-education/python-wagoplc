@@ -1,7 +1,7 @@
 import os
 import unittest
 import yaml
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from unittest import mock
 
 
@@ -22,19 +22,20 @@ class Test_config(unittest.TestCase):
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
     def test_read_yaml(self):
         data = {"itemNumber": "751-9301", "tasks": [
-                {"name": "task1", "entry": "plc.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None},
-                {"name": "task2", "entry": "plc2.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
+                {"name": "task1", "entry": "plc.foo", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None},
+                {"name": "task2", "entry": "plc2.bar", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
                 ]
         }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
         with open(self.filename, "r") as f:
             loaded = yaml.safe_load(f)
+
         self.assertEqual(loaded["itemNumber"], "751-9301")
-        n= read_config()
-        a,b,c = n
-        self.assertEqual(loaded["itemNumber"],c)
-        self.assertEqual(loaded["tasks"],a)
+        tasks, _, itemNum = read_config()
+        self.assertEqual(loaded["itemNumber"], itemNum)
+        self.assertEqual(len(loaded["tasks"]), len(tasks))
+
     
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
     def test_invalid_config(self):
@@ -47,6 +48,7 @@ class Test_config(unittest.TestCase):
             yaml.dump(data, f)
         with self.assertRaises(InvalidConfig):
             read_config()
+
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
     def test_no_itemNumber(self):
         data = {"tasks": [
@@ -67,6 +69,42 @@ class Test_PLC(unittest.TestCase):
     
     def test_get_controller(self):
         pass
+    
+    @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
+    def test_read_task(self):
+        data = {"itemNumber": "751-9301", "tasks": [
+            {"name": "foo", "entry": "foo.bar", "cycle_ms": 10, "priority": 1, "sensitivity": None, "watchdog_ms": None}
+        ]}
+
+        with open("test_controller.yaml", "w") as f:
+            yaml.dump(data, f)
+
+        with open("foo.py", "w") as f:
+            f.write(
+"""
+def bar():
+    return locals()
+"""
+            )
+                
+        tasks = Tasks()
+        @tasks.register(
+            name="foo",
+            cycle_ms=10,
+            priority=1
+        )
+        def foo():
+            return locals()
+
+        plc = PLC(tasks)
+        for task in plc.tasks:
+            self.assertEqual(task.name, "foo")
+            self.assertDictEqual(task.cycle_func(), {})
+            self.assertEqual(task.cycle_ms, 10)
+            self.assertEqual(task.priority, 1)
+
+        os.remove("test_controller.yaml")
+        os.remove("foo.py")
         
 
 class Test_Tasks(unittest.TestCase):
@@ -98,10 +136,10 @@ class Test_Tasks(unittest.TestCase):
     def test_task_register_no_config(self):
         tasks = Tasks()
         @tasks.register
-        def foo(bar):
+        def foo():
             pass
 
-        self.assertDictEqual(tasks.task_func, {"foo": foo})
+        self.assertEqual(tasks.task.cycle_func, foo)
 
 
 class Test_Task(unittest.TestCase):

@@ -8,15 +8,28 @@ class InvalidConfig(Exception):
     """Throw when an invalid configuration was given."""
     pass
 
-def read_config():
+def read_config() -> tuple[list, dict, str]:
+    """Read the configuration file.
+    
+    Return the tasks, the I/O mapping and the item number.
+    """
     if not os.path.exists(YAML_CONFIG):
         raise FileNotFoundError("Configfile does not exist.")
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
     if not "itemNumber" in config:
         raise InvalidConfig(f"No ItemNumber was given.")
+    
+    tasks = []
     if "tasks" in config:
         validate_task(config)
+        # Filter out None values
+        for task in config["tasks"]:
+            # Filter out None values
+            tasks.append(dict(filter(
+                lambda p: p[1] is not None, task.items()
+            )))
+
     result = {}
     if "io_mapping" in config:
         io_mapping = config["io_mapping"]
@@ -34,9 +47,12 @@ def read_config():
                         result[value] = AI(index)
                     elif interface == "ao":
                         result[value] = AO(index)
-    return config["tasks"], result,config["itemNumber"]
+
+    return tasks, result, config["itemNumber"]
 
 def validate_task(config):
+    "Validate task schema."
+
     ENTRY_REGEX = r'^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$'
 
     task_schema = {
