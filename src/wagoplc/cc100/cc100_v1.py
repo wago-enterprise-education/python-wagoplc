@@ -1,9 +1,6 @@
 from io import TextIOWrapper
 import logging
-import os
 import time
-
-from wagoplc.cc100.constants import *
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +35,19 @@ class AO(IO):
         return cc_obj.analogWrite(self.id, value)
 
 class CC100_v1:
+    # data paths on CC100 751-9301 (V1)
+    DOUT_DATA ="/sys/kernel/dout_drv/DOUT_DATA"
+    OUT_VOLTAGE1_POWERDOWN = "/sys/bus/iio/devices/iio:device0/out_voltage1_powerdown"
+    OUT_VOLTAGE2_POWERDOWN = "/sys/bus/iio/devices/iio:device1/out_voltage2_powerdown"
+    OUT_VOLTAGE1_RAW = "/sys/bus/iio/devices/iio:device0/out_voltage1_raw"
+    OUT_VOLTAGE2_RAW = "/sys/bus/iio/devices/iio:device1/out_voltage2_raw"
+    DIN = "/sys/devices/platform/soc/44009000.spi/spi_master/spi0/spi0.0/din"
+    IN_VOLTAGE3_RAW = "/sys/bus/iio/devices/iio:device3/in_voltage3_raw"
+    IN_VOLTAGE0_RAW = "/sys/bus/iio/devices/iio:device3/in_voltage0_raw"
+    IN_VOLTAGE13_RAW = "/sys/bus/iio/devices/iio:device2/in_voltage13_raw"
+    IN_VOLTAGE1_RAW = "/sys/bus/iio/devices/iio:device2/in_voltage1_raw"
+    CALIB_DATA = "/etc/calib"
+    SERIAL_PORT = "/dev/ttySTM1"
 
     def __init__(self):
         self.input_image: dict[str, str] = {}
@@ -45,27 +55,27 @@ class CC100_v1:
 
     def get_write_paths(self) -> tuple[str]:
         return (
-            DOUT_DATA,
-            SERIAL_PORT,
-            OUT_VOLTAGE1_POWERDOWN,
-            OUT_VOLTAGE2_POWERDOWN,
-            OUT_VOLTAGE1_RAW,
-            OUT_VOLTAGE2_RAW
+            self.DOUT_DATA,
+            self.SERIAL_PORT,
+            self.OUT_VOLTAGE1_POWERDOWN,
+            self.OUT_VOLTAGE2_POWERDOWN,
+            self.OUT_VOLTAGE1_RAW,
+            self.OUT_VOLTAGE2_RAW
         )
     
     def get_read_paths(self) -> tuple[str]:
         return (
-            DIN,
-            IN_VOLTAGE0_RAW,
-            IN_VOLTAGE3_RAW,
-            IN_VOLTAGE13_RAW,
-            IN_VOLTAGE1_RAW,
+            self.DIN,
+            self.IN_VOLTAGE0_RAW,
+            self.IN_VOLTAGE3_RAW,
+            self.IN_VOLTAGE13_RAW,
+            self.IN_VOLTAGE1_RAW,
         )
     
     def get_read_once_paths(self) -> tuple[str]:
         return (
-            CALIB_DATA,
-            DOUT_DATA
+            self.CALIB_DATA,
+            self.DOUT_DATA
         )
 
     def digitalWrite(self, output: int, value: int) -> bool:
@@ -76,7 +86,7 @@ class CC100_v1:
         Return True if value is written, False if out does not exist.
         """
         # Read the current state to calculate the new value
-        currentValue = int(self.input_image[DOUT_DATA])
+        currentValue = int(self.input_image[self.DOUT_DATA])
 
         # Addition or rather subtraction to the current state to switch the corresponding output
         # Least Significant Bit corresponds to digital output 1, the 4th bit corresponds to output 4
@@ -92,7 +102,7 @@ class CC100_v1:
             return False
 
         # Write the calculated value for the new configuration to the output image
-        self.output_image[DOUT_DATA] = str(currentValue)
+        self.output_image[self.DOUT_DATA] = str(currentValue)
         return True
 
     def analogWrite(self, output: int, voltage: int) -> bool:
@@ -105,13 +115,13 @@ class CC100_v1:
         voltage: Voltage which the selected output should be set to
         """
         if output == 1:
-            self.output_image[OUT_VOLTAGE1_POWERDOWN] = "0"
+            self.output_image[self.OUT_VOLTAGE1_POWERDOWN] = "0"
 
-            output_file = OUT_VOLTAGE1_RAW
+            output_file = self.OUT_VOLTAGE1_RAW
         elif output == 2:
-            self.output_image[OUT_VOLTAGE2_POWERDOWN] = "0"
+            self.output_image[self.OUT_VOLTAGE2_POWERDOWN] = "0"
 
-            output_file = OUT_VOLTAGE2_RAW
+            output_file = self.OUT_VOLTAGE2_RAW
         else:
             logger.warning("Analog output does not exist")
             return False
@@ -137,7 +147,7 @@ class CC100_v1:
             return False
         
         # Read the state of the digital inputs on the CC100
-        value = self.input_image[DIN]
+        value = self.input_image[self.DIN]
 
         # Format the current state into an 8-digit binary code
         value = int(value)
@@ -181,9 +191,9 @@ class CC100_v1:
         """
         # Read the state of the analog input on the CC100
         if input == 1:
-            path = IN_VOLTAGE3_RAW
+            path = self.IN_VOLTAGE3_RAW
         elif input == 2:
-            path = IN_VOLTAGE0_RAW
+            path = self.IN_VOLTAGE0_RAW
         else:
             logger.warning("Analog input does not exist")
             return False
@@ -202,9 +212,9 @@ class CC100_v1:
         input: PT input to be read
         """
         if input == "PT1":
-            path = IN_VOLTAGE13_RAW
+            path = self.IN_VOLTAGE13_RAW
         elif input == "PT2":
-            path = IN_VOLTAGE1_RAW
+            path = self.IN_VOLTAGE1_RAW
         
         voltage = self.input_image[path]
 
@@ -214,7 +224,7 @@ class CC100_v1:
     def serialReadLine(self)-> str:
         """Read incoming message on RS485 Port till eol and return data."""
         data = ""
-        with open(SERIAL_PORT) as ser:
+        with open(self.SERIAL_PORT) as ser:
             data = ser.readline()
         return data
         
@@ -224,7 +234,7 @@ class CC100_v1:
         n: number of bytes to read
         """
         data = ""
-        with open(SERIAL_PORT, "r") as ser:
+        with open(self.SERIAL_PORT, "r") as ser:
             data = ser.read(n)
         return data
 
@@ -234,7 +244,7 @@ class CC100_v1:
         message: String to write
         """
         written = -1
-        with open(SERIAL_PORT, "w") as ser:
+        with open(self.SERIAL_PORT, "w") as ser:
             written = ser.write(message)
         return written
 
@@ -244,7 +254,7 @@ class CC100_v1:
 
         value: the row to read
         """
-        calib_data = self.input_image[CALIB_DATA].strip().split("\n")[1:]
+        calib_data = self.input_image[self.CALIB_DATA].strip().split("\n")[1:]
         return calib_data[value].rstrip().split(' ', 4)
 
     def calcCalibrate(self, val_uncal: int, calib: int)-> int:

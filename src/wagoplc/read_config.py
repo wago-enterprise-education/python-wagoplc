@@ -1,8 +1,9 @@
+from schema import And, Or, Schema, SchemaError, Regex
 import yaml
 import os
-from schema import Schema,SchemaError,And,Regex,Or
+
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO
-from wagoplc.cc100.constants import YAML_CONFIG
+from wagoplc.constants import YAML_CONFIG
 
 class InvalidConfig(Exception):
     """Throw when an invalid configuration was given."""

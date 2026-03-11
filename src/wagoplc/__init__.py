@@ -1,7 +1,7 @@
 import sys
 
 from wagoplc.plc import Tasks, PLC, DI, DO, AI, AO
-from wagoplc.cc100.constants import SCRIPT_PATH
+from wagoplc.constants import SCRIPT_PATH
 
 def main(tasks_object: Tasks | None = None):
     """
