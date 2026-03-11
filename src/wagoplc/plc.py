@@ -1,4 +1,6 @@
 from collections.abc import Callable
+from io import TextIOWrapper
+from typing import Any
 
 import importlib
 import inspect
@@ -48,7 +50,7 @@ class Tasks:
         # Map of variables and interfaces
         self.map: dict[str, IO] = {}
 
-    def setup(self, func: Callable[[], dict[str, IO]]) -> None:
+    def setup(self, func: Callable[[], dict[str, Any]]) -> None:
         """Retrieve variables from function in script.
         
         func: a function that returns all variables as a dict
@@ -84,7 +86,7 @@ class Tasks:
             self.task = Task(
                 name=name,
                 cc_obj=None,
-                io_mapping=self.map,
+                var_mapping=self.map,
                 entry=func,
                 cycle_ms=cycle_ms,
                 priority=priority,
@@ -105,19 +107,23 @@ class PLC:
     def __init__(self, tasks_object: Tasks | None):
         # List of PLC tasks
         self.tasks: list[Task] = []
-        # Map of variables and interfaces
-        self.map: dict[str, IO]
+        # Map of variables
+        self.map: dict[str, Any]
 
         self.tasks_config, config_map, controller_id = read_config()
         if tasks_object is not None:
             config_map.update(tasks_object.map)
-        # Catch duplicate mappings
-        ios = list(config_map.values())
-        duplicates = {name: str(io) for name, io in config_map.items() if ios.count(io) > 1}
-        if duplicates:
-            dups_sorted = dict(sorted(duplicates.items(), key=lambda item: item[1]))
+        # Catch duplicate I/O mappings
+        vars = list(config_map.values())
+        duplicate_ios = {
+            name: str(value) for name, value in config_map.items()
+            if isinstance(value, IO) and vars.count(value) > 1
+        }
+        if duplicate_ios:
+            dups_sorted = dict(sorted(duplicate_ios.items(), key=lambda item: item[1]))
             raise InvalidConfig(f"Duplicate I/O mappings in configuration: {dups_sorted}")
         self.map = config_map
+
         self.cc_obj = self._get_controller(controller_id)
         self._read_tasks(tasks_object)
 
@@ -216,9 +222,9 @@ class PLC:
         except Exception as e:
             raise
         finally:
-            logger.info("Resetting outputs...")
+            logger.info("Resetting outputsAny")
             self.cc_obj.reset_outputs(write_fds)
-            logger.debug("Closing file descriptors...")
+            logger.debug("Closing file descriptorsAny")
             (file.close() for file in read_fds.values())
             (file.close() for file in write_fds.values())
 
@@ -229,7 +235,7 @@ class Task:
     def __init__(
         self,
         cc_obj,
-        io_mapping: dict[str, IO],
+        var_mapping: dict[str, Any],
         name: str,
         cycle_ms: int = 100,
         priority: int = 15,
@@ -270,35 +276,35 @@ class Task:
 
         self.watchdog_ms = watchdog_ms * (self.sensitivity * 0.05 + 1.0)
 
-        self.inputs = self._get_inputs(io_mapping)
-        self.outputs = self._get_outputs(io_mapping)
+        self.inputs = self._get_inputs(var_mapping)
+        self.outputs = self._get_outputs(var_mapping)
 
         self.next_run: float = time.time()
     
     def __lt__(self, other: Task) -> bool:
         return self.priority < other.priority
 
-    def _get_inputs(self, io_mapping: dict[str, IO]) -> dict[str, AO | DO]:
+    def _get_inputs(self, var_mapping: dict[str, Any]) -> dict[str, AO | DO]:
         """Compare defined and actual parameters and return input mapping.
         
         Raise NotDefinedError if a parameter is not defined as a variable.
 
-        io_mapping: map of user-defined variables 
+        var_mapping: map of user-defined variables 
         """
         func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
-        vars = io_mapping.keys()
+        vars = var_mapping.keys()
         if not_defined := list(filter(lambda p: p not in vars, func_params)):
             raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
         def is_input(pair):
-            k, v = pair
-            if not isinstance(v, IO):
-                raise ValueError("Variables must be mapped to I/O objects!")
+            k, _ = pair
+            # if not isinstance(v, IO):
+            #     raise ValueError("Variables must be mapped to I/O objects!")
             if k in func_params:
                 return True
             return False
-        return dict(filter(is_input, io_mapping.items()))
+        return dict(filter(is_input, var_mapping.items()))
     
-    def _get_outputs(self, io_mapping: dict[str, any])-> dict[str, any]:
+    def _get_outputs(self, var_mapping: dict[str, Any])-> dict[str, Any]:
         """Get output variables from mapping.
         
         io_mapping: map of user-defined variables
@@ -306,11 +312,11 @@ class Task:
         return dict(
             filter(
                 lambda map: isinstance(map[1], (DO, AO)), 
-                io_mapping.items()
+                var_mapping.items()
             )
         )
 
-    def cycle(self, read_fds: dict[str, any], write_fds: dict[str, any]) -> None:
+    def cycle(self, read_fds: dict[str, TextIOWrapper], write_fds: dict[str, TextIOWrapper]) -> None:
         """Run one task cycle."""
         # Get input image (variables mapped to values)
         input_image = self.cc_obj.read_inputs(read_fds, self.inputs)

@@ -1,6 +1,10 @@
 from io import TextIOWrapper
+from typing import Any
+
 import logging
 import time
+
+from wagoplc.fb import FB
 
 logger = logging.getLogger(__name__)
 
@@ -325,11 +329,11 @@ class CC100_v1:
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
     def read_inputs(self, fds: dict[str, TextIOWrapper],
-                    io_mapping: dict[str, IO] = {}) -> dict[str, bool | int | str]:
+                    input_mapping: dict[str, Any] = {}) -> dict[str, bool | int | str]:
         """Read compact controller inputs and write input image.
         
         fds: read system file descriptors
-        io_mapping: variables mapped to input interface objects
+        input_mapping: variables mapped to input interface objects
         """
         input_image = {}
         # Fill database
@@ -337,32 +341,35 @@ class CC100_v1:
             self.input_image[path] = file.read()
             file.seek(0)
 
-        if not io_mapping:
+        if not input_mapping:
             return {}
         
-        # Map variables to values    
-        for var, io in io_mapping.items():
-            input_image[var] = io.read(self)
+        # Map variables to values
+        for var, value in input_mapping.items():
+            if isinstance(value, IO):
+                # Read the inputs and add them to the image
+                input_image[var] = value.read(self)
+            else:
+                # Write any other variable (e. g. a function block) unchanged
+                # into the image
+                input_image[var] = value
         return input_image
 
     def write_outputs(self, fds: dict[str, TextIOWrapper],
                       output_image: dict[str, bool | int | str] = {},
-                      outputs: dict[str, IO] = {}):
+                      outputs: dict[str, Any] = {}):
         """Write compact controller outputs from output image.
         
         Also set the input image to the new value to avoid reading every
         new cycle.
 
         fds: write system file descriptors
-        output_image: unfiltered local variables from the cycle function
+        output_image: output variables from the cycle function
         outputs: variables mapped to output interfaces
         """
         for var, value in output_image.items():
-            try:
-                io = outputs[var]
-                io.write(self, value)
-            except KeyError:
-                raise IOError(f"Not an output: '{var}'")
+            if var in outputs:
+                outputs[var].write(self, value)
 
         for path, value in self.output_image.items():
             file = fds[path]

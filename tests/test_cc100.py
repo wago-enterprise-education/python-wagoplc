@@ -100,7 +100,7 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         with open(cc.DIN, "w") as din:
             din.write("1")
         self.assertDictEqual(
-            cc.read_inputs(fds=self.read_fds, io_mapping=inputs),
+            cc.read_inputs(fds=self.read_fds, input_mapping=inputs),
             input_image
         )
         self.assertEqual(cc.input_image[cc.DIN], "1")
@@ -119,20 +119,6 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         )
         # value was directly written to input image
         self.assertEqual(cc.input_image[cc.DOUT_DATA], "1")
-
-    def test_write_outputs_error_not_an_output(self):
-        outputs = {"do1": DO(1)}
-        output_image = {"di1": True}
-        # reset input value
-        cc.input_image[cc.DOUT_DATA] = "0"
-
-        with self.assertRaises(IOError) as cm:
-            cc.write_outputs(
-                fds=self.write_fds,
-                output_image=output_image,
-                outputs=outputs
-            )
-        self.assertEqual(str(cm.exception), "Not an output: 'di1'")
         
     def test_temp_read(self):
         pass

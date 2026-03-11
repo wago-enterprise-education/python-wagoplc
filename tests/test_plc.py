@@ -177,7 +177,7 @@ class Test_Task(unittest.TestCase):
 
             t = Task(
                 cc_obj=cc_obj,
-                io_mapping=io_map,
+                var_mapping=io_map,
                 name="TestTask",
                 cycle_ms=100,
                 priority=5,
@@ -209,7 +209,7 @@ class Test_Task(unittest.TestCase):
 
         t = Task(
             cc_obj=CC100_9301(),
-            io_mapping=io_map,
+            var_mapping=io_map,
             name="OutputTest",
             entry=lambda a, b: {"b": 1}
         )
@@ -238,7 +238,7 @@ class Test_Task(unittest.TestCase):
 
         def cycle_func_returns_none():
             return None
-        t = Task(CC100_9301,io_mapping=dict(),name="test",entry=cycle_func_returns_none)
+        t = Task(CC100_9301,var_mapping=dict(),name="test",entry=cycle_func_returns_none)
         
         with self.assertRaises(NotDefinedError):
             t.cycle(read_fds={},write_fds={})
