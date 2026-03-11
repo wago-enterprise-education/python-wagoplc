@@ -1,8 +1,6 @@
 def fan(xTaster):
+    xLuefter = False
     if xTaster:
-        if xLuefter:
-            xLuefter = False
-        else:
-            xLuefter = True
+        xLuefter = not xLuefter
 
-    return locals()
+    return dict(xLuefter=xLuefter)

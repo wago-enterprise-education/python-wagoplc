@@ -7,7 +7,7 @@ def setup():
     xEndlageS1 = DI(1)
     xMotor = DO(1)
 
-    return locals()
+    return dict(xEndlageS1=xEndlageS1, xMotor=xMotor)
 
 @tasks.register(
         name = "start the motor",
@@ -18,7 +18,7 @@ def start_motor(xEndlageS1):
     if xEndlageS1:
         xMotor = False
 
-    return locals()
+    return dict(xMotor=xMotor)
 
 if __name__ == "__main__":
     main(tasks)

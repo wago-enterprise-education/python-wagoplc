@@ -3,8 +3,7 @@ import unittest
 
 from pyfakefs import fake_filesystem_unittest
 
-from wagoplc.cc100.cc100_v1 import CC100_v1, DI, DO
-from wagoplc.cc100.constants import DOUT_DATA, DIN, CALIB_DATA
+from wagoplc.cc100.cc100_v1 import CC100_v1, DI, DO, IOError
 
 TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02
 12452 1182 21785 1777
@@ -30,11 +29,11 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         for path in cc.get_write_paths():
             os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        with open(CALIB_DATA, "w") as f:
+        with open(cc.CALIB_DATA, "w") as f:
             f.write(TEST_CALIB_DATA)
 
-        cc.input_image[CALIB_DATA] = TEST_CALIB_DATA
-        cc.input_image[DOUT_DATA] = "0"
+        cc.input_image[cc.CALIB_DATA] = TEST_CALIB_DATA
+        cc.input_image[cc.DOUT_DATA] = "0"
 
         cls.read_fds = {path: open(path, "r") for path in cc.get_read_paths()}
         cls.write_fds = {path: open(path, "w") for path in cc.get_write_paths()}
@@ -62,7 +61,7 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
                 self.assertTrue(cc.digitalWrite(i, j))
                 # file content increases by power of two
                 dout_content += 2**(i - 1) * j
-                self.assertEqual(cc.output_image[DOUT_DATA], str(dout_content))
+                self.assertEqual(cc.output_image[cc.DOUT_DATA], str(dout_content))
                 cc.write_outputs(self.write_fds)
 
     def test_non_existing_input(self):
@@ -80,7 +79,7 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     def test_digital_read(self):
         for i in range(1, 9):
             # Simulate digital input
-            with open(DIN, "w") as din:
+            with open(cc.DIN, "w") as din:
                 din.write(str(2**(i - 1)))
             self.assertFalse(cc.digitalRead(i))
             cc.read_inputs(self.read_fds)
@@ -98,19 +97,19 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     def test_read_inputs(self):
         inputs = {"di1": DI(1)}
         input_image = {"di1": True}
-        with open(DIN, "w") as din:
+        with open(cc.DIN, "w") as din:
             din.write("1")
         self.assertDictEqual(
             cc.read_inputs(fds=self.read_fds, io_mapping=inputs),
             input_image
         )
-        self.assertEqual(cc.input_image[DIN], "1")
+        self.assertEqual(cc.input_image[cc.DIN], "1")
 
     def test_write_outputs(self):
         outputs = {"do1": DO(1)}
-        output_image = {"do1": True, "di1": True}
+        output_image = {"do1": True}
         # reset input value
-        cc.input_image[DOUT_DATA] = "0"
+        cc.input_image[cc.DOUT_DATA] = "0"
 
         cc.digitalWrite(1, True)
         cc.write_outputs(
@@ -119,7 +118,21 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
             outputs=outputs
         )
         # value was directly written to input image
-        self.assertEqual(cc.input_image[DOUT_DATA], "1")
+        self.assertEqual(cc.input_image[cc.DOUT_DATA], "1")
+
+    def test_write_outputs_error_not_an_output(self):
+        outputs = {"do1": DO(1)}
+        output_image = {"di1": True}
+        # reset input value
+        cc.input_image[cc.DOUT_DATA] = "0"
+
+        with self.assertRaises(IOError) as cm:
+            cc.write_outputs(
+                fds=self.write_fds,
+                output_image=output_image,
+                outputs=outputs
+            )
+        self.assertEqual(str(cm.exception), "Not an output: 'di1'")
         
     def test_temp_read(self):
         pass

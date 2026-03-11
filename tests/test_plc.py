@@ -119,10 +119,10 @@ def bar():
             di2 = DI(1)
             return locals()
 
-        with self.assertRaises(
-            InvalidConfig,
-            msg="Duplicate I/O mappings in configuration: {'di1': 'DI(1)', 'di2': 'DI(1)'}"):
+        with self.assertRaises(InvalidConfig) as cm:
             PLC(tasks)
+
+        self.assertEqual(str(cm.exception), "Duplicate I/O mappings in configuration: {'di1': 'DI(1)', 'di2': 'DI(1)'}")
 
 class Test_Tasks(unittest.TestCase):
 
@@ -131,10 +131,10 @@ class Test_Tasks(unittest.TestCase):
         def setup():
             xFan = DO(1)
 
-        with self.assertRaises(
-            InvalidConfig,
-            msg="Expected setup function to return a dictionary of variables!"):
+        with self.assertRaises(InvalidConfig) as cm:
             tasks.setup(setup)
+
+        self.assertEqual(str(cm.exception), "Expected setup function to return a dictionary of variables!")
 
     def test_task_register(self):
         tasks = Tasks()
@@ -145,10 +145,12 @@ class Test_Tasks(unittest.TestCase):
         self.assertEqual(tasks.task.cycle_func, foo)
         self.assertEqual(tasks.task.name, "foo")
 
-        with self.assertRaises(InvalidConfig, msg="Only one task per program allowed!"):
+        with self.assertRaises(InvalidConfig) as cm:
             @tasks.register
             def bar(foo):
                 print(foo)
+
+        self.assertEqual(str(cm.exception), "Only one task per program allowed!")
 
     def test_task_register_no_config(self):
         tasks = Tasks()

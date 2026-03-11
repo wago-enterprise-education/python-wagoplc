@@ -22,17 +22,25 @@ class DI(IO):
     def read(self, cc_obj) -> bool:
         return cc_obj.digitalRead(self.id)
 
+
 class DO(IO):
     def write(self, cc_obj, value) -> bool:
         return cc_obj.digitalWrite(self.id, value)
+
 
 class AI(IO):
     def read(self, cc_obj) -> int:
         return cc_obj.analogRead(self.id)
 
+
 class AO(IO):
     def write(self, cc_obj, value: int) -> bool:
         return cc_obj.analogWrite(self.id, value)
+
+
+class IOError(Exception):
+    pass
+
 
 class CC100_v1:
     # data paths on CC100 751-9301 (V1)
@@ -349,14 +357,12 @@ class CC100_v1:
         output_image: unfiltered local variables from the cycle function
         outputs: variables mapped to output interfaces
         """
-        output_image = dict(
-            filter(lambda map: map[0] in outputs.keys(),
-                   output_image.items()
-            )
-        )
         for var, value in output_image.items():
-            io = outputs[var]
-            io.write(self, value)
+            try:
+                io = outputs[var]
+                io.write(self, value)
+            except KeyError:
+                raise IOError(f"Not an output: '{var}'")
 
         for path, value in self.output_image.items():
             file = fds[path]
