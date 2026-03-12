@@ -1,32 +1,35 @@
 from wagoplc import main, Tasks, DI, DO
-from wagoplc.fb import CTU
+from wagoplc.fb import CTUD
 
 tasks = Tasks()
 
 @tasks.setup
 def setup():
-    xEndlageS1 = DI(1)
+    xLichtSchrankeRein = DI(1)
+    xLichtSchrankeRaus = DI(2)
     xMotor = DO(1)
-    oMotor_Drehzahl_CTU = CTU(pv=3)
+    oFlasche_Puffer_CTUD = CTUD(pv=3)
 
     return dict(
-        xEndlageS1=xEndlageS1,
+        xLichtSchrankeRein=xLichtSchrankeRein,
+        xLichtSchrankeRaus=xLichtSchrankeRaus,
         xMotor=xMotor,
-        oMotor_Drehzahl_CTU=oMotor_Drehzahl_CTU
+        oFlasche_Puffer_CTUD=oFlasche_Puffer_CTUD
     )
 
 @tasks.register(
-        name = "start the motor",
+        name = "bottle filling plant",
         cycle_ms = 5
 )
-def start_motor(xEndlageS1, oMotor_Drehzahl_CTU: CTU):
-    oMotor_Drehzahl_CTU(cu=xEndlageS1)
+def bottle_filler(xLichtSchrankeRein, xLichtSchrankeRaus, oFlasche_Puffer_CTUD: CTUD):
+    oFlasche_Puffer_CTUD(cu=xLichtSchrankeRein, cd=xLichtSchrankeRaus)
     xMotor = True
-    print(oMotor_Drehzahl_CTU.cv, oMotor_Drehzahl_CTU.q)
-    if oMotor_Drehzahl_CTU.q:
+    print(oFlasche_Puffer_CTUD.cv)
+    if oFlasche_Puffer_CTUD.qu:
+        print("Motor... aus!")
         xMotor = False
 
-    return dict(xMotor=xMotor, oMotor_Drehzahl_CTU=oMotor_Drehzahl_CTU)
+    return dict(xMotor=xMotor, oFlasche_Puffer_CTUD=oFlasche_Puffer_CTUD)
 
 if __name__ == "__main__":
     main(tasks)

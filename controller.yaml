@@ -10,8 +10,8 @@ gateway: undefined
 io_mapping:
   pii:
     x12.di1:
-    x12.di2: xTaster
-    x12.di3:
+    x12.di2:
+    x12.di3: xTaster
     x12.di4:
     x12.di5:
     x12.di6:
