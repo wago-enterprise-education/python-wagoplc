@@ -1,15 +1,17 @@
 from schema import And, Or, Schema, SchemaError, Regex
-import yaml
+from typing import Any
+import importlib
 import os
+import yaml
 
-from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO
+from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.constants import YAML_CONFIG
 
 class InvalidConfig(Exception):
     """Throw when an invalid configuration was given."""
     pass
 
-def read_config() -> tuple[list, dict, str]:
+def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
     """Read the configuration file.
     
     Return the tasks, the I/O mapping and the item number.
@@ -21,6 +23,24 @@ def read_config() -> tuple[list, dict, str]:
     if not "itemNumber" in config:
         raise InvalidConfig(f"No ItemNumber was given.")
     
+    var_mapping = {}
+    if "vars" in config:
+        # TODO: Validate schema
+        # Import the standard library
+        fbs = importlib.import_module("wagoplc.fb")
+        for var in config["vars"]:
+            if "fb" in var:
+                # Variable is declared as a function block;
+                # try to get an instance.
+                try:
+                    fb = getattr(fbs, var["fb"])
+                    value = fb()
+                except AttributeError:
+                    raise InvalidConfig(f"No such function block: '{fb}'")
+            else:
+                value = var["value"]
+            var_mapping[var["name"]] = value
+    
     tasks = []
     if "tasks" in config:
         validate_task(config)
@@ -31,7 +51,6 @@ def read_config() -> tuple[list, dict, str]:
                 lambda p: p[1] is not None, task.items()
             )))
 
-    result = {}
     if "io_mapping" in config:
         io_mapping = config["io_mapping"]
         for section in io_mapping.values():           
@@ -41,15 +60,15 @@ def read_config() -> tuple[list, dict, str]:
                     interface = short_key[:2]
                     index = int(short_key[2])
                     if interface == "di":
-                        result[value] = DI(index)    
+                        var_mapping[value] = DI(index)    
                     elif interface == "do":
-                        result[value] = DO(index)
+                        var_mapping[value] = DO(index)
                     elif interface == "ai":
-                        result[value] = AI(index)
+                        var_mapping[value] = AI(index)
                     elif interface == "ao":
-                        result[value] = AO(index)
+                        var_mapping[value] = AO(index)
 
-    return tasks, result, config["itemNumber"]
+    return tasks, var_mapping, config["itemNumber"]
 
 def validate_task(config):
     "Validate task schema."

@@ -2,7 +2,6 @@ from io import TextIOWrapper
 from typing import Any
 
 import logging
-import time
 
 from wagoplc.fb import FB
 
@@ -213,10 +212,6 @@ class CC100_v1:
         voltage = int(self.input_image[path])
 
         return(self.calibrateIn(voltage, input))
-    
-    def delay(self, iTime: float):
-        iTime = iTime/1000
-        time.sleep(iTime)
 
     def tempRead(self, input: int)-> int:
         """Read PT input and return calibrated value in °C.
@@ -338,8 +333,13 @@ class CC100_v1:
         input_image = {}
         # Fill database
         for path, file in fds.items():
-            self.input_image[path] = file.read()
+            file_content = file.read()
             file.seek(0)
+            if file_content:
+                self.input_image[path] = file_content
+            else:
+                # Did not read correct value; use the old one for a cycle
+                pass
 
         if not input_mapping:
             return {}
@@ -357,9 +357,10 @@ class CC100_v1:
 
     def write_outputs(self, fds: dict[str, TextIOWrapper],
                       output_image: dict[str, bool | int | str] = {},
-                      outputs: dict[str, Any] = {}):
+                      outputs: dict[str, Any] = {}) -> dict[str, Any]:
         """Write compact controller outputs from output image.
         
+        Return all state variables that should be fed into the function the next time.
         Also set the input image to the new value to avoid reading every
         new cycle.
 
@@ -367,15 +368,20 @@ class CC100_v1:
         output_image: output variables from the cycle function
         outputs: variables mapped to output interfaces
         """
+        retain_vars = {}
         for var, value in output_image.items():
             if var in outputs:
                 outputs[var].write(self, value)
+            else:
+                retain_vars[var] = value
 
         for path, value in self.output_image.items():
             file = fds[path]
             file.write(value)
             file.seek(0)
             self.input_image[path] = value
+
+        return retain_vars
 
     def reset_outputs(self, fds: dict[str, TextIOWrapper]) -> None:
         """Reset the output interfaces to null.

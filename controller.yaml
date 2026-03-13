@@ -1,5 +1,4 @@
 itemNumber: 751-9301
-version: 0.2.0
 connection: usb-c
 ip: 192.168.42.42
 port: 22
@@ -12,7 +11,7 @@ io_mapping:
     x12.di1:
     x12.di2:
     x12.di3: xTaster
-    x12.di4:
+    x12.di4: xTaster_Aus
     x12.di5:
     x12.di6:
     x12.di7:
@@ -28,11 +27,26 @@ io_mapping:
     x5.do4:
     x6.ao1:
     x6.ao2:
-
+vars:
+  - name: oLuefter_Einschalt_TON
+    fb: TON
+  - {name: iStatus, value: 0}
+  - {name: xLuefterAn, value: False}
+  - {name: xLuefterAus, value: False}
+  - name: oLuefter_Ausschalt_TOF
+    fb: TOF
+  - name: oLicht_An_RS
+    fb: RS
 tasks:
-  - name: start fan
-    entry: "ventilator.fan"
-    cycle_ms: 100
-    priority: 15
-    watchdog_ms: 80
-    sensitivity: 1
+  # - name: light control
+  #   entry: light.light_ctrl
+  #   cycle_ms: 50
+  #   priority:
+  #   sensitivity:
+  #   watchdog_ms:
+  # - name: bathroom
+  #   entry: ventilator.fan
+  #   cycle_ms: 100
+  #   priority: 15
+  #   watchdog_ms: 80
+  #   sensitivity: 1

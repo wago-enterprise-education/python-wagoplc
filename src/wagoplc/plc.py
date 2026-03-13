@@ -192,6 +192,8 @@ class PLC:
             for t in self.tasks:
                 t.next_run = now
 
+            # Task names mapped to dicts of state variables
+            state_vars: dict[str, dict[str, Any]] = {task.name: {} for task in self.tasks}
             logger.info("Starting tasks execution")
             while True:
                 now = time.time()
@@ -207,15 +209,15 @@ class PLC:
 
                     start_perf = time.perf_counter()
                     # Run task cycle
-                    task.cycle(read_fds, write_fds)
+                    task_state = task.cycle(read_fds, write_fds, state_vars[task.name])
                     duration_ms = (time.perf_counter() - start_perf) * 1000.0
-
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeout(
                             f"Task '{task.name}' has been caught by the watchdog: "
                             f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
                         )
 
+                    state_vars[task.name] = task_state
                     task.next_run += task._cycle_s
 
                 time.sleep(0.0005)
@@ -316,13 +318,16 @@ class Task:
             )
         )
 
-    def cycle(self, read_fds: dict[str, TextIOWrapper], write_fds: dict[str, TextIOWrapper]) -> None:
+    def cycle(self, read_fds: dict[str, TextIOWrapper], write_fds: dict[str, TextIOWrapper],
+              state_vars: dict[str, Any]) -> dict[str, Any]:
         """Run one task cycle."""
         # Get input image (variables mapped to values)
         input_image = self.cc_obj.read_inputs(read_fds, self.inputs)
+        input_image.update(state_vars)
         # Get output image (variables mapped to values)
         output_image = self.cycle_func(**input_image)
         if not isinstance(output_image, dict):
             raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
-        # Actually write outputs
-        self.cc_obj.write_outputs(write_fds, output_image, self.outputs)
+        # Actually write outputs, return state variables
+        return self.cc_obj.write_outputs(write_fds, output_image, self.outputs)
+
