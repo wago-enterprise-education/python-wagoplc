@@ -54,15 +54,13 @@ class CTU(FB):
         cu: counter impulse (default False)
         r: reset impulse (default False)
         """
-        if r and not self.r:
+        if _rising_edge(r, self.r):
             self.cv = 0
-        elif cu and not self.cu and self.cv < self._pv_max:
+        elif _rising_edge(cu, self.cu) and self.cv < self._pv_max:
             self.cv += 1
 
-        if r is not None:
-            self.r = r
-        if cu is not None:
-            self.cu = cu
+        self.r = r
+        self.cu = cu
 
         self.q = self.cv >= self.pv
 
@@ -87,15 +85,13 @@ class CTD(FB):
         cd: counter impulse (default False)
         ld: reset impulse (default False)
         """
-        if ld and not self.ld:
+        if _rising_edge(ld, self.ld):
             self.cv = self.pv
-        elif cd and not self.cd and self.cv > self._pv_min:
+        elif _rising_edge(cd, self.cd) and self.cv > self._pv_min:
             self.cv -= 1
 
-        if ld is not None:
-            self.ld = ld
-        if cd is not None:
-            self.cd = cd
+        self.ld = ld
+        self.cd = cd
 
         self.q = self.cv <= 0
 
@@ -129,13 +125,13 @@ class CTUD(FB):
         r: up-counter reset signal (default False)
         ld: down-counter reset signal (default False)
         """
-        if r and not self.r:
+        if _rising_edge(r, self.r):
             self.cv = 0
-        elif cu and not self.cu and self.cv < self._pv_max:
+        elif _rising_edge(cu, self.cu) and self.cv < self._pv_max:
             self.cv += 1
-        elif ld and not self.ld:
+        elif _rising_edge(ld, self.ld):
             self.cv = self.pv
-        elif cd and not self.cd and self.cv > self._pv_min:
+        elif _rising_edge(cd, self.cd) and self.cv > self._pv_min:
             self.cv -= 1
 
         self.r = r

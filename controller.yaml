@@ -37,16 +37,16 @@ vars:
     fb: TOF
   - name: oLicht_An_RS
     fb: RS
-tasks:
-  # - name: light control
-  #   entry: light.light_ctrl
-  #   cycle_ms: 50
-  #   priority:
-  #   sensitivity:
-  #   watchdog_ms:
-  # - name: bathroom
-  #   entry: ventilator.fan
-  #   cycle_ms: 100
-  #   priority: 15
-  #   watchdog_ms: 80
-  #   sensitivity: 1
+# tasks:
+#   - name: light control
+#     entry: light.light_ctrl
+#     cycle_ms: 50
+#     priority:
+#     sensitivity:
+#     watchdog_ms:
+#   - name: bathroom
+#     entry: ventilator.fan
+#     cycle_ms: 100
+#     priority: 15
+#     watchdog_ms: 80
+#     sensitivity: 1
