@@ -13,7 +13,7 @@ from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
-from wagoplc.read_config import read_config, InvalidConfig
+from wagoplc.read_config import read_config, InvalidConfigError
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -32,7 +32,7 @@ class NotDefinedError(WAGOPlcError):
     """Raised when a variable in a task function is not defined in IO mapping."""
     pass
 
-class WatchdogTimeout(WAGOPlcError):
+class WatchdogTimeoutError(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
@@ -59,7 +59,7 @@ class Tasks:
             logger.debug(f"Reading configuration from script function '{func.__name__}'")
             self.map = func()
             if not isinstance(self.map, dict):
-                raise InvalidConfig("Expected setup function to return a dictionary of variables!")
+                raise InvalidConfigError("Expected setup function to return a dictionary of variables!")
 
         return decorator_setup(func)
     
@@ -81,7 +81,7 @@ class Tasks:
         sensitivity: sensitivity from 0 (highest) to 10
         """
         if self.task:
-            raise InvalidConfig("Only one task per program allowed!")
+            raise InvalidConfigError("Only one task per program allowed!")
         def decorator_task(func: Callable[...]):
             self.task = Task(
                 name=name,
@@ -121,7 +121,7 @@ class PLC:
         }
         if duplicate_ios:
             dups_sorted = dict(sorted(duplicate_ios.items(), key=lambda item: item[1]))
-            raise InvalidConfig(f"Duplicate I/O mappings in configuration: {dups_sorted}")
+            raise InvalidConfigError(f"Duplicate I/O mappings in configuration: {dups_sorted}")
         self.map = config_map
 
         self.cc_obj = self._get_controller(controller_id)
@@ -212,7 +212,7 @@ class PLC:
                     task_state = task.cycle(read_fds, write_fds, state_vars[task])
                     duration_ms = (time.perf_counter() - start_perf) * 1000.0
                     if duration_ms > task.watchdog_ms:
-                        raise WatchdogTimeout(
+                        raise WatchdogTimeoutError(
                             f"Task '{task.name}' has been caught by the watchdog: "
                             f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
                         )

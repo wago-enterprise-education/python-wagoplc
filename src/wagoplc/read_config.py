@@ -8,7 +8,7 @@ import yaml
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.constants import YAML_CONFIG
 
-class InvalidConfig(Exception):
+class InvalidConfigError(Exception):
     """Throw when an invalid configuration was given."""
     pass
 
@@ -22,7 +22,7 @@ def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
     if not "itemNumber" in config:
-        raise InvalidConfig(f"No ItemNumber was given.")
+        raise InvalidConfigError(f"No ItemNumber was given.")
     
     var_mapping = {}
     if "vars" in config:
@@ -45,7 +45,7 @@ def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
                     # Instantiate the function block
                     value = fb()
                 except ImportError, AttributeError:
-                    raise InvalidConfig(f"No such function block: '{fb}'")
+                    raise InvalidConfigError(f"No such function block: '{var["fb"]}'")
             else:
                 # a plain variable with name and value
                 value = var["value"]
@@ -101,4 +101,4 @@ def validate_task(config):
     try:
         root_schema.validate({"tasks": config["tasks"]})
     except SchemaError as e:
-        raise InvalidConfig(f"The given config is not valid.{e}")
+        raise InvalidConfigError(f"The given config is not valid.{e}")

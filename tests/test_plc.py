@@ -4,9 +4,9 @@ import yaml
 from unittest.mock import Mock
 from unittest import mock
 
-
+from wagoplc.fb import TON
 from wagoplc.plc import CC100_9301, NotDefinedError, PLC, Task, Tasks
-from wagoplc.read_config import read_config, InvalidConfig
+from wagoplc.read_config import read_config, InvalidConfigError
 from wagoplc import DI, DO, AI, AO
 
 class Test_config(unittest.TestCase):
@@ -15,12 +15,38 @@ class Test_config(unittest.TestCase):
         cls.filename = "test_controller.yaml"
     
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "non-existing.yaml")
-    def test_read_non_existing(self):
+    def test_read_non_existing_config_file(self):
         with self.assertRaises(FileNotFoundError):
             read_config()
     
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
-    def test_read_yaml(self):
+    def test_read_variables(self):
+        data = {"itemNumber": "751-9301", "io_mapping": {
+            "pii": {"x12.di1": None, "x12.di2": "xSwitch"}, "piq": {"x5.do1": "xMotor"}},
+            "vars": [{"name": "oPower_on_TON", "fb": "TON"}, {"name": "iStatus", "value": 0}]
+        }
+        with open(self.filename, "w") as f:
+            yaml.dump(data, f)
+
+        _, var_mapping, _ = read_config()
+        self.assertListEqual(list(var_mapping.keys()), ["oPower_on_TON", "iStatus", "xSwitch", "xMotor"])
+        self.assertIsInstance(var_mapping["xSwitch"], DI)
+        self.assertIsInstance(var_mapping["oPower_on_TON"], TON)
+        self.assertEqual(var_mapping["iStatus"], 0)
+
+    @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
+    def test_non_existing_function_block(self):
+        data = {"itemNumber": "751-9301", "vars": [{"name": "oHay_To_Gold_FB", "fb": "riches.Hay_To_Gold"}]}
+        with open(self.filename, "w") as f:
+            yaml.dump(data, f)
+
+        with self.assertRaises(InvalidConfigError) as cm:
+            read_config()
+
+        self.assertEqual(str(cm.exception), "No such function block: 'riches.Hay_To_Gold'")
+
+    @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
+    def test_read_tasks(self):
         data = {"itemNumber": "751-9301", "tasks": [
                 {"name": "task1", "entry": "plc.foo", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None},
                 {"name": "task2", "entry": "plc2.bar", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
@@ -28,17 +54,17 @@ class Test_config(unittest.TestCase):
         }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
-        with open(self.filename, "r") as f:
-            loaded = yaml.safe_load(f)
 
-        self.assertEqual(loaded["itemNumber"], "751-9301")
         tasks, _, itemNum = read_config()
-        self.assertEqual(loaded["itemNumber"], itemNum)
-        self.assertEqual(len(loaded["tasks"]), len(tasks))
+        self.assertEqual(itemNum, "751-9301")
+        self.assertListEqual(tasks, [
+            {"name": "task1", "entry": "plc.foo"},
+            {"name": "task2", "entry": "plc2.bar"}        
+        ])
 
     
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
-    def test_invalid_config(self):
+    def test_missing_task_params(self):
         data = {"itemNumber": "751-9301", "tasks": [
                 {"name": "task1", "entry": "plc.py", "cycle_ms": None},
                 {"name": "task2", "entry": "plc2.py", "cycle_ms": None, "priority": None, "watchdog_ms": None, "sensitivity": None}
@@ -46,7 +72,7 @@ class Test_config(unittest.TestCase):
         }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
-        with self.assertRaises(InvalidConfig):
+        with self.assertRaises(InvalidConfigError):
             read_config()
 
     @mock.patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
@@ -57,7 +83,7 @@ class Test_config(unittest.TestCase):
         }
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
-        with self.assertRaises(InvalidConfig):
+        with self.assertRaises(InvalidConfigError):
             read_config()
 
     @classmethod
@@ -119,7 +145,7 @@ def bar():
             di2 = DI(1)
             return locals()
 
-        with self.assertRaises(InvalidConfig) as cm:
+        with self.assertRaises(InvalidConfigError) as cm:
             PLC(tasks)
 
         self.assertEqual(str(cm.exception), "Duplicate I/O mappings in configuration: {'di1': 'DI(1)', 'di2': 'DI(1)'}")
@@ -131,7 +157,7 @@ class Test_Tasks(unittest.TestCase):
         def setup():
             xFan = DO(1)
 
-        with self.assertRaises(InvalidConfig) as cm:
+        with self.assertRaises(InvalidConfigError) as cm:
             tasks.setup(setup)
 
         self.assertEqual(str(cm.exception), "Expected setup function to return a dictionary of variables!")
@@ -145,7 +171,7 @@ class Test_Tasks(unittest.TestCase):
         self.assertEqual(tasks.task.cycle_func, foo)
         self.assertEqual(tasks.task.name, "foo")
 
-        with self.assertRaises(InvalidConfig) as cm:
+        with self.assertRaises(InvalidConfigError) as cm:
             @tasks.register
             def bar(foo):
                 print(foo)
@@ -235,13 +261,21 @@ class Test_Task(unittest.TestCase):
             Task(CC100_9301(), {}, "BadSens", entry=lambda: None, sensitivity=11)
  
     def test_cycle_raises_if_cycle_func_returns_none(self):
-
         def cycle_func_returns_none():
             return None
-        t = Task(CC100_9301,var_mapping=dict(),name="test",entry=cycle_func_returns_none)
+        t = Task(CC100_9301(),var_mapping=dict(),name="test",entry=cycle_func_returns_none)
         
         with self.assertRaises(NotDefinedError):
-            t.cycle(read_fds={},write_fds={})
+            t.cycle(read_fds={},write_fds={},state_vars={})
+
+    def test_cycle_with_state_vars(self):
+        def cycle_func(iStatus: int):
+            iStatus = 1
+            return dict(iStatus=iStatus)
+
+        t = Task(CC100_9301(), var_mapping={"iStatus": 0}, name="test", entry=cycle_func)
+        state_vars = t.cycle(read_fds={}, write_fds={}, state_vars={})
+        self.assertDictEqual(state_vars, {"iStatus": 1})
 
 if __name__ == '__main__':
         unittest.main()
