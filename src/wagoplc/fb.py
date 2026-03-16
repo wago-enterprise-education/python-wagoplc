@@ -5,10 +5,13 @@ norm DIN EN 61131-3. They can be imported and used in a PLC program.
 - CTU: up-counter
 - CTD: down-counter
 - CTUD: up- and down-counter
+- TP: impulse giver
 - TON: switch-on-timer
 - TOF: switch-off-timer
 - RS: RS latch
 - SR: SR latch
+- R_TRIG: trigger on rising flank
+- F_TRIG: trigger on falling flank
 """
 
 import time
@@ -143,18 +146,53 @@ class CTUD(FB):
         self.qd = self.cv <= 0
 
 
-class TON(FB):
-    """Create a delay in switching on."""
+class TP(FB):
+    """Create an impulse."""
 
     def __init__(self, pt: float = 0.0):
         """
-        pt: the delay time
+        pt: the impulse time
         """
         self.pt = pt
         self.start = False
         self.et = 0.0
         self.q = False
         self._start_time = None
+
+    def __call__(self, start: bool = False, pt: float = 0.0):
+        """Fire an impulse.
+
+        start: start impulse (default False)
+        pt: delay time in s (default 0.0)
+        """
+        if _rising_edge(start, self.start):
+            # Take the time
+            self._start_time = time.time()
+            self.q = True
+        elif self._start_time:
+            # Timer is running
+            now = time.time()
+            diff = now - self._start_time
+            self.et = diff
+            if diff >= self.pt:
+                # Timer has finished; reset variables
+                self.start = False
+                self._start_time = None
+                self.et = 0.0
+                self.q = False
+
+        self.start = start
+        self.pt = pt 
+
+
+class TON(TP):
+    """Create a delay in switching on."""
+
+    def __init__(self, pt: float = 0.0):
+        """
+        pt: the delay time
+        """
+        return super().__init__(pt=pt)
 
     def __call__(self, start: bool = False, pt: float = 0.0):
         """Start the delay.
@@ -169,7 +207,7 @@ class TON(FB):
             # Impulse is low, reset timer
             self.start = False
             self._start_time = None
-            self.et = 0
+            self.et = 0.0
             self.q = False
         elif self._start_time:
             # Timer is running
@@ -183,14 +221,14 @@ class TON(FB):
         self.pt = pt 
 
 
-class TOF(TON):
+class TOF(TP):
     """Create a delay in switching off."""
 
     def __init__(self, pt: float = 0.0):
         """
         pt: the delay time
         """
-        super().__init__()
+        super().__init__(pt=pt)
         self.q = False
 
     def __call__(self, start: bool = False, pt: float = 0.0):
@@ -206,7 +244,7 @@ class TOF(TON):
             # Impulse is low, reset timer
             self.start = False
             self._start_time = None
-            self.et = 0
+            self.et = 0.0
             self.q = True
         elif self._start_time:
             # Timer is running
@@ -261,3 +299,37 @@ class SR(RS):
         self.r = r
         self.q = (self.q and not off) or on
 
+
+class R_TRIG(FB):
+    """Trigger on a rising flank."""
+
+    def __init__(self):
+        self.clk = False
+        self.q = False
+
+    def __call__(self, clk: bool):
+        """Set the output q to True on a rising flank of the input signal.
+
+        Reset q to False after one cycle.
+
+        clk: the input signal
+        """
+        self.q = _rising_edge(clk, self.clk)
+        self.clk = clk
+
+
+class F_TRIG(R_TRIG):
+    """Trigger on a falling flank."""
+
+    def __init__(self):
+        return super().__init__()
+
+    def __call__(self, clk: bool):
+        """Set the output q to True on a falling flank of the input signal.
+
+        Reset q to False after one cycle.
+
+        clk: the input signal
+        """
+        self.q = _falling_edge(clk, self.clk)
+        self.clk = clk
