@@ -172,7 +172,7 @@ class PLC:
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
-        read_fds = {path: open(TEST_DATA + path.replace(":", "_"), "r") for path in self.cc_obj.get_read_paths()}
+        read_fds = {path: open(TEST_DATA + path, "r") for path in self.cc_obj.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
         # in write mode.  Otherwise, it would be necessary to use update file mode
@@ -181,7 +181,7 @@ class PLC:
             with open(TEST_DATA + path, "r") as f:
                 self.cc_obj.input_image[path] = f.read()
 
-        write_fds = {path: open(TEST_DATA + path.replace(":", "_"), "w") for path in self.cc_obj.get_write_paths()}
+        write_fds = {path: open(TEST_DATA + path, "w") for path in self.cc_obj.get_write_paths()}
 
         try:
             if not self.tasks:
@@ -192,8 +192,8 @@ class PLC:
             for t in self.tasks:
                 t.next_run = now
 
-            # Task names mapped to dicts of state variables
-            state_vars: dict[str, dict[str, Any]] = {task.name: {} for task in self.tasks}
+            # Task objects mapped to dicts of state variables
+            state_vars: dict[str, dict[str, Any]] = {task: {} for task in self.tasks}
             logger.info("Starting tasks execution")
             while True:
                 now = time.time()
@@ -209,7 +209,7 @@ class PLC:
 
                     start_perf = time.perf_counter()
                     # Run task cycle
-                    task_state = task.cycle(read_fds, write_fds, state_vars[task.name])
+                    task_state = task.cycle(read_fds, write_fds, state_vars[task])
                     duration_ms = (time.perf_counter() - start_perf) * 1000.0
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeout(
@@ -217,16 +217,16 @@ class PLC:
                             f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
                         )
 
-                    state_vars[task.name] = task_state
+                    state_vars[task] = task_state
                     task.next_run += task._cycle_s
 
                 time.sleep(0.0005)
         except Exception as e:
             raise
         finally:
-            logger.info("Resetting outputsAny")
+            logger.info("Resetting outputs...")
             self.cc_obj.reset_outputs(write_fds)
-            logger.debug("Closing file descriptorsAny")
+            logger.debug("Closing file descriptors...")
             (file.close() for file in read_fds.values())
             (file.close() for file in write_fds.values())
 
@@ -239,20 +239,20 @@ class Task:
         cc_obj,
         var_mapping: dict[str, Any],
         name: str,
+        entry: Callable[..., dict[str, str | int | bool]],
         cycle_ms: int = 100,
         priority: int = 15,
-        entry: Callable[..., dict[str, str | int | bool]] = None,
         watchdog_ms: int = 400000,      
         sensitivity: int = 0):
         """
         name:        task name
+        entry:       task function
         cycle_ms:    call cycle time in ms
         priority:    a priority from 1 (highest) to 15
-        function:    task function
         watchdog_ms: maximum runtime in ms before watchdog interrupts
         sensitivity: sensitivity from 0 (highest) to 10
         """
-        self.name = name
+        self.name = name or "<unnamed task>"
         self.cycle_time = cycle_ms
         self.cycle_func = entry
         self.cc_obj = cc_obj
@@ -286,6 +286,9 @@ class Task:
     def __lt__(self, other: Task) -> bool:
         return self.priority < other.priority
 
+    def __str__(self):
+        return f"Task(name={self.name}, entry={self.cycle_func}, cycle_ms={self.cycle_ms}, priority={self.priority}, watchdog_ms={self.watchdog_ms}, sensitivity={self.sensitivity})"
+
     def _get_inputs(self, var_mapping: dict[str, Any]) -> dict[str, AO | DO]:
         """Compare defined and actual parameters and return input mapping.
         
@@ -299,8 +302,6 @@ class Task:
             raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
         def is_input(pair):
             k, _ = pair
-            # if not isinstance(v, IO):
-            #     raise ValueError("Variables must be mapped to I/O objects!")
             if k in func_params:
                 return True
             return False

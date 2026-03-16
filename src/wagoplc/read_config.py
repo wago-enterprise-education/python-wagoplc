@@ -2,6 +2,7 @@ from schema import And, Or, Schema, SchemaError, Regex
 from typing import Any
 import importlib
 import os
+import sys
 import yaml
 
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
@@ -26,18 +27,27 @@ def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
     var_mapping = {}
     if "vars" in config:
         # TODO: Validate schema
-        # Import the standard library
-        fbs = importlib.import_module("wagoplc.fb")
         for var in config["vars"]:
             if "fb" in var:
                 # Variable is declared as a function block;
-                # try to get an instance.
+                # try to import it.
                 try:
-                    fb = getattr(fbs, var["fb"])
+                    fb_import = var["fb"].split(".")
+                    if len(fb_import) > 1:
+                        # fb is in separate module
+                        mod_name, func_name = fb_import
+                    else:
+                        # fb is likely in the standard library
+                        mod_name, func_name = "wagoplc.fb", var["fb"]
+
+                    fb_module = sys.modules.get(mod_name, importlib.import_module(mod_name))
+                    fb = getattr(fb_module, func_name)
+                    # Instantiate the function block
                     value = fb()
-                except AttributeError:
+                except ImportError, AttributeError:
                     raise InvalidConfig(f"No such function block: '{fb}'")
             else:
+                # a plain variable with name and value
                 value = var["value"]
             var_mapping[var["name"]] = value
     

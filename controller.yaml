@@ -30,13 +30,15 @@ io_mapping:
 vars:
   - name: oLuefter_Einschalt_TON
     fb: TON
+  - name: oLuefter_Ausschalt_TOF
+    fb: TOF
   - {name: iStatus, value: 0}
   - {name: xLuefterAn, value: False}
   - {name: xLuefterAus, value: False}
-  - name: oLuefter_Ausschalt_TOF
-    fb: TOF
   - name: oLicht_An_RS
     fb: RS
+  - name: oTorsteuerung_FB
+    fb: fb.Torsteuerung
 # tasks:
 #   - name: light control
 #     entry: light.light_ctrl
@@ -46,6 +48,12 @@ vars:
 #     watchdog_ms:
 #   - name: bathroom
 #     entry: ventilator.fan
+#     cycle_ms: 100
+#     priority: 15
+#     watchdog_ms: 80
+#     sensitivity: 1
+#   - name: porta
+#     entry: torsteuerung.porta_westfalica
 #     cycle_ms: 100
 #     priority: 15
 #     watchdog_ms: 80
