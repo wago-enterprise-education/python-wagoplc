@@ -36,6 +36,9 @@ class WatchdogTimeoutError(WAGOPlcError):
     """Throw when task cycle exceeds maximum allowed time."""
     pass
 
+class NonExistingIOError(WAGOPlcError):
+    """Throw when a not existing IO is trying to be reached."""
+    pass
 
 class Tasks:
     """Manage task registration per program.
