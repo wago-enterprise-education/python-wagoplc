@@ -62,7 +62,8 @@ class CC100_v1:
 
     def __init__(self):
         self.input_image: dict[str, str] = {}
-        self.output_image: dict[str, str] = {}
+        # Add all output paths to output image for reset
+        self.output_image: dict[str, str] = {path: "0" for path in self.get_write_paths()}
 
     def get_write_paths(self) -> tuple[str]:
         return (

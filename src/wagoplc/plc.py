@@ -10,6 +10,7 @@ import time
 import heapq
 
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
+from wagoplc.cc100.cc100_v1 import CC100_v1
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
@@ -115,10 +116,10 @@ class PLC:
         self.cc_obj = self._get_controller(controller_id)
         self._read_tasks(tasks_object)
 
-    def _read_tasks(self, tasks_object: Tasks | None):
+    def _read_tasks(self, tasks_object: Tasks | None = None):
         """Read tasks from configuration and tasks object in script.
         
-        tasks_object: task registrator passed from script
+        tasks_object: task registrator passed from script (default None)
         """
         # Add decorated task
         if tasks_object is not None:
@@ -155,12 +156,17 @@ class PLC:
                 cc_obj = CC100_9401()
             elif version == 9403:
                 cc_obj = CC100_9403()
+
+            if isinstance(cc_obj, CC100_v1):
+                self._get_file_fds()
+
             logger.info(f"Using controller with item number '{controller_id}'")
             return cc_obj
 
-    def run_tasks(self):
-        """Scheduler to run all tasks in cycles."""
-        read_fds = {path: open(TEST_DATA + path, "r") for path in self.cc_obj.get_read_paths()}
+    def _get_file_fds(self):
+        """Get system file descriptors for the CC100 v1."""
+        # Get the file descriptors for the CC100 v1 system files.
+        self._read_fds = {path: open(TEST_DATA + path, "r") for path in self.cc_obj.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
         # in write mode.  Otherwise, it would be necessary to use update file mode
@@ -168,9 +174,19 @@ class PLC:
         for path in self.cc_obj.get_read_once_paths():
             with open(TEST_DATA + path, "r") as f:
                 self.cc_obj.input_image[path] = f.read()
+        self._write_fds = {path: open(TEST_DATA + path, "w") for path in self.cc_obj.get_write_paths()}
 
-        write_fds = {path: open(TEST_DATA + path, "w") for path in self.cc_obj.get_write_paths()}
+    def reset(self):
+        """Reset the controller outputs."""
+        if isinstance(self.cc_obj, CC100_v1):
+            logger.info("Resetting outputs...")
+            self.cc_obj.reset_outputs(self._write_fds)
+            logger.debug("Closing file descriptors...")
+            (file.close() for file in self._read_fds.values())
+            (file.close() for file in self._write_fds.values())
 
+    def run_tasks(self):
+        """Scheduler to run all tasks in cycles."""
         try:
             if not self.tasks:
                 return
@@ -197,7 +213,7 @@ class PLC:
 
                     start_perf = time.perf_counter()
                     # Run task cycle
-                    task_state = task.cycle(read_fds, write_fds, state_vars[task])
+                    task_state = task.cycle(self._read_fds, self._write_fds, state_vars[task])
                     duration_ms = (time.perf_counter() - start_perf) * 1000.0
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeoutError(
@@ -212,11 +228,7 @@ class PLC:
         except Exception as e:
             raise
         finally:
-            logger.info("Resetting outputs...")
-            self.cc_obj.reset_outputs(write_fds)
-            logger.debug("Closing file descriptors...")
-            (file.close() for file in read_fds.values())
-            (file.close() for file in write_fds.values())
+            self.reset()
 
 
 class Task:
