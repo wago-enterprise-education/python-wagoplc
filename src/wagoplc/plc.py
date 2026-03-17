@@ -13,6 +13,7 @@ from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
+from wagoplc.cc100.exceptions import NotDefinedError,WatchdogTimeoutError
 from wagoplc.read_config import read_config, InvalidConfigError
 
 logger = logging.getLogger(__name__)
@@ -23,22 +24,6 @@ logging.basicConfig(
 )
 
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
-
-class WAGOPlcError(Exception):
-    """Base class for WAGO PLC related errors."""
-    pass
-
-class NotDefinedError(WAGOPlcError):
-    """Raised when a variable in a task function is not defined in IO mapping."""
-    pass
-
-class WatchdogTimeoutError(WAGOPlcError):
-    """Throw when task cycle exceeds maximum allowed time."""
-    pass
-
-class NonExistingIOError(WAGOPlcError):
-    """Throw when a not existing IO is trying to be reached."""
-    pass
 
 class Tasks:
     """Manage task registration per program.

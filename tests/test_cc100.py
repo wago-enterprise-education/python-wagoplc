@@ -3,7 +3,9 @@ import unittest
 
 from pyfakefs import fake_filesystem_unittest
 
-from wagoplc.cc100.cc100_v1 import CC100_v1, DI, DO, IOError
+from wagoplc.cc100.cc100_v1 import CC100_v1, DI, DO
+from wagoplc.cc100.cc100_9403 import CC100_9403
+from wagoplc.cc100.exceptions import NonExistingIOError
 
 TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02
 12452 1182 21785 1777
@@ -91,7 +93,7 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
                 self.assertTrue(cc.analogWrite(i,j))
         
     def test_analog_read(self):
-        for i in range(1,2):
+        for i in range(1,3):
             cc.analogRead(i)
 
     def test_read_inputs(self):
@@ -127,5 +129,15 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         cc.reset_outputs(self.write_fds)
         self.assertTrue(all(out == "0" for out in cc.output_image.values()))
 
-if __name__ == '__main__':
+
+class Test_9403(unittest.TestCase):
+
+    def test_analog_read_error(self):
+        c = CC100_9403()
+        with self.assertRaises(NonExistingIOError) as io:
+            c.analogRead(1)
+
+        self.assertEqual(str(io.exception),"The 751-9403 has no analog inputs.")
+ 
+if __name__ == "__main__":
     unittest.main()

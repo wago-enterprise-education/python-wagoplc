@@ -333,6 +333,7 @@ class CC100_v1:
         input_image = {}
         # Fill database
         for path, file in fds.items():
+            print(path)
             file_content = file.read()
             file.seek(0)
             if file_content:
