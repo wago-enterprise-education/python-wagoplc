@@ -5,9 +5,10 @@ from unittest.mock import Mock
 from unittest import mock
 
 from wagoplc.fb import TON
-from wagoplc.plc import CC100_9301, NotDefinedError, PLC, Task, Tasks
+from wagoplc.plc import CC100_9301, NotDefinedError, Scheduler, Task, Tasks
 from wagoplc.read_config import read_config, InvalidConfigError
 from wagoplc import DI, DO, AI, AO
+
 
 class Test_config(unittest.TestCase):
     @classmethod
@@ -91,7 +92,7 @@ class Test_config(unittest.TestCase):
         os.remove(cls.filename)
 
 
-class Test_PLC(unittest.TestCase):
+class Test_Scheduler(unittest.TestCase):
     
     def test_get_controller(self):
         pass
@@ -122,7 +123,7 @@ def bar():
         def foo():
             return locals()
 
-        plc = PLC(tasks)
+        plc = Scheduler(tasks)
         for task in plc.tasks:
             self.assertEqual(task.name, "foo")
             self.assertDictEqual(task.cycle_func(), {})
@@ -146,7 +147,7 @@ def bar():
             return locals()
 
         with self.assertRaises(InvalidConfigError) as cm:
-            PLC(tasks)
+            Scheduler(tasks)
 
         self.assertEqual(str(cm.exception), "Duplicate I/O mappings in configuration: {'di1': 'DI(1)', 'di2': 'DI(1)'}")
 

@@ -3,6 +3,8 @@ from typing import Any
 import logging
 import os
 
+from wagoplc.controller import Controller
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename="wagoplc.log",
@@ -12,41 +14,7 @@ logging.basicConfig(
 
 TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
-class IO:
-    """Generic I/O superclass to store interface id."""
-    def __init__(self, id: int):
-        if not isinstance(id, int):
-            raise ValueError("Expected and integer id.")
-        self.id = id
-
-    def __eq__(self, other):
-        return isinstance(self, other.__class__) and self.id == other.id
-    
-    def __str__(self):
-        return f"{type(self).__name__}({self.id})"
-
-
-class DI(IO):
-    def read(self, cc_obj) -> bool:
-        return cc_obj.digitalRead(self.id)
-
-
-class DO(IO):
-    def write(self, cc_obj, value) -> bool:
-        return cc_obj.digitalWrite(self.id, value)
-
-
-class AI(IO):
-    def read(self, cc_obj) -> int:
-        return cc_obj.analogRead(self.id)
-
-
-class AO(IO):
-    def write(self, cc_obj, value: int) -> bool:
-        return cc_obj.analogWrite(self.id, value)
-
-
-class CC100_v1:
+class CC100_v1(Controller):
     # data paths on CC100 751-9301 (V1)
     DOUT_DATA ="/sys/kernel/dout_drv/DOUT_DATA"
     OUT_VOLTAGE1_POWERDOWN = "/sys/bus/iio/devices/iio:device0/out_voltage1_powerdown"
@@ -338,13 +306,8 @@ class CC100_v1:
         #Return the calculated value in °C
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
-    def read_inputs(self, input_mapping: dict[str, Any] = {}) -> dict[str, bool | int | str]:
-        """Read compact controller inputs and write input image.
-        
-        fds: read system file descriptors
-        input_mapping: variables mapped to input interface objects
-        """
-        input_image = {}
+    def read_inputs(self) :
+        """Read compact controller inputs."""
         # Fill database
         for path, file in self._read_fds.items():
             file_content = file.read()
@@ -355,46 +318,18 @@ class CC100_v1:
                 # Did not read correct value; use the old one for a cycle
                 pass
 
-        if not input_mapping:
-            return {}
-        
-        # Map variables to values
-        for var, value in input_mapping.items():
-            if isinstance(value, IO):
-                # Read the inputs and add them to the image
-                input_image[var] = value.read(self)
-            else:
-                # Write any other variable (e. g. a function block) unchanged
-                # into the image
-                input_image[var] = value
-        return input_image
-
-    def write_outputs(self, output_image: dict[str, bool | int | str] = {},
-                      outputs: dict[str, Any] = {}) -> dict[str, Any]:
+    def write_outputs(self):
         """Write compact controller outputs from output image.
         
         Return all state variables that should be fed into the function the next time.
         Also set the input image to the new value to avoid reading every
         new cycle.
-
-        fds: write system file descriptors
-        output_image: output variables from the cycle function
-        outputs: variables mapped to output interfaces
         """
-        retain_vars = {}
-        for var, value in output_image.items():
-            if var in outputs:
-                outputs[var].write(self, value)
-            else:
-                retain_vars[var] = value
-
         for path, value in self.output_image.items():
             file = self._write_fds[path]
             file.write(value)
             file.seek(0)
             self.input_image[path] = value
-
-        return retain_vars
 
     def reset(self) -> None:
         """Reset the output interfaces and close the file descriptors."""

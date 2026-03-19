@@ -7,11 +7,9 @@ import logging
 import time
 import heapq
 
-from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
-from wagoplc.cc100.cc100_9301 import CC100_9301
-from wagoplc.cc100.cc100_9401 import CC100_9401
-from wagoplc.cc100.cc100_9403 import CC100_9403
-from wagoplc.cc100.exceptions import NotDefinedError,WatchdogTimeoutError
+from wagoplc.controller import DI, DO, AI, AO, IO, IOHandler
+from wagoplc.cc100 import CC100_9301, CC100_9401, CC100_9403
+from wagoplc.exceptions import NotDefinedError, WatchdogTimeoutError
 from wagoplc.read_config import read_config, InvalidConfigError
 
 logger = logging.getLogger(__name__)
@@ -30,7 +28,7 @@ class Tasks:
     """
 
     def __init__(self):
-        self.task: Task = None
+        self.task: dict[str, Any] = None
         # Map of variables and interfaces
         self.map: dict[str, IO] = {}
 
@@ -67,8 +65,7 @@ class Tasks:
         if self.task:
             raise InvalidConfigError("Only one task per program allowed!")
         def decorator_task(func: Callable[...]):
-            self.task = Task(
-                name=name,
+            self.task = dict(name=name,
                 plc_obj=None,
                 var_mapping=self.map,
                 entry=func,
@@ -85,8 +82,8 @@ class Tasks:
         return decorator_task(_func)
 
 
-class PLC:
-    """Represent a programmable logic controller (PLC)."""
+class Scheduler:
+    """A task scheduler."""
     
     def __init__(self, tasks_object: Tasks | None):
         # List of PLC tasks
@@ -119,8 +116,8 @@ class PLC:
         # Add decorated task
         if tasks_object is not None:
             if task := tasks_object.task:
-                task.plc_obj = self.plc_obj
-                self.tasks.append(task)
+                task["plc_obj"] = self.plc_obj
+                self.tasks.append(Task(**task))
 
         # Get task definitions from config and retrieve the task function
         for task in self.tasks_config:
@@ -154,10 +151,6 @@ class PLC:
 
         logger.info(f"Using controller with item number '{controller_id}'")
         return plc_obj
-
-    def reset(self):
-        """Reset the controller outputs."""
-        ...
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
@@ -252,8 +245,9 @@ class Task:
 
         self.watchdog_ms = watchdog_ms * (self.sensitivity * 0.05 + 1.0)
 
-        self.inputs = self._get_inputs(var_mapping)
-        self.outputs = self._get_outputs(var_mapping)
+        self.iohandler = IOHandler(
+            plc_obj, self._get_input_vars(var_mapping), var_mapping
+        )
 
         self.next_run: float = time.time()
     
@@ -263,8 +257,8 @@ class Task:
     def __str__(self):
         return f"Task(name={self.name}, entry={self.cycle_func}, cycle_ms={self.cycle_ms}, priority={self.priority}, watchdog_ms={self.watchdog_ms}, sensitivity={self.sensitivity})"
 
-    def _get_inputs(self, var_mapping: dict[str, Any]) -> dict[str, AO | DO]:
-        """Compare defined and actual parameters and return input mapping.
+    def _get_input_vars(self, var_mapping: dict[str, Any]) -> dict[str, Any]:
+        """Compare defined variables and parameters and return input mapping.
         
         Raise NotDefinedError if a parameter is not defined as a variable.
 
@@ -280,28 +274,15 @@ class Task:
                 return True
             return False
         return dict(filter(is_input, var_mapping.items()))
-    
-    def _get_outputs(self, var_mapping: dict[str, Any])-> dict[str, Any]:
-        """Get output variables from mapping.
-        
-        io_mapping: map of user-defined variables
-        """
-        return dict(
-            filter(
-                lambda map: isinstance(map[1], (DO, AO)), 
-                var_mapping.items()
-            )
-        )
 
-    def cycle(self, state_vars: dict[str, Any]) -> dict[str, Any]:
+    def cycle(self, state_vars: dict[str, Any]):
         """Run one task cycle."""
         # Get input image (variables mapped to values)
-        input_image = self.plc_obj.read_inputs(self.inputs)
-        input_image.update(state_vars)
+        input_image = self.iohandler.get_input_image()
         # Get output image (variables mapped to values)
         output_image = self.cycle_func(**input_image)
         if not isinstance(output_image, dict):
             raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
         # Actually write outputs, return state variables
-        return self.plc_obj.write_outputs(output_image, self.outputs)
+        self.iohandler.process_output_image(output_image)
 

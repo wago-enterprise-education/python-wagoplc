@@ -3,9 +3,10 @@ import unittest
 
 from pyfakefs import fake_filesystem_unittest
 
-from wagoplc.cc100.cc100_v1 import CC100_v1, DI, DO
+from wagoplc.cc100 import CC100_v1
 from wagoplc.cc100.cc100_9403 import CC100_9403
-from wagoplc.cc100.exceptions import NonExistingIOError
+from wagoplc.controller import DI, DO
+from wagoplc.exceptions import NonExistingIOError
 
 TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02
 12452 1182 21785 1777
@@ -94,31 +95,6 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     def test_analog_read(self):
         for i in range(1,3):
             self.cc.analogRead(i)
-
-    def test_read_inputs(self):
-        inputs = {"di1": DI(1)}
-        input_image = {"di1": True}
-        with open(self.cc.DIN, "w") as din:
-            din.write("1")
-        self.assertDictEqual(
-            self.cc.read_inputs(input_mapping=inputs),
-            input_image
-        )
-        self.assertEqual(self.cc.input_image[self.cc.DIN], "1")
-
-    def test_write_outputs(self):
-        outputs = {"do1": DO(1)}
-        output_image = {"do1": True}
-        # reset input value
-        self.cc.input_image[self.cc.DOUT_DATA] = "0"
-
-        self.cc.digitalWrite(1, True)
-        self.cc.write_outputs(
-            output_image=output_image,
-            outputs=outputs
-        )
-        # value was directly written to input image
-        self.assertEqual(self.cc.input_image[self.cc.DOUT_DATA], "1")
         
     def test_temp_read(self):
         pass

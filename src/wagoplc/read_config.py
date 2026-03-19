@@ -5,7 +5,7 @@ import os
 import sys
 import yaml
 
-from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
+from wagoplc.controller import DI, DO, AI, AO
 from wagoplc.constants import YAML_CONFIG
 
 class InvalidConfigError(Exception):
