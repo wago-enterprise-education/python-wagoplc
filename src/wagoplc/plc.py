@@ -1,16 +1,13 @@
 from collections.abc import Callable
-from io import TextIOWrapper
 from typing import Any
 
 import importlib
 import inspect
 import logging
-import os
 import time
 import heapq
 
 from wagoplc.cc100.cc100_v1 import DI, DO, AI, AO, IO
-from wagoplc.cc100.cc100_v1 import CC100_v1
 from wagoplc.cc100.cc100_9301 import CC100_9301
 from wagoplc.cc100.cc100_9401 import CC100_9401
 from wagoplc.cc100.cc100_9403 import CC100_9403
@@ -23,8 +20,6 @@ logging.basicConfig(
     format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
     level=logging.DEBUG
 )
-
-TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
 class Tasks:
     """Manage task registration per program.
@@ -74,7 +69,7 @@ class Tasks:
         def decorator_task(func: Callable[...]):
             self.task = Task(
                 name=name,
-                cc_obj=None,
+                plc_obj=None,
                 var_mapping=self.map,
                 entry=func,
                 cycle_ms=cycle_ms,
@@ -113,7 +108,7 @@ class PLC:
             raise InvalidConfigError(f"Duplicate I/O mappings in configuration: {dups_sorted}")
         self.map = config_map
 
-        self.cc_obj = self._get_controller(controller_id)
+        self.plc_obj = self._get_controller(controller_id)
         self._read_tasks(tasks_object)
 
     def _read_tasks(self, tasks_object: Tasks | None = None):
@@ -124,7 +119,7 @@ class PLC:
         # Add decorated task
         if tasks_object is not None:
             if task := tasks_object.task:
-                task.cc_obj = self.cc_obj
+                task.plc_obj = self.plc_obj
                 self.tasks.append(task)
 
         # Get task definitions from config and retrieve the task function
@@ -134,12 +129,11 @@ class PLC:
             try:
                 module = importlib.import_module(module_name)
                 task["entry"] = getattr(module, func_name)                
-                self.tasks.append(Task(self.cc_obj, self.map, **task))
+                self.tasks.append(Task(self.plc_obj, self.map, **task))
                 logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
             except ModuleNotFoundError, AttributeError:
                 raise NotDefinedError(f"Function '{entry}' for task '{task["name"]}' not defined!")
 
-        
     def _get_controller(self, controller_id: str):
         """Get controller object by item number.
         
@@ -151,39 +145,19 @@ class PLC:
         
         if model == 751:
             if version == 9301:
-                cc_obj = CC100_9301()
+                plc_obj = CC100_9301()
             elif version == 9401:
-                cc_obj = CC100_9401()
+                plc_obj = CC100_9401()
             elif version == 9403:
-                cc_obj = CC100_9403()
+                plc_obj = CC100_9403()
+            plc_obj.init_fds()
 
-            if isinstance(cc_obj, CC100_v1):
-                self._get_file_fds()
-
-            logger.info(f"Using controller with item number '{controller_id}'")
-            return cc_obj
-
-    def _get_file_fds(self):
-        """Get system file descriptors for the CC100 v1."""
-        # Get the file descriptors for the CC100 v1 system files.
-        self._read_fds = {path: open(TEST_DATA + path, "r") for path in self.cc_obj.get_read_paths()}
-        # Read digital output file initially and add it to the input image.
-        # The value is updated after every write, the file is kept open
-        # in write mode.  Otherwise, it would be necessary to use update file mode
-        # (r+), which is too costly.
-        for path in self.cc_obj.get_read_once_paths():
-            with open(TEST_DATA + path, "r") as f:
-                self.cc_obj.input_image[path] = f.read()
-        self._write_fds = {path: open(TEST_DATA + path, "w") for path in self.cc_obj.get_write_paths()}
+        logger.info(f"Using controller with item number '{controller_id}'")
+        return plc_obj
 
     def reset(self):
         """Reset the controller outputs."""
-        if isinstance(self.cc_obj, CC100_v1):
-            logger.info("Resetting outputs...")
-            self.cc_obj.reset_outputs(self._write_fds)
-            logger.debug("Closing file descriptors...")
-            (file.close() for file in self._read_fds.values())
-            (file.close() for file in self._write_fds.values())
+        ...
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
@@ -213,7 +187,7 @@ class PLC:
 
                     start_perf = time.perf_counter()
                     # Run task cycle
-                    task_state = task.cycle(self._read_fds, self._write_fds, state_vars[task])
+                    task_state = task.cycle(state_vars[task])
                     duration_ms = (time.perf_counter() - start_perf) * 1000.0
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeoutError(
@@ -228,7 +202,7 @@ class PLC:
         except Exception as e:
             raise
         finally:
-            self.reset()
+            self.plc_obj.reset()
 
 
 class Task:
@@ -236,7 +210,7 @@ class Task:
 
     def __init__(
         self,
-        cc_obj,
+        plc_obj,
         var_mapping: dict[str, Any],
         name: str,
         entry: Callable[..., dict[str, str | int | bool]],
@@ -255,7 +229,7 @@ class Task:
         self.name = name or "<unnamed task>"
         self.cycle_time = cycle_ms
         self.cycle_func = entry
-        self.cc_obj = cc_obj
+        self.plc_obj = plc_obj
         if cycle_ms < 1:
             cycle_ms = 1
         elif cycle_ms > 10000:
@@ -319,16 +293,15 @@ class Task:
             )
         )
 
-    def cycle(self, read_fds: dict[str, TextIOWrapper], write_fds: dict[str, TextIOWrapper],
-              state_vars: dict[str, Any]) -> dict[str, Any]:
+    def cycle(self, state_vars: dict[str, Any]) -> dict[str, Any]:
         """Run one task cycle."""
         # Get input image (variables mapped to values)
-        input_image = self.cc_obj.read_inputs(read_fds, self.inputs)
+        input_image = self.plc_obj.read_inputs(self.inputs)
         input_image.update(state_vars)
         # Get output image (variables mapped to values)
         output_image = self.cycle_func(**input_image)
         if not isinstance(output_image, dict):
             raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
         # Actually write outputs, return state variables
-        return self.cc_obj.write_outputs(write_fds, output_image, self.outputs)
+        return self.plc_obj.write_outputs(output_image, self.outputs)
 

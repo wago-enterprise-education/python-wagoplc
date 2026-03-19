@@ -1,6 +1,6 @@
 from wagoplc.fb import FB
 
-class Torsteuerung:
+class Torsteuerung(FB):
 
     def __init__(self):
         self.tor_auf = False

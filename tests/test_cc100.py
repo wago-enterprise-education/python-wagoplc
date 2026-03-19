@@ -15,38 +15,37 @@ TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02
 1064 350 8976 3000
 1053 350 8966 3000
 """
-cc = CC100_v1()
 
 class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     @classmethod
+    @unittest.mock.patch("wagoplc.cc100.cc100_v1.TEST_DATA", "")
     def setUpClass(cls):
         cls.setUpClassPyfakefs()
+        cls.cc = CC100_v1()
 
         # create files and directories
-        for path in cc.get_read_paths() + cc.get_read_once_paths():
+        for path in cls.cc.get_read_paths() + cls.cc.get_read_once_paths():
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w") as f:
                 f.write("0")
 
-        for path in cc.get_write_paths():
+        for path in cls.cc.get_write_paths():
             os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        with open(cc.CALIB_DATA, "w") as f:
+        with open(cls.cc.CALIB_DATA, "w") as f:
             f.write(TEST_CALIB_DATA)
 
-        cc.input_image[cc.CALIB_DATA] = TEST_CALIB_DATA
-        cc.input_image[cc.DOUT_DATA] = "0"
+        cls.cc.input_image[cls.cc.CALIB_DATA] = TEST_CALIB_DATA
+        cls.cc.input_image[cls.cc.DOUT_DATA] = "0"
 
-        cls.read_fds = {path: open(path, "r") for path in cc.get_read_paths()}
-        cls.write_fds = {path: open(path, "w") for path in cc.get_write_paths()}
-
+        cls.cc.init_fds()
         # Initially read inputs
-        cc.read_inputs(cls.read_fds)
+        cls.cc.read_inputs()
 
     def test_non_existing_output(self):
         with self.assertLogs(level="WARNING") as cm:
-            self.assertFalse(cc.digitalWrite(5, True))
-            self.assertFalse(cc.analogWrite(3, 1000))
+            self.assertFalse(self.cc.digitalWrite(5, True))
+            self.assertFalse(self.cc.analogWrite(3, 1000))
         self.assertEqual(
             cm.output,
             [
@@ -60,16 +59,16 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         dout_content = 0
         for i in range(1, 5):
             for j in range(2):
-                self.assertTrue(cc.digitalWrite(i, j))
+                self.assertTrue(self.cc.digitalWrite(i, j))
                 # file content increases by power of two
                 dout_content += 2**(i - 1) * j
-                self.assertEqual(cc.output_image[cc.DOUT_DATA], str(dout_content))
-                cc.write_outputs(self.write_fds)
+                self.assertEqual(self.cc.output_image[self.cc.DOUT_DATA], str(dout_content))
+                self.cc.write_outputs()
 
     def test_non_existing_input(self):
         with self.assertLogs(level="WARNING") as cm:
-                self.assertFalse(cc.digitalRead(9))
-                self.assertFalse(cc.analogRead(3))
+                self.assertFalse(self.cc.digitalRead(9))
+                self.assertFalse(self.cc.analogRead(3))
         self.assertEqual(
             cm.output,
             [
@@ -81,63 +80,59 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     def test_digital_read(self):
         for i in range(1, 9):
             # Simulate digital input
-            with open(cc.DIN, "w") as din:
+            with open(self.cc.DIN, "w") as din:
                 din.write(str(2**(i - 1)))
-            self.assertFalse(cc.digitalRead(i))
-            cc.read_inputs(self.read_fds)
-            self.assertTrue(cc.digitalRead(i))
+            self.assertFalse(self.cc.digitalRead(i))
+            self.cc.read_inputs()
+            self.assertTrue(self.cc.digitalRead(i))
 
     def test_analog_write(self):
         for i in range(1, 3):
             for j in range(0,10001,1000):
-                self.assertTrue(cc.analogWrite(i,j))
+                self.assertTrue(self.cc.analogWrite(i,j))
         
     def test_analog_read(self):
         for i in range(1,3):
-            cc.analogRead(i)
+            self.cc.analogRead(i)
 
     def test_read_inputs(self):
         inputs = {"di1": DI(1)}
         input_image = {"di1": True}
-        with open(cc.DIN, "w") as din:
+        with open(self.cc.DIN, "w") as din:
             din.write("1")
         self.assertDictEqual(
-            cc.read_inputs(fds=self.read_fds, input_mapping=inputs),
+            self.cc.read_inputs(input_mapping=inputs),
             input_image
         )
-        self.assertEqual(cc.input_image[cc.DIN], "1")
+        self.assertEqual(self.cc.input_image[self.cc.DIN], "1")
 
     def test_write_outputs(self):
         outputs = {"do1": DO(1)}
         output_image = {"do1": True}
         # reset input value
-        cc.input_image[cc.DOUT_DATA] = "0"
+        self.cc.input_image[self.cc.DOUT_DATA] = "0"
 
-        cc.digitalWrite(1, True)
-        cc.write_outputs(
-            fds=self.write_fds,
+        self.cc.digitalWrite(1, True)
+        self.cc.write_outputs(
             output_image=output_image,
             outputs=outputs
         )
         # value was directly written to input image
-        self.assertEqual(cc.input_image[cc.DOUT_DATA], "1")
+        self.assertEqual(self.cc.input_image[self.cc.DOUT_DATA], "1")
         
     def test_temp_read(self):
         pass
 
-    def test_reset_outputs(self):
-        cc.reset_outputs(self.write_fds)
-        self.assertTrue(all(out == "0" for out in cc.output_image.values()))
-
-
-class Test_9403(unittest.TestCase):
-
-    def test_analog_read_error(self):
-        c = CC100_9403()
+    def test_analog_read_error_9403(self):
+        cc = CC100_9403()
         with self.assertRaises(NonExistingIOError) as io:
-            c.analogRead(1)
+            cc.analogRead(1)
 
         self.assertEqual(str(io.exception),"The 751-9403 has no analog inputs.")
+
+    def test_reset(self):
+        self.cc.reset()
+        self.assertTrue(all(out == "0" for out in self.cc.output_image.values()))
  
 if __name__ == "__main__":
     unittest.main()

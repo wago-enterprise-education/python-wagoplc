@@ -1,11 +1,16 @@
-from io import TextIOWrapper
 from typing import Any
 
 import logging
-
-from wagoplc.fb import FB
+import os
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="wagoplc.log",
+    format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
+    level=logging.DEBUG
+)
+
+TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
 
 class IO:
     """Generic I/O superclass to store interface id."""
@@ -39,10 +44,6 @@ class AI(IO):
 class AO(IO):
     def write(self, cc_obj, value: int) -> bool:
         return cc_obj.analogWrite(self.id, value)
-
-
-class IOError(Exception):
-    pass
 
 
 class CC100_v1:
@@ -89,6 +90,19 @@ class CC100_v1:
             self.CALIB_DATA,
             self.DOUT_DATA
         )
+
+    def init_fds(self):
+        """Get system file descriptors for the CC100 v1."""
+        print(TEST_DATA)
+        self._read_fds = {path: open(TEST_DATA + path, "r") for path in self.get_read_paths()}
+        # Read digital output file initially and add it to the input image.
+        # The value is updated after every write, the file is kept open
+        # in write mode.  Otherwise, it would be necessary to use update file mode
+        # (r+), which is too costly.
+        for path in self.get_read_once_paths():
+            with open(TEST_DATA + path, "r") as f:
+                self.input_image[path] = f.read()
+        self._write_fds = {path: open(TEST_DATA + path, "w") for path in self.get_write_paths()}
 
     def digitalWrite(self, output: int, value: int) -> bool:
         """Switch the output to the specified value.
@@ -324,8 +338,7 @@ class CC100_v1:
         #Return the calculated value in °C
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
-    def read_inputs(self, fds: dict[str, TextIOWrapper],
-                    input_mapping: dict[str, Any] = {}) -> dict[str, bool | int | str]:
+    def read_inputs(self, input_mapping: dict[str, Any] = {}) -> dict[str, bool | int | str]:
         """Read compact controller inputs and write input image.
         
         fds: read system file descriptors
@@ -333,8 +346,7 @@ class CC100_v1:
         """
         input_image = {}
         # Fill database
-        for path, file in fds.items():
-            print(path)
+        for path, file in self._read_fds.items():
             file_content = file.read()
             file.seek(0)
             if file_content:
@@ -357,8 +369,7 @@ class CC100_v1:
                 input_image[var] = value
         return input_image
 
-    def write_outputs(self, fds: dict[str, TextIOWrapper],
-                      output_image: dict[str, bool | int | str] = {},
+    def write_outputs(self, output_image: dict[str, bool | int | str] = {},
                       outputs: dict[str, Any] = {}) -> dict[str, Any]:
         """Write compact controller outputs from output image.
         
@@ -378,18 +389,20 @@ class CC100_v1:
                 retain_vars[var] = value
 
         for path, value in self.output_image.items():
-            file = fds[path]
+            file = self._write_fds[path]
             file.write(value)
             file.seek(0)
             self.input_image[path] = value
 
         return retain_vars
 
-    def reset_outputs(self, fds: dict[str, TextIOWrapper]) -> None:
-        """Reset the output interfaces to null.
-        
-        fds: write system file descriptors
-        """
+    def reset(self) -> None:
+        """Reset the output interfaces and close the file descriptors."""
+        logger.info("Resetting outputs...")
         for path in self.output_image:
-            self.output_image[path] = "0"
-        self.write_outputs(fds)
+                self.output_image[path] = "0"
+        self.write_outputs()
+
+        logger.debug("Closing file descriptors...")
+        (file.close() for file in self._read_fds.values())
+        (file.close() for file in self._write_fds.values())
