@@ -116,26 +116,27 @@ def light_ctrl(oLight_On_RS: RS, xSwitch: bool, xSwitch_off: bool, iStatus: int)
 # the controller item number
 itemNumber: 751-9301
 io_mapping:
-  pii:
-    x12.di1:
-    x12.di2:
-    x12.di3: xSwitch
-    x12.di4: xSwitch_off
-    x12.di5:
-    x12.di6:
-    x12.di7:
-    x12.di8:
-    x13.pt1: 
-    x13.pt2: 
-    x14.ai1: 
-    x14.ai2: 
-  piq:
-    x5.do1: xLight
-    x5.do2:
-    x5.do3:
-    x5.do4:
-    x6.ao1:
-    x6.ao2:
+  751-9301:
+    pii:
+      di1:
+      di2:
+      di3: xTaster
+      di4: xTaster_Aus
+      di5:
+      di6:
+      di7:
+      di8:
+      pt1: 
+      pt2: 
+      ai1: 
+      ai2: 
+    piq:
+      do1:
+      do2: xLuefter
+      do3:
+      do4:
+      ao1:
+      ao2:
 vars:
   - name: oLight_On_RS
     fb: RS
