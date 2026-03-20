@@ -24,7 +24,8 @@ class Controller:
     def analogRead(self, input: int):
         raise NotImplementedError
     
-    def digitalWrite(self, output: int, value: int):
+    def digitalWrite(self, module: str, output: int, value: int):
+        current_value = self.input_image[module][DO]
         raise NotImplementedError
     
     def analogWrite(self, output: int, value: int):
@@ -101,10 +102,11 @@ class IOHandler:
 
 class IO:
     """Generic I/O superclass to store interface id."""
-    def __init__(self, id: int):
+    def __init__(self, id: int, module: str):
         if not isinstance(id, int):
             raise ValueError("Expected and integer id.")
         self.id = id
+        self.module = module
 
     def __eq__(self, other):
         return isinstance(self, other.__class__) and self.id == other.id
@@ -118,3 +120,11 @@ class AI(IO): pass
 class AO(IO): pass
 class NI(IO): pass
 class PT(IO): pass
+class DIO(IO):
+    def __init__(self, id, module, type):
+        super().__init__(id, module)
+        self.type = type
+class AIO(IO):
+    def __init__(self, id, module, type):
+        super().__init__(id, module)
+        self.type = type

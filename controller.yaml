@@ -7,26 +7,27 @@ autoupdate: on
 netmask: 255.255.255.0
 gateway: undefined
 io_mapping:
-  pii:
-    x12.di1:
-    x12.di2:
-    x12.di3: xTaster
-    x12.di4: xTaster_Aus
-    x12.di5:
-    x12.di6:
-    x12.di7:
-    x12.di8:
-    x13.pt1: 
-    x13.pt2: 
-    x14.ai1: 
-    x14.ai2: 
-  piq:
-    x5.do1:
-    x5.do2: xLuefter
-    x5.do3:
-    x5.do4:
-    x6.ao1:
-    x6.ao2:
+  751-9301:
+    pii:
+      di1:
+      di2:
+      di3: xTaster
+      di4: xTaster_Aus
+      di5:
+      di6:
+      di7:
+      di8:
+      pt1: 
+      pt2: 
+      ai1: 
+      ai2: 
+    piq:
+      do1:
+      do2: xLuefter
+      do3:
+      do4:
+      ao1:
+      ao2:
 vars:
   - name: oLuefter_Einschalt_TON
     fb: TON

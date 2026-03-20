@@ -5,7 +5,7 @@ import os
 import sys
 import yaml
 
-from wagoplc.controller import DI, DO, AI, AO
+from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO
 from wagoplc.constants import YAML_CONFIG
 
 class InvalidConfigError(Exception):
@@ -63,20 +63,31 @@ def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
 
     if "io_mapping" in config:
         io_mapping = config["io_mapping"]
-        for section in io_mapping.values():           
-            for full_key, value in section.items():   
-                if value:                             
-                    short_key = full_key.split(".", 1)[1] 
-                    interface = short_key[:2]
-                    index = int(short_key[2])
-                    if interface == "di":
-                        var_mapping[value] = DI(index)    
-                    elif interface == "do":
-                        var_mapping[value] = DO(index)
-                    elif interface == "ai":
-                        var_mapping[value] = AI(index)
-                    elif interface == "ao":
-                        var_mapping[value] = AO(index)
+        for module,sections in io_mapping.items():           
+            for sections_name, section in section.items():   
+                if sections_name in {"pii","piq"}:
+                    for key, value in sections.items():
+                        if value: 
+                            interface = "".join(g for g in key if g.isalpha)  
+                            index = "".join(g for g in key if g.isdigit)                 
+                            if interface == "di":
+                                var_mapping[value] = DI(module,index)    
+                            elif interface == "do":
+                                var_mapping[value] = DO(module,index)
+                            elif interface == "ai":
+                                var_mapping[value] = AI(module,index)
+                            elif interface == "ao":
+                                var_mapping[value] = AO(module,index)
+                            elif interface == "pt":
+                                var_mapping[value] = PT(module,index)
+                            elif interface == "ni":
+                                var_mapping[value] = NI(module,index)
+                            elif interface == "dio":
+                                type = 0 if sections == "pii" else 1
+                                var_mapping[value] = DIO(module,index,type)
+                            elif interface == "aio":
+                                type = 0 if sections == "pii" else 1
+                                var_mapping[value] = AIO(module,index,type)
 
     return tasks, var_mapping, config["itemNumber"]
 
