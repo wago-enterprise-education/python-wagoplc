@@ -1,7 +1,7 @@
 import sys
 
 from wagoplc.controller import DI, DO, AI, AO
-from wagoplc.plc import Tasks, Scheduler
+from wagoplc.tasks import Tasks, Scheduler
 from wagoplc.constants import SCRIPT_PATH
 
 def main(tasks_object: Tasks | None = None):
