@@ -20,7 +20,7 @@ io_mapping:
       pt1: 
       pt2: 
       ai1: 
-      ai2: 
+      ai2:
     piq:
       do1:
       do2: xLuefter
@@ -38,8 +38,6 @@ vars:
   - {name: xLuefterAus, value: False}
   - name: oLicht_An_RS
     fb: RS
-  - name: oTorsteuerung_FB
-    fb: fb.Torsteuerung
 # tasks:
 #   - name: light control
 #     entry: light.light_ctrl

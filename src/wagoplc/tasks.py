@@ -163,8 +163,6 @@ class Scheduler:
             for t in self.tasks:
                 t.next_run = now
 
-            # Task objects mapped to dicts of state variables
-            state_vars: dict[str, dict[str, Any]] = {task: {} for task in self.tasks}
             logger.info("Starting tasks execution")
             while True:
                 now = time.time()
@@ -180,7 +178,7 @@ class Scheduler:
 
                     start_perf = time.perf_counter()
                     # Run task cycle
-                    task_state = task.cycle(state_vars[task])
+                    task_state = task.cycle()
                     duration_ms = (time.perf_counter() - start_perf) * 1000.0
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeoutError(
@@ -188,7 +186,6 @@ class Scheduler:
                             f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
                         )
 
-                    state_vars[task] = task_state
                     task.next_run += task._cycle_s
 
                 time.sleep(0.0005)
@@ -275,7 +272,7 @@ class Task:
             return False
         return dict(filter(is_input, var_mapping.items()))
 
-    def cycle(self, state_vars: dict[str, Any]):
+    def cycle(self):
         """Run one task cycle."""
         # Get input image (variables mapped to values)
         input_image = self.iohandler.get_input_image()

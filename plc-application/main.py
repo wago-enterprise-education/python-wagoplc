@@ -1,4 +1,4 @@
-from wagoplc import main, Tasks, DI, DO
+from wagoplc import main, Tasks, DI, AO
 from wagoplc.fb import CTUD
 
 tasks = Tasks()
@@ -7,7 +7,7 @@ tasks = Tasks()
 def setup():
     xLichtSchrankeRein = DI(1)
     xLichtSchrankeRaus = DI(2)
-    xMotor = DO(1)
+    xMotor = AO(1)
     oFlasche_Puffer_CTUD = CTUD(pv=3)
 
     return dict(
@@ -23,11 +23,12 @@ def setup():
 )
 def bottle_filler(xLichtSchrankeRein, xLichtSchrankeRaus, oFlasche_Puffer_CTUD: CTUD):
     oFlasche_Puffer_CTUD(cu=xLichtSchrankeRein, cd=xLichtSchrankeRaus)
-    xMotor = True
+    # set to 5 V (5000 mV)
+    xMotor = 5000
     print(oFlasche_Puffer_CTUD.cv)
     if oFlasche_Puffer_CTUD.qu:
         print("Motor... aus!")
-        xMotor = False
+        xMotor = 0
 
     return dict(xMotor=xMotor, oFlasche_Puffer_CTUD=oFlasche_Puffer_CTUD)
 
