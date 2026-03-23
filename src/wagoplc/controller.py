@@ -25,9 +25,9 @@ class Controller:
         value: Value which the selected output should be set to
         Return True if value is written, False if out does not exist.
         """
-        if output not in range(1, self.input_data[module]["specs"][DI]):
+        if output not in range(1, self.input_data[module]["specs"][DO]):
             return False
-
+        
         # Read the current state to calculate the new value
         currentValue = int(self.input_data[module][DO])
 

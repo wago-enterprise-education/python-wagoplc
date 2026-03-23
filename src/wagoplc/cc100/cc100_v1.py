@@ -83,7 +83,7 @@ class CC100_v1(Controller):
         # (r+), which is too costly.
         for key, loc in self.file_map["read_once"].items():
             with open(TEST_DATA + loc, "r") as f:
-                self.input_data[key] = f.read()
+                self.input_data[self.item_num][key] = f.read()
 
         for loc in self.file_map["piq"].values():
             if isinstance(loc, dict):
@@ -226,7 +226,7 @@ class CC100_v1(Controller):
                 path = self.file_map["piq"][ii]
                 file_contents[path] = content
                 # Take digital output value as input for next cycle
-                self.input_data[self.item_num][ii] = value
+                self.input_data[self.item_num][ii] = content
         
         for path, value in file_contents.items():
             file = self._write_fds[path]
