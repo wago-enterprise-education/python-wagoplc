@@ -55,7 +55,6 @@ class CC100_v1(Controller):
     def get_write_paths(self) -> tuple[str]:
         return (
             self.DOUT_DATA,
-            self.SERIAL_PORT,
             self.OUT_VOLTAGE1_POWERDOWN,
             self.OUT_VOLTAGE2_POWERDOWN,
             self.OUT_VOLTAGE1_RAW,
@@ -191,7 +190,6 @@ class CC100_v1(Controller):
 
     def read_inputs(self) :
         """Read compact controller inputs."""
-        print(self.input_data)
         # Fill database
         for path, file in self._read_fds.items():
             file_content = file.read()
@@ -209,7 +207,6 @@ class CC100_v1(Controller):
         Also set the input image to the new value to avoid reading every
         new cycle.
         """
-        print(self.output_data)
         for path, value in self.output_data.items():
             file = self._write_fds[path]
             file.write(value)
