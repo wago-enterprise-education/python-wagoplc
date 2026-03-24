@@ -51,7 +51,7 @@ class CTU(FB):
         self.pv = pv
         self._pv_max = 32767
 
-    def __call__(self, cu: bool = False, r: bool = False) -> None:
+    def __call__(self, cu: bool = False, r: bool = False, pv: int = 0) -> None:
         """Count up if a rising edge for cu is registered.
         
         cu: counter impulse (default False)
@@ -64,6 +64,7 @@ class CTU(FB):
 
         self.r = r
         self.cu = cu
+        self.pv = pv or self.pv
 
         self.q = self.cv >= self.pv
 
@@ -120,7 +121,7 @@ class CTUD(FB):
 
     def __call__(
             self, cu: bool = False, r: bool = False,
-            cd: bool = False, ld: bool = False) -> None:
+            cd: bool = False, ld: bool = False, pv: int = 0) -> None:
         """Count up/down if a rising edge for cu/cd is registered.
         
         cu: up-counter signal (default False)
@@ -138,6 +139,7 @@ class CTUD(FB):
             self.cv -= 1
 
         self.r = r
+        self.pv = pv or self.pv
         self.cu = cu
         self.ld = ld
         self.cd = cd
@@ -182,7 +184,7 @@ class TP(FB):
                 self.q = False
 
         self.start = start
-        self.pt = pt 
+        self.pt = pt or self.pt
 
 
 class TON(TP):
@@ -218,7 +220,7 @@ class TON(TP):
                 self.q = True
 
         self.start = start
-        self.pt = pt 
+        self.pt = pt or self.pt
 
 
 class TOF(TP):
@@ -255,7 +257,7 @@ class TOF(TP):
                 self.q = False
 
         self.start = start
-        self.pt = pt
+        self.pt = pt or self.pt
 
 
 class RS(FB):
