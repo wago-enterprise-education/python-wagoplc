@@ -3,8 +3,15 @@
 This module holds the controller factory and I/O wrapper classes
 for use by both the programmer and the library.
 """
-
 from typing import Any
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="wagoplc.log",
+    format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
+    level=logging.DEBUG
+)
 
 class Controller:
     """The controller interface and basic functionality.
@@ -13,8 +20,7 @@ class Controller:
     """
 
     def __init__(self):
-        self.input_data: dict[str, str] = {}
-        self.output_data: dict[str, str] = {}
+        self.specs = {}
 
     # The following functions read from the input image
     # or write to the output image
@@ -25,11 +31,11 @@ class Controller:
         value: Value which the selected output should be set to
         Return True if value is written, False if out does not exist.
         """
-        if output not in range(1, self.input_data[module]["specs"][DO]):
-            return False
-        
         # Read the current state to calculate the new value
-        currentValue = int(self.input_data[module][DO])
+        if (currentValue := self._get_data(DO, output, module)) is None:
+            logger.warning(f"Digital output {output} for module {module} does not exist.")
+            return False
+        currentValue = int(currentValue)
 
         # Addition or rather subtraction to the current state to switch the corresponding output
         # Least Significant Bit corresponds to digital output 1, the 4th bit corresponds to output 4
@@ -41,7 +47,7 @@ class Controller:
             currentValue = currentValue & ~mask
 
         # Write the calculated value for the new configuration to the output image
-        self.output_data[module][DO] = str(currentValue)
+        self._set_data(DO, output, module, str(currentValue))
         return True
 
     def analogWrite(self, output: int, voltage: int, module: str) -> bool:
@@ -53,7 +59,8 @@ class Controller:
         output: Analog output to be switched
         voltage: Voltage which the selected output should be set to
         """
-        if output not in range(1, self.input_data[module]["specs"][AO]):
+        if self._get_data(DO, output, module) is None:
+            logger.warning(f"Analog output {output} for module {module} does not exist.")
             return False
 
         if (voltage > 0 and voltage < 10001):
@@ -64,7 +71,7 @@ class Controller:
         # Write the voltage, taken from the calibration for the corresponding output,
         # for the voltage to the file for the output
         # When turning off, zero is written to the file        
-        self.output_data[module][AO][output] = str(voltage)
+        self._set_data(AO, output, module, str(voltage))
         return True
         
     def digitalRead(self, input: int, module: str) -> int:
@@ -72,31 +79,30 @@ class Controller:
 
         input: Digital input to be read
         """
-        value = self.input_data[module][DI]
-        num_inputs = self.input_data[module]["specs"][DI]
+        if (value := self._get_data(DI, input, module)) is None:
+            logger.warning(f"Digital input {input} for module {module} does not exist.")
+            return False
 
         # Format the current state into a binary code
         value = int(value)
+        num_inputs = self.specs[DI]
         binary_code = format(value, f"0{num_inputs}b")
-
-        # Calculate the position of the bit from the desired input
         input_bit = num_inputs - input
 
         # Return the value of the state of the desired input
         # Note: last index (read from left to right) ist the Least Significant Bit.
         return int(binary_code[input_bit]) == 1
     
-    def analogRead(self, input: int, module: str) -> int|bool:
+    def analogRead(self, input: int, module: str) -> int | bool:
         """Read analog input and return calibrated value in mV.
 
         Return False if the analog input does not exist.
         
         input: Analog input to be read
         """
-        if input not in range(1, self.input_data[module]["specs"][AI]):
+        if (voltage := self._get_data(DI, input, module)) is None:
+            logger.warning(f"Analog input {input} for module {module} does not exist.")
             return False
-        voltage = int(self.input_data[module][AI][input])
-
         return(self.calibrateIn(voltage, input))
     
     def tempRead(self, input: int, module: str) -> int:
@@ -106,13 +112,27 @@ class Controller:
 
         input: PT input to be read
         """
-        if input not in range(1, self.input_data[module]["specs"][PT]):
+        if (voltage := self._get_data(PT, input, module)) is None:
+            logger.warning(f"PT input {input} for module {module} does not exist.")
             return False
-        voltage = self.input_data[module][PT][input]
 
         # Calibrate the value and return it
         return(self.calibrateTemp(voltage, input))
+
+    def _get_data(self, io: IO, input: int, module: str) -> int | bool | None:
+        """Get raw input/output data data and return it.
     
+        Return None if the specified input does not exist.
+        """
+        raise NotImplementedError
+
+    def _set_data(self, iq: DO | AO, output: int, module: str, value: str) -> bool:
+        """Set raw output data and return True.
+
+        Return False if the specified output does not exist.
+        """
+        raise NotImplementedError
+
     def calibrateIn(self):
         raise NotImplementedError
     
@@ -175,20 +195,18 @@ class IOHandler:
         self.plc_obj.write_outputs()
     
     def read(self, io: IO):
-        module = io.module or self.plc_obj.item_num
         if isinstance(io, DI):
-            return self.plc_obj.digitalRead(io.id, module)
+            return self.plc_obj.digitalRead(io.id, io.module)
         elif isinstance(io, AI):
-            return self.plc_obj.analogRead(io.id, module)
+            return self.plc_obj.analogRead(io.id, io.module)
         elif isinstance(io, (NI, PT)):
-            return self.plc_obj.tempRead(io.id, module)
+            return self.plc_obj.tempRead(io.id, io.module)
     
     def write(self, io: IO, value: int | bool):
-        module = io.module or self.plc_obj.item_num
         if isinstance(io, DO):
-            return self.plc_obj.digitalWrite(io.id, value, module)
+            return self.plc_obj.digitalWrite(io.id, value, io.module)
         elif isinstance(io, AO):
-            return self.plc_obj.analogWrite(io.id, value, module)
+            return self.plc_obj.analogWrite(io.id, value, io.module)
 
 class IO:
     """Generic I/O superclass to store interface id."""

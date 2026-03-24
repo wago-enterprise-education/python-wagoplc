@@ -1,8 +1,7 @@
-from io import TextIOWrapper
 import logging
 import os
 
-from wagoplc.controller import Controller, DI, DO, AI, AO, PT
+from wagoplc.controller import Controller, IO, DI, DO, AI, AO, PT
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -29,28 +28,17 @@ class CC100_v1(Controller):
     SERIAL_PORT = "/dev/ttySTM1"
 
     def __init__(self):
-        self.item_num: int
         self.file_map = {
-            "pii": {
-                DI: self.DIN,
-                AI: {
-                    1: self.IN_VOLTAGE3_RAW, 2: self.IN_VOLTAGE0_RAW
-                },
-                PT: {
-                    1: self.IN_VOLTAGE13_RAW, 2: self.IN_VOLTAGE1_RAW
-                }
+            DI: self.DIN,
+            AI: {
+                1: self.IN_VOLTAGE3_RAW, 2: self.IN_VOLTAGE0_RAW
             },
-            "piq": {
-                DO: self.DOUT_DATA,
-                AO: {
-                    1: self.OUT_VOLTAGE1_RAW, 2: self.OUT_VOLTAGE2_RAW,
-                    "1_power": self.OUT_VOLTAGE1_POWERDOWN,
-                    "2_power": self.OUT_VOLTAGE2_POWERDOWN 
-                }
+            PT: {
+                1: self.IN_VOLTAGE13_RAW, 2: self.IN_VOLTAGE1_RAW
             },
-            "read_once": {
-                "calib": self.CALIB_DATA,
-                DO: self.DOUT_DATA
+            DO: self.DOUT_DATA,
+            AO: {
+                1: self.OUT_VOLTAGE1_RAW, 2: self.OUT_VOLTAGE2_RAW,
             }
         }
         self.specs = {
@@ -61,36 +49,45 @@ class CC100_v1(Controller):
             AO: 2
         }
 
-        self.input_data: dict[str, str] = {self.item_num: {"specs": self.specs, AI: {}, PT: {}}}
-        # Add all output paths to output image for reset
-        self.output_data: dict[str, str] = {self.item_num: {AO: {}}}
+        self.input_data: dict[str, str] = {}
+        self.output_data: dict[str, str] = {}
+
+    def get_write_paths(self) -> tuple[str]:
+        return (
+            self.DOUT_DATA,
+            self.SERIAL_PORT,
+            self.OUT_VOLTAGE1_POWERDOWN,
+            self.OUT_VOLTAGE2_POWERDOWN,
+            self.OUT_VOLTAGE1_RAW,
+            self.OUT_VOLTAGE2_RAW
+        )
+
+    def get_read_paths(self) -> tuple[str]:
+        return (
+            self.DIN,
+            self.IN_VOLTAGE0_RAW,
+            self.IN_VOLTAGE3_RAW,
+            self.IN_VOLTAGE13_RAW,
+            self.IN_VOLTAGE1_RAW,
+        )
+
+    def get_read_once_paths(self) -> tuple[str]:
+        return (
+            self.CALIB_DATA,
+            self.DOUT_DATA
+        )
 
     def init_fds(self):
         """Get system file descriptors for the CC100 v1."""
-        self._read_fds: dict[str, TextIOWrapper] = {}
-        self._write_fds: dict[str, TextIOWrapper] = {}
-        
-        for loc in self.file_map["pii"].values():
-            if isinstance(loc, dict):
-                for path in loc.values():
-                    self._read_fds[path] = open(TEST_DATA + path, "r")
-            else:
-                self._read_fds[loc] = open(TEST_DATA + loc, "r")
-
+        self._read_fds = {path: open(TEST_DATA + path, "r") for path in self.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
         # in write mode.  Otherwise, it would be necessary to use update file mode
         # (r+), which is too costly.
-        for key, loc in self.file_map["read_once"].items():
-            with open(TEST_DATA + loc, "r") as f:
-                self.input_data[self.item_num][key] = f.read()
-
-        for loc in self.file_map["piq"].values():
-            if isinstance(loc, dict):
-                for path in loc.values():
-                    self._write_fds[path] = open(TEST_DATA + path, "w")
-            else:
-                self._write_fds[loc] = open(TEST_DATA + loc, "w")
+        for path in self.get_read_once_paths():
+            with open(TEST_DATA + path, "r") as f:
+                self.input_data[path] = f.read()
+        self._write_fds = {path: open(TEST_DATA + path, "w") for path in self.get_write_paths()}
 
     def analogWrite(self, output: int, voltage: int, module: str) -> bool:
         """Switch the output to the specified voltage.
@@ -102,9 +99,9 @@ class CC100_v1(Controller):
         voltage: Voltage which the selected output should be set to
         """
         if output == 1:
-            self.output_data[self.item_num][AO]["1_power"] = "0"
+            self.output_data[self.OUT_VOLTAGE1_POWERDOWN] = "0"
         elif output == 2:
-            self.output_data[self.item_num][AO]["2_power"] = "0"
+            self.output_data[self.OUT_VOLTAGE2_POWERDOWN] = "0"
         super().analogWrite(output, voltage, module)
 
     # Output calibration from: https://github.com/WAGO/cc100-howtos/blob/main/HowTo_Access_Onboard_IO/accessIO_CC100.py
@@ -113,7 +110,7 @@ class CC100_v1(Controller):
 
         value: the row to read
         """
-        calib_data = self.input_data["calib"].strip().split("\n")[1:]
+        calib_data = self.input_data[self.CALIB_DATA].strip().split("\n")[1:]
         return calib_data[value].rstrip().split(' ', 4)
 
     def calcCalibrate(self, val_uncal: int, calib: int)-> int:
@@ -176,37 +173,34 @@ class CC100_v1(Controller):
         # Return the calculated value in °C
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
+    def _get_data(self, io: IO, input: int, module: str) -> int | bool | None:
+        if input not in range(1, self.specs[io]):
+            return None
+        path = self.file_map[io]
+        if isinstance(path, dict):
+            path = path[input]
+        return self.input_data[path]
+
+    def _set_data(self, iq: DO | AO, output: int, module: str, value: str) -> bool:
+        if output not in range(1, self.specs[iq]):
+            return False
+        path = self.file_map[iq]
+        if isinstance(path, dict):
+            path = path[input]
+        self.output_data[path] = value
+
     def read_inputs(self) :
         """Read compact controller inputs."""
         print(self.input_data)
         # Fill database
-        file_contents = {}
         for path, file in self._read_fds.items():
             file_content = file.read()
             file.seek(0)
             if file_content:
-                file_contents[path] = file_content
+                self.input_data[path] = file_content
             else:
                 # Did not read correct value; use the old one for a cycle
                 pass
-
-        # create input image
-        input_data = {}
-        for ii, loc in self.file_map["pii"].items():
-            if isinstance(loc, dict):
-                data = {}
-                for num, path in loc.items():
-                    content = file_contents.get(path)
-                    if content is not None:
-                        data[num] = content
-                # Update directly to preserve unchanged values
-                self.input_data[self.item_num][ii].update(data)
-            else:
-                content = file_contents.get(loc)
-                if content is not None:
-                    input_data[ii] = content
-
-        self.input_data[self.item_num].update(input_data)
 
     def write_outputs(self):
         """Write compact controller outputs from output image.
@@ -216,22 +210,11 @@ class CC100_v1(Controller):
         new cycle.
         """
         print(self.output_data)
-        file_contents = {}
-        for ii, content in self.output_data[self.item_num].items():
-            if isinstance(content, dict):
-                for num, value in content.items():
-                    path = self.file_map["piq"][ii][num]
-                    file_contents[path] = value
-            else:
-                path = self.file_map["piq"][ii]
-                file_contents[path] = content
-                # Take digital output value as input for next cycle
-                self.input_data[self.item_num][ii] = content
-        
-        for path, value in file_contents.items():
+        for path, value in self.output_data.items():
             file = self._write_fds[path]
             file.write(value)
             file.seek(0)
+            self.input_data[path] = value
 
     def reset(self) -> None:
         """Reset the output interfaces and close the file descriptors."""
