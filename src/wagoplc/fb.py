@@ -229,7 +229,7 @@ class TOF(TP):
         pt: the delay time
         """
         super().__init__(pt=pt)
-        self.q = False
+        self.q = True
 
     def __call__(self, start: bool = False, pt: float = 0.0):
         """Start the delay.
