@@ -6,6 +6,8 @@ for use by both the programmer and the library.
 from typing import Any
 import logging
 
+from wagoplc.fb import TP
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename="wagoplc.log",
@@ -193,6 +195,16 @@ class IOHandler:
             else:
                 self.state_vars[var] = value
         self.plc_obj.write_outputs()
+
+    def update_timers(self, stop_duration: int):
+        """Update start time of timer fbs, as program execution was paused."""
+        def update_timer(var):
+            name, value = var
+            if isinstance(value, TP):
+                if value.start_time is not None:
+                    value.start_time += stop_duration
+            return name, value
+        self.state_vars = dict(map(update_timer, self.state_vars.items()))
     
     def read(self, io: IO):
         if isinstance(io, DI):

@@ -4,6 +4,7 @@ from typing import Any
 import importlib
 import inspect
 import logging
+import signal
 import time
 import heapq
 
@@ -18,6 +19,15 @@ logging.basicConfig(
     format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
     level=logging.DEBUG
 )
+
+# Record time when switch is moved to 'stop' via signal handler
+stop_time = 0
+def stop_handler(signum, frame):
+    logger.debug(f"Caught runtime signal, saving stop time")
+    global stop_time
+    stop_time = time.time()
+    return
+signal.signal(signal.SIGUSR1, stop_handler)
 
 class Tasks:
     """Manage task registration per program.
@@ -154,6 +164,7 @@ class Scheduler:
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
+        global stop_time
         try:
             if not self.tasks:
                 return
@@ -173,20 +184,27 @@ class Scheduler:
                         heapq.heappush(ready, t)
 
                 while ready:
-                    task = heapq.heappop(ready)
-                    print(f"Running task {task.name} with priority {task.priority} (every {task.cycle_ms} ms)")
+                    task: Task = heapq.heappop(ready)
+                    print(f"Running task {task.name} with priority {task.priority} at {task.next_run} (every {task.cycle_ms} ms)")
 
                     start_perf = time.perf_counter()
                     # Run task cycle
-                    task_state = task.cycle()
-                    duration_ms = (time.perf_counter() - start_perf) * 1000.0
+                    task.cycle()
+                    
+                    stop_duration = 0
+                    if stop_time:
+                        # Stop switch was pressed during cycle, reset time
+                        stop_duration = time.time() - stop_time
+                        task.iohandler.update_timers(stop_duration)
+                        stop_time = 0
+                    duration_ms = (time.perf_counter() - start_perf - stop_duration) * 1000.0
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeoutError(
                             f"Task '{task.name}' has been caught by the watchdog: "
                             f"{duration_ms:.3f} ms > {task.watchdog_ms:.3f} ms"
                         )
-
-                    task.next_run += task._cycle_s
+                    # Next run is scheduled after cycle time passes
+                    task.next_run = time.time() + (task.cycle_ms / 1000.0)
 
                 time.sleep(0.0005)
         except Exception as e:
@@ -225,7 +243,6 @@ class Task:
         elif cycle_ms > 10000:
             cycle_ms = 10000
         self.cycle_ms = cycle_ms
-        self._cycle_s = cycle_ms / 1000.0
 
         if priority not in range(1, 16):
             raise ValueError("priority must be between 1 and 15.")

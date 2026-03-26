@@ -159,7 +159,7 @@ class TP(FB):
         self.start = False
         self.et = 0.0
         self.q = False
-        self._start_time = None
+        self.start_time = None
 
     def __call__(self, start: bool = False, pt: float = 0.0):
         """Fire an impulse.
@@ -169,17 +169,17 @@ class TP(FB):
         """
         if _rising_edge(start, self.start):
             # Take the time
-            self._start_time = time.time()
+            self.start_time = time.time()
             self.q = True
-        elif self._start_time:
+        elif self.start_time:
             # Timer is running
             now = time.time()
-            diff = now - self._start_time
+            diff = now - self.start_time
             self.et = diff
             if diff >= self.pt:
                 # Timer has finished; reset variables
                 self.start = False
-                self._start_time = None
+                self.start_time = None
                 self.et = 0.0
                 self.q = False
 
@@ -204,17 +204,17 @@ class TON(TP):
         """
         if _rising_edge(start, self.start):
             # Take the time
-            self._start_time = time.time()
+            self.start_time = time.time()
         elif _falling_edge(start, self.start):
             # Impulse is low, reset timer
             self.start = False
-            self._start_time = None
+            self.start_time = None
             self.et = 0.0
             self.q = False
-        elif self._start_time:
+        elif self.start_time:
             # Timer is running
             now = time.time()
-            diff = now - self._start_time
+            diff = now - self.start_time
             self.et = diff
             if diff >= self.pt:
                 self.q = True
@@ -241,17 +241,17 @@ class TOF(TP):
         """
         if _rising_edge(start, self.start):
             # Take the time
-            self._start_time = time.time()
+            self.start_time = time.time()
         elif _falling_edge(start, self.start):
             # Impulse is low, reset timer
             self.start = False
-            self._start_time = None
+            self.start_time = None
             self.et = 0.0
             self.q = True
-        elif self._start_time:
+        elif self.start_time:
             # Timer is running
             now = time.time()
-            diff = now - self._start_time
+            diff = now - self.start_time
             self.et = diff
             if diff >= self.pt:
                 self.q = False
