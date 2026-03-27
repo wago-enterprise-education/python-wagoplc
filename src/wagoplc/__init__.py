@@ -1,3 +1,16 @@
+"""The wagoplc library.
+
+Packages:
+- cc100: all functionality specific to the CC100 controller
+Modules:
+- constants: all top-level constants
+- controller: controller superclass and I/O classes
+- exceptions: all library exceptions
+- fb: standard library function blocks
+- read_config: read the configuration file
+- tasks: task management for all controllers
+"""
+
 import sys
 
 from wagoplc.controller import DI, DO, AI, AO

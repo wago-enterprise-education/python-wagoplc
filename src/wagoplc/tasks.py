@@ -1,3 +1,11 @@
+"""wagoplc.tasks
+
+This module holds the classes responsible for task management.
+- Tasks: manage task and variable collection in an application script
+- Task: a single task
+- Scheduler: read the configuration and run the tasks in cycles
+"""
+
 from collections.abc import Callable
 from typing import Any
 
@@ -8,10 +16,10 @@ import signal
 import time
 import heapq
 
-from wagoplc.controller import DI, DO, AI, AO, IO, IOHandler
+from wagoplc.controller import IO, IOHandler
 from wagoplc.cc100 import CC100_9301, CC100_9401, CC100_9403
-from wagoplc.exceptions import NotDefinedError, WatchdogTimeoutError
-from wagoplc.read_config import read_config, InvalidConfigError
+from wagoplc.exceptions import NotDefinedError, WatchdogTimeoutError, InvalidConfigError
+from wagoplc.read_config import read_config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -36,7 +44,6 @@ def cont_handler(signum, frame):
     global stop_time, stop_duration, task
     if task is not None:
           stop_duration = time.time() - stop_time
-          print(stop_time)
           task.iohandler.update_timers(stop_duration)
     return
 signal.signal(signal.SIGUSR1, stop_handler)
@@ -106,9 +113,22 @@ class Tasks:
 
 
 class Scheduler:
-    """A task scheduler."""
+    """A task scheduler.
+    
+    - run_tasks: run the collected tasks
+    """
     
     def __init__(self, tasks_object: Tasks | None):
+        """Configure the scheduler.
+
+        Read all configuration from the tasks object
+        and the configuration file. Raise InvalidConfigError
+        if there appear to be any duplicate variable mappings.
+        Get a controller object using the item number retrieved from
+        the configuration.
+
+        tasks_object: retrieved from the main script, may be None
+        """
         # List of PLC tasks
         self.tasks: list[Task] = []
         # Map of variables
@@ -220,7 +240,10 @@ class Scheduler:
 
 
 class Task:
-    """Represent a PLC task."""
+    """Represent a PLC task.
+    
+    - cycle: one task cycle
+    """
 
     def __init__(
         self,
@@ -232,7 +255,12 @@ class Task:
         priority: int = 15,
         watchdog_ms: int = 400000,      
         sensitivity: int = 0):
-        """
+        """Configure the task.
+
+        Raise ValueError if priority or sensitivity are not within the
+        allowed ranges. Raise NotDefinedError via _get_input_vars if
+        there are undefined variables in the input parameters.
+
         name:        task name
         entry:       task function
         cycle_ms:    call cycle time in ms
@@ -274,7 +302,7 @@ class Task:
     def __lt__(self, other: Task) -> bool:
         return self.priority < other.priority
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Task(name={self.name}, entry={self.cycle_func}, cycle_ms={self.cycle_ms}, priority={self.priority}, watchdog_ms={self.watchdog_ms}, sensitivity={self.sensitivity})"
 
     def _get_input_vars(self, var_mapping: dict[str, Any]) -> dict[str, Any]:
@@ -295,7 +323,7 @@ class Task:
             return False
         return dict(filter(is_input, var_mapping.items()))
 
-    def cycle(self):
+    def cycle(self) -> None:
         """Run one task cycle."""
         # Get input image (variables mapped to values)
         input_image = self.iohandler.get_input_image()

@@ -43,51 +43,6 @@ in separate areas of the CoDeSys development system.
 
 The following snippets show how the same could be programmed using this library.
 
-### Configuration directly in the script
-
-```python
-# main.py
-
-from wagoplc import DI, main, Tasks
-from wagoplc.fb import RS
-
-tasks = Tasks()
-
-# Define the task variables
-@tasks.setup
-def setup():
-    oLight_On_RS = RS()
-    xSwitch = DI(1)
-    xSwitch_off = DI(2)
-    xLight = DO(1)
-
-    return locals()
-
-# Register the task
-@tasks.register(
-    name="Control the light",
-    cycle_ms="10"
-)
-def light_ctrl(oLight_On_RS: RS, xSwitch: bool, xSwitch_off: bool, iStatus: int):
-    oLight_On_RS(s=xTSwitch, r=xSwitch_off)
-    match iStatus:
-        case 0:
-            if oLight_On_RS.q:
-                xLight = True
-                iStatus = 1
-        case 1:
-            if not oLight_On_RS.q:
-                xLight = False
-                iStatus = 0
-
-    # Return the variables for processing
-    return dict(oLight_On_RS=oLight_On_RS, xLight=xLight, iStatus=iStatus)
-
-# Let the library take over
-if __name__ == "__main__":
-    main(tasks)
-```
-
 ### Configuration in the config file
 
 ```python
@@ -149,6 +104,56 @@ tasks:
     priority:
     sensitivity:
     watchdog_ms:
+```
+
+### Configuration directly in the script
+
+```python
+# main.py
+
+from wagoplc import DI, main, Tasks
+from wagoplc.fb import RS
+
+tasks = Tasks()
+
+# Define the task variables
+@tasks.setup
+def setup():
+    oLight_On_RS = RS()
+    xSwitch = DI(1)
+    xSwitch_off = DI(2)
+    xLight = DO(1)
+
+    return locals()
+
+# Register the task
+@tasks.register(
+    name="Control the light",
+    cycle_ms="10"
+)
+def light_ctrl(oLight_On_RS: RS, xSwitch: bool, xSwitch_off: bool, iStatus: int):
+    oLight_On_RS(s=xTSwitch, r=xSwitch_off)
+    match iStatus:
+        case 0:
+            if oLight_On_RS.q:
+                xLight = True
+                iStatus = 1
+        case 1:
+            if not oLight_On_RS.q:
+                xLight = False
+                iStatus = 0
+
+    # Return the variables for processing
+    return dict(oLight_On_RS=oLight_On_RS, xLight=xLight, iStatus=iStatus)
+
+# Let the library take over
+if __name__ == "__main__":
+    main(tasks)
+```
+
+```yaml
+# controller.yaml -- needs to contain at least the controller item number
+itemNumber: 751-9301
 ```
 
 The WAGO CC100 VS Code extension will automatically generate the proper config-file layout for your

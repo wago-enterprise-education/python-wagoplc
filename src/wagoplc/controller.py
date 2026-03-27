@@ -2,6 +2,10 @@
 
 This module holds the controller factory and I/O wrapper classes
 for use by both the programmer and the library.
+
+- Controller: the controller base class from which every controller version inherits
+- IOHandler: handle the I/O wrapper classes and state variables for a task
+- IO: base class for an I/O interface, child classes: DI, DO, AI, AO, PT, NI, DIO, AIO
 """
 from typing import Any
 import logging
@@ -19,6 +23,19 @@ class Controller:
     """The controller interface and basic functionality.
     
     Needs to be implemented by every PLC added to the library.
+    Each I/O function takes a module parameter referring to the
+    controller module. It is forwarded to the controller specific
+    _get_data and _set_data functions.
+    
+    - digitalWrite: write the digital outputs
+    - analogWrite: write the analog outputs
+    - digitalRead: read the digital inputs
+    - analogRead: read the analog inputs
+    - tempRead: read the temperature inputs
+    - calibrateIn, calibrateOut, calibrateTemp: calibrate analog values
+    - read_inputs: read and store controller inputs
+    - write_outputs: write stored values to controller outputs
+    - reset: reset all controller outputs
     """
 
     def __init__(self):
@@ -158,7 +175,14 @@ class Controller:
 
 
 class IOHandler:
-    """Handle the I/O wrapper classes."""
+    """Handle the I/O wrapper classes.
+    
+    - get_input_image: get an input image (variables -> values) for a task cycle
+    - process_output_image: process output variables of the cycle function and write outputs
+    - update_timers: update state of running timers if the program was stopped for a while
+    - read: read from a specific input interface
+    - write: write to a specific output interface
+    """
 
     def __init__(self, plc_object: Controller, input_mapping: dict[str, Any], var_mapping: dict[str, Any]):
         self.plc_obj = plc_object
@@ -222,7 +246,13 @@ class IOHandler:
 
 class IO:
     """Generic I/O superclass to store interface id."""
+
     def __init__(self, id: int, module: str = ""):
+        """Save interface and module numbers.
+
+        id: interface number
+        module: module number
+        """
         if not isinstance(id, int):
             raise ValueError("Expected and integer id.")
         self.id = id

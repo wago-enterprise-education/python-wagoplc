@@ -1,3 +1,8 @@
+"""wagoplc.constants
+
+Top-level constants.
+"""
+
 # path of controller configuration
 YAML_CONFIG = "controller.yaml"
 

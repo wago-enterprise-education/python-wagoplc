@@ -1,3 +1,11 @@
+"""wagoplc.read_config
+
+Read the configuration file.
+- read_config: read and validate the configuration
+- validate_task: validate schema of tasks section to
+ensure all parameters are present.
+"""
+
 from schema import And, Or, Schema, SchemaError, Regex
 from typing import Any
 import importlib
@@ -7,15 +15,15 @@ import yaml
 
 from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO
 from wagoplc.constants import YAML_CONFIG, INPUT, OUTPUT
-
-class InvalidConfigError(Exception):
-    """Throw when an invalid configuration was given."""
-    pass
+from wagoplc.exceptions import InvalidConfigError
 
 def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
     """Read the configuration file.
     
     Return the tasks, the I/O mapping and the item number.
+    Raise FileNotFoundError if the configuration file does not exist.
+    Raise InvalidConfigError if the configuration does not include the itemNumber
+    field, or if a function block used does not exist.
     """
     if not os.path.exists(YAML_CONFIG):
         raise FileNotFoundError("Configfile does not exist.")
@@ -83,8 +91,8 @@ def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
                             elif interface == "ni":
                                 var_mapping[value] = NI(index, module)
                             elif interface == "dio":
+                                # Define type by section name
                                 type = INPUT if section_name == "pii" else OUTPUT
-                                print(type)
                                 var_mapping[value] = DIO(index, module, type)
                             elif interface == "aio":
                                 type = INPUT if section_name == "pii" else OUTPUT
