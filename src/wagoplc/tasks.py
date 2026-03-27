@@ -20,14 +20,27 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
+stop_time = stop_duration = 0
+task = None
+
 # Record time when switch is moved to 'stop' via signal handler
-stop_time = 0
 def stop_handler(signum, frame):
     logger.debug(f"Caught runtime signal, saving stop time")
     global stop_time
-    stop_time = time.time()
+    stop_time = time.time() + 0.0001
+    return
+
+# Get stop duration and update running timers before resuming
+def cont_handler(signum, frame):
+    logger.debug(f"Resuming")
+    global stop_time, stop_duration, task
+    if task is not None:
+          stop_duration = time.time() - stop_time
+          print(stop_time)
+          task.iohandler.update_timers(stop_duration)
     return
 signal.signal(signal.SIGUSR1, stop_handler)
+signal.signal(signal.SIGCONT, cont_handler)
 
 class Tasks:
     """Manage task registration per program.
@@ -164,7 +177,7 @@ class Scheduler:
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
-        global stop_time
+        global stop_time, stop_duration, task
         try:
             if not self.tasks:
                 return
@@ -177,27 +190,20 @@ class Scheduler:
             logger.info("Starting tasks execution")
             while True:
                 now = time.time()
-                ready = []
+                ready: list[Task] = []
 
                 for t in self.tasks:
                     if now >= t.next_run:
                         heapq.heappush(ready, t)
-
                 while ready:
-                    task: Task = heapq.heappop(ready)
+                    task = heapq.heappop(ready)
                     print(f"Running task {task.name} with priority {task.priority} at {task.next_run} (every {task.cycle_ms} ms)")
 
                     start_perf = time.perf_counter()
                     # Run task cycle
                     task.cycle()
-                    
-                    stop_duration = 0
-                    if stop_time:
-                        # Stop switch was pressed during cycle, reset time
-                        stop_duration = time.time() - stop_time
-                        task.iohandler.update_timers(stop_duration)
-                        stop_time = 0
                     duration_ms = (time.perf_counter() - start_perf - stop_duration) * 1000.0
+                    stop_duration = 0
                     if duration_ms > task.watchdog_ms:
                         raise WatchdogTimeoutError(
                             f"Task '{task.name}' has been caught by the watchdog: "

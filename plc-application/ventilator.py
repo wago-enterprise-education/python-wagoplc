@@ -6,6 +6,8 @@ def fan(xTaster, oLuefter_Einschalt_TON: TON,
     oLuefter_Einschalt_TON(start=xLuefterAn, pt=10)
     oLuefter_Ausschalt_TOF(start=xLuefterAus, pt=15)
 
+    print(iStatus)
+
     match iStatus:
         case 0: # Luefter ist aus
             xLuefter = False
