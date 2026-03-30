@@ -13,14 +13,18 @@ Modules:
 
 import sys
 
-from wagoplc.controller import DI, DO, AI, AO
-from wagoplc.tasks import Tasks, Scheduler
 from wagoplc.constants import SCRIPT_PATH
+# All usable interfaces
+from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO
+from wagoplc.read_config import read_config
+from wagoplc.tasks import Tasks, Scheduler
 
 def main(tasks_object: Tasks | None = None):
-    """
-    Main runtime loop to run the given tasks in cycles.
+    """Main entry point to invoke the scheduler.
+
+    tasks_object: a task registrator given from the main script
     """
     sys.path.append(SCRIPT_PATH)
-    scheduler = Scheduler(tasks_object)
+    tasks, _, plc_obj = read_config(tasks_object)
+    scheduler = Scheduler(tasks, plc_obj)
     scheduler.run_tasks()

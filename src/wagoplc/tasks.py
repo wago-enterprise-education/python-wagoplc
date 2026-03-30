@@ -3,23 +3,20 @@
 This module holds the classes responsible for task management.
 - Tasks: manage task and variable collection in an application script
 - Task: a single task
-- Scheduler: read the configuration and run the tasks in cycles
+- Scheduler: task scheduler
 """
 
 from collections.abc import Callable
 from typing import Any
 
-import importlib
 import inspect
 import logging
 import signal
 import time
 import heapq
 
-from wagoplc.controller import IO, IOHandler
-from wagoplc.cc100 import CC100_9301, CC100_9401, CC100_9403
+from wagoplc.controller import IO, IOHandler, Controller
 from wagoplc.exceptions import NotDefinedError, WatchdogTimeoutError, InvalidConfigError
-from wagoplc.read_config import read_config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -118,82 +115,14 @@ class Scheduler:
     - run_tasks: run the collected tasks
     """
     
-    def __init__(self, tasks_object: Tasks | None):
+    def __init__(self, tasks: list[Task], plc_obj: Controller) -> None:
         """Configure the scheduler.
 
-        Read all configuration from the tasks object
-        and the configuration file. Raise InvalidConfigError
-        if there appear to be any duplicate variable mappings.
-        Get a controller object using the item number retrieved from
-        the configuration.
-
-        tasks_object: retrieved from the main script, may be None
+        tasks: list of task objects to run
+        plc_obj: the controller object
         """
-        # List of PLC tasks
-        self.tasks: list[Task] = []
-        # Map of variables
-        self.map: dict[str, Any]
-
-        self.tasks_config, config_map, controller_id = read_config()
-        if tasks_object is not None:
-            config_map.update(tasks_object.map)
-        # Catch duplicate I/O mappings
-        vars = list(config_map.values())
-        duplicate_ios = {
-            name: str(value) for name, value in config_map.items()
-            if isinstance(value, IO) and vars.count(value) > 1
-        }
-        if duplicate_ios:
-            dups_sorted = dict(sorted(duplicate_ios.items(), key=lambda item: item[1]))
-            raise InvalidConfigError(f"Duplicate I/O mappings in configuration: {dups_sorted}")
-        self.map = config_map
-
-        self.plc_obj = self._get_controller(controller_id)
-        self._read_tasks(tasks_object)
-
-    def _read_tasks(self, tasks_object: Tasks | None = None):
-        """Read tasks from configuration and tasks object in script.
-        
-        tasks_object: task registrator passed from script (default None)
-        """
-        # Add decorated task
-        if tasks_object is not None:
-            if task := tasks_object.task:
-                task["plc_obj"] = self.plc_obj
-                self.tasks.append(Task(**task))
-
-        # Get task definitions from config and retrieve the task function
-        for task in self.tasks_config:
-            entry: str = task["entry"]
-            module_name, func_name = entry.rsplit(".")
-            try:
-                module = importlib.import_module(module_name)
-                task["entry"] = getattr(module, func_name)                
-                self.tasks.append(Task(self.plc_obj, self.map, **task))
-                logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
-            except ModuleNotFoundError, AttributeError:
-                raise NotDefinedError(f"Function '{entry}' for task '{task["name"]}' not defined!")
-
-    def _get_controller(self, controller_id: str):
-        """Get controller object by item number.
-        
-        controller_id: item number
-        """
-        model, version = controller_id.split("-")
-        model = int(model)
-        version = int(version)
-        
-        if model == 751:
-            if version == 9301:
-                plc_obj = CC100_9301()
-            elif version == 9401:
-                plc_obj = CC100_9401()
-            elif version == 9403:
-                plc_obj = CC100_9403()
-            plc_obj.init_fds()
-
-        logger.info(f"Using controller with item number '{controller_id}'")
-        return plc_obj
+        self.tasks = tasks
+        self.plc_obj = plc_obj
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""

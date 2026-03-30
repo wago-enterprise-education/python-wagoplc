@@ -9,29 +9,62 @@ ensure all parameters are present.
 from schema import And, Or, Schema, SchemaError, Regex
 from typing import Any
 import importlib
+import logging
 import os
 import sys
 import yaml
 
-from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO
+from wagoplc.cc100 import CC100_9301, CC100_9401, CC100_9403
+from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO, IO, Controller
 from wagoplc.constants import YAML_CONFIG, INPUT, OUTPUT
 from wagoplc.exceptions import InvalidConfigError
+from wagoplc.tasks import Task, Tasks
 
-def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="wagoplc.log",
+    format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
+    level=logging.DEBUG
+)
+
+def _get_controller(controller_id: str):
+    """Get controller object by item number.
+    
+    controller_id: item number
+    """
+    model, version = controller_id.split("-")
+    model = int(model)
+    version = int(version)
+    
+    if model == 751:
+        if version == 9301:
+            plc_obj = CC100_9301()
+        elif version == 9401:
+            plc_obj = CC100_9401()
+        elif version == 9403:
+            plc_obj = CC100_9403()
+        plc_obj.init_fds()
+
+    logger.info(f"Using controller with item number '{controller_id}'")
+    return plc_obj
+
+def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, Any], Controller]:
     """Read the configuration file.
     
-    Return the tasks, the I/O mapping and the item number.
+    Return the tasks, the I/O mapping and the controller object.
     Raise FileNotFoundError if the configuration file does not exist.
     Raise InvalidConfigError if the configuration does not include the itemNumber
-    field, or if a function block used does not exist.
+    field, a function block or a task entry point do not exist, or if there are duplicates
+    in the variable mapping.
     """
     if not os.path.exists(YAML_CONFIG):
         raise FileNotFoundError("Configfile does not exist.")
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
     if not "itemNumber" in config:
-        raise InvalidConfigError(f"No ItemNumber was given.")
+        raise InvalidConfigError(f"The field 'itemNumber' is missing.")
     
+    # Get state variables
     var_mapping = {}
     if "vars" in config:
         # TODO: Validate schema
@@ -59,46 +92,78 @@ def read_config() -> tuple[list[dict[str, int | str]], dict[str, Any], str]:
                 value = var["value"]
             var_mapping[var["name"]] = value
     
+    # Get task definitions
     tasks = []
+    plc_obj = _get_controller(config["itemNumber"])
+
+    # Add decorated task
+    if tasks_obj is not None:
+        if task := tasks_obj.task:
+            task.update({"plc_obj": plc_obj})
+            tasks.append(Task(**task))
+
     if "tasks" in config:
         validate_task(config)
         # Filter out None values
         for task in config["tasks"]:
             # Filter out None values
-            tasks.append(dict(filter(
-                lambda p: p[1] is not None, task.items()
-            )))
+            task = {k: v for k, v in task.items() if v is not None}
+            entry: str = task["entry"]
+            module_name, func_name = entry.rsplit(".")
+            # Get task definitions from config and retrieve the task function
+            try:
+                module = importlib.import_module(module_name)
+                task["entry"] = getattr(module, func_name)                
+                tasks.append(Task(plc_obj, var_mapping, **task))
+                logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
+            except ModuleNotFoundError, AttributeError:
+                raise InvalidConfigError(f"Function '{entry}' for task '{task["name"]}' not defined!")
 
+
+    # Get I/O mapping
     if "io_mapping" in config:
         io_mapping = config["io_mapping"]
         for module, sections in io_mapping.items():
             for section_name, section in sections.items():
                 if section_name in {"pii", "piq"}:
-                    for key, value in section.items():
-                        if value:
-                            interface = "".join(g for g in key if g.isalpha()) 
-                            index = int(key.removeprefix(interface))
+                    for id, var in section.items():
+                        if var:
+                            # Separate interface name from number
+                            interface = "".join(g for g in id if g.isalpha()) 
+                            index = int(id.removeprefix(interface))
                             if interface == "di":
-                                var_mapping[value] = DI(index, module)    
+                                var_mapping[var] = DI(index, module)    
                             elif interface == "do":
-                                var_mapping[value] = DO(index, module)
+                                var_mapping[var] = DO(index, module)
                             elif interface == "ai":
-                                var_mapping[value] = AI(index, module)
+                                var_mapping[var] = AI(index, module)
                             elif interface == "ao":
-                                var_mapping[value] = AO(index, module)
+                                var_mapping[var] = AO(index, module)
                             elif interface == "pt":
-                                var_mapping[value] = PT(index, module)
+                                var_mapping[var] = PT(index, module)
                             elif interface == "ni":
-                                var_mapping[value] = NI(index, module)
+                                var_mapping[var] = NI(index, module)
                             elif interface == "dio":
                                 # Define type by section name
                                 type = INPUT if section_name == "pii" else OUTPUT
-                                var_mapping[value] = DIO(index, module, type)
+                                var_mapping[var] = DIO(index, module, type)
                             elif interface == "aio":
                                 type = INPUT if section_name == "pii" else OUTPUT
-                                var_mapping[value] = AIO(index, module, type)
+                                var_mapping[var] = AIO(index, module, type)
+    
+    if tasks_obj is not None:
+        var_mapping.update(tasks_obj.map)
+    # Catch duplicate I/O mappings
+    vars = list(var_mapping.values())
+    duplicate_ios = {
+        name: str(value) for name, value in var_mapping.items()
+        if isinstance(value, IO) and vars.count(value) > 1
+    }
+    if duplicate_ios:
+        dups_sorted = dict(sorted(duplicate_ios.items(), key=lambda item: item[1]))
+        raise InvalidConfigError(f"Duplicate I/O mappings in configuration: {dups_sorted}")
 
-    return tasks, var_mapping, config["itemNumber"]
+    return tasks, var_mapping, plc_obj
 
 def validate_task(config):
     "Validate task schema."
