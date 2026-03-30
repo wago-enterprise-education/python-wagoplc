@@ -97,11 +97,12 @@ class CC100_v1(Controller):
         output: Analog output to be switched
         voltage: Voltage which the selected output should be set to
         """
+        # TODO: Why is this needed?
         if output == 1:
             self.output_data[self.OUT_VOLTAGE1_POWERDOWN] = "0"
         elif output == 2:
             self.output_data[self.OUT_VOLTAGE2_POWERDOWN] = "0"
-        super().analogWrite(output, voltage, module)
+        return super().analogWrite(output, voltage, module)
 
     # Output calibration from: https://github.com/WAGO/cc100-howtos/blob/main/HowTo_Access_Onboard_IO/accessIO_CC100.py
     def getCalibrationData(self, value: int) -> list[str]:
@@ -173,15 +174,18 @@ class CC100_v1(Controller):
         return (self.calcCalibrate(value, cal_Temp)-1000)/(3.91)
 
     def _get_data(self, io: IO, input: int, module: str) -> int | bool | None:
-        if input not in range(1, self.specs[io]):
+        if input not in range(1, self.specs[io] + 1):
             return None
         path = self.file_map[io]
         if isinstance(path, dict):
             path = path[input]
-        return self.input_data[path]
+        if path in self.input_data:
+            return self.input_data[path]
+        # For outputs
+        return -1
 
     def _set_data(self, iq: DO | AO, output: int, module: str, value: str) -> bool:
-        if output not in range(1, self.specs[iq]):
+        if output not in range(1, self.specs[iq] + 1):
             return False
         path = self.file_map[iq]
         if isinstance(path, dict):

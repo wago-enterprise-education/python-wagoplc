@@ -78,7 +78,7 @@ class Controller:
         output: Analog output to be switched
         voltage: Voltage which the selected output should be set to
         """
-        if self._get_data(DO, output, module) is None:
+        if self._get_data(AO, output, module) is None:
             logger.warning(f"Analog output {output} for module {module} does not exist.")
             return False
 
@@ -119,10 +119,10 @@ class Controller:
         
         input: Analog input to be read
         """
-        if (voltage := self._get_data(DI, input, module)) is None:
+        if (voltage := self._get_data(AI, input, module)) is None:
             logger.warning(f"Analog input {input} for module {module} does not exist.")
             return False
-        return(self.calibrateIn(voltage, input))
+        return(self.calibrateIn(int(voltage), input))
     
     def tempRead(self, input: int, module: str) -> int:
         """Read PT input and return calibrated value in °C.

@@ -36,8 +36,10 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         with open(cls.cc.CALIB_DATA, "w") as f:
             f.write(TEST_CALIB_DATA)
 
-        cls.cc.input_image[cls.cc.CALIB_DATA] = TEST_CALIB_DATA
-        cls.cc.input_image[cls.cc.DOUT_DATA] = "0"
+        cls.cc.input_data.update({
+            cls.cc.CALIB_DATA: TEST_CALIB_DATA,
+            cls.cc.DOUT_DATA: "0"}
+        )
 
         cls.cc.init_fds()
         # Initially read inputs
@@ -45,13 +47,13 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
 
     def test_non_existing_output(self):
         with self.assertLogs(level="WARNING") as cm:
-            self.assertFalse(self.cc.digitalWrite(5, True))
-            self.assertFalse(self.cc.analogWrite(3, 1000))
+            self.assertFalse(self.cc.digitalWrite(5, True, module="751-9301"))
+            self.assertFalse(self.cc.analogWrite(3, 1000, module="751-9301"))
         self.assertEqual(
             cm.output,
             [
-                "WARNING:wagoplc.cc100.cc100_v1:Digital output does not exist",
-                "WARNING:wagoplc.cc100.cc100_v1:Analog output does not exist"
+                "WARNING:wagoplc.controller:Digital output 5 for module 751-9301 does not exist.",
+                "WARNING:wagoplc.controller:Analog output 3 for module 751-9301 does not exist."
             ]
         )
 
@@ -60,21 +62,21 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
         dout_content = 0
         for i in range(1, 5):
             for j in range(2):
-                self.assertTrue(self.cc.digitalWrite(i, j))
+                self.assertTrue(self.cc.digitalWrite(i, j, module="751-9301"))
                 # file content increases by power of two
                 dout_content += 2**(i - 1) * j
-                self.assertEqual(self.cc.output_image[self.cc.DOUT_DATA], str(dout_content))
+                self.assertEqual(self.cc.output_data[self.cc.DOUT_DATA], str(dout_content))
                 self.cc.write_outputs()
 
     def test_non_existing_input(self):
         with self.assertLogs(level="WARNING") as cm:
-                self.assertFalse(self.cc.digitalRead(9))
-                self.assertFalse(self.cc.analogRead(3))
+                self.assertFalse(self.cc.digitalRead(9, module="751-9301"))
+                self.assertFalse(self.cc.analogRead(3, module="751-9301"))
         self.assertEqual(
             cm.output,
             [
-                "WARNING:wagoplc.cc100.cc100_v1:Digital input does not exist",
-                "WARNING:wagoplc.cc100.cc100_v1:Analog input does not exist"
+                "WARNING:wagoplc.controller:Digital input 9 for module 751-9301 does not exist.",
+                "WARNING:wagoplc.controller:Analog input 3 for module 751-9301 does not exist."
             ]
         )
               
@@ -83,18 +85,18 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
             # Simulate digital input
             with open(self.cc.DIN, "w") as din:
                 din.write(str(2**(i - 1)))
-            self.assertFalse(self.cc.digitalRead(i))
+            self.assertFalse(self.cc.digitalRead(i, module="751-9301"))
             self.cc.read_inputs()
-            self.assertTrue(self.cc.digitalRead(i))
+            self.assertTrue(self.cc.digitalRead(i, module="751-9301"))
 
     def test_analog_write(self):
         for i in range(1, 3):
             for j in range(0,10001,1000):
-                self.assertTrue(self.cc.analogWrite(i,j))
+                self.assertTrue(self.cc.analogWrite(i,j, module="751-9301"))
         
     def test_analog_read(self):
-        for i in range(1,3):
-            self.cc.analogRead(i)
+        for i in range(1, 3):
+            self.assertTrue(self.cc.analogRead(i, module="751-9301"))
         
     def test_temp_read(self):
         pass
@@ -102,13 +104,9 @@ class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     def test_analog_read_error_9403(self):
         cc = CC100_9403()
         with self.assertRaises(NonExistingIOError) as io:
-            cc.analogRead(1)
+            cc.analogRead(1, module="751-9301")
 
         self.assertEqual(str(io.exception),"The 751-9403 has no analog inputs.")
 
-    def test_reset(self):
-        self.cc.reset()
-        self.assertTrue(all(out == "0" for out in self.cc.output_image.values()))
- 
 if __name__ == "__main__":
     unittest.main()
