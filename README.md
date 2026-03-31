@@ -9,37 +9,43 @@ This library provides a simple interface to interact with WAGO PLCs (*Programmab
 
 * blistering pace: cycle times of below 4ms possible
 * easily configurable: directly in the script or via config file
-* modern porgramming: seamless integration with the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100)
+* modern programming: seamless integration with the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100)
 * familiar: CoDeSys developers will feel at home in no time
 * well-equipped: standard library of function blocks according to IEC 61131-3
-* customizable: definition of own function blocks
+* customizable: definition of own function blocks supported
 * versatile: ever-growing list of supported controllers
 
 ## Usage example
 
-Consider the following CoDeSys program, which controls a light using an on and an off switch:
+Consider the following CoDeSys program, which operates a conveyor belt. A light barrier
+registers every passing object and sends an impulse to the up-counter function block (CTU).
+When the count value increases to 3, the motor is turned off for 4 seconds (processing time),
+after which it is turned on again and the counter is reset.
 
 ```
-PROGRAM light_control
+PROGRAM PLC_PRG
 VAR
-    oLight_On_RS: RS;
-    iStatus: INT;
+    xLightBarrier AT %IX0.0: BOOL;
+    wMotor        AT %QW1  : INT; 
+    oObject_counter_CTU: CTU;
+    oDelay_TON: TON;
+    start_delay: BOOL := False;
 END_VAR
 
-oLight_On_RS(R := xSwitch, S := xSwitch_off, Q =>);
-CASE iStatus OF
-    0:      IF oLight_On_RS.Q THEN
-                xLight := True;
-                iStatus := 1;
-            END_IF
-    1:      IF NOT oLight_On_RS.Q THEN
-                xLight := False;
-                iStatus := 0;
-            END_IF
-END_CASE
+oDelay_TON(IN := start_delay, PT := 4, Q =>);
+oObject_counter_CTU(CU := xLightBarrier, PV := 3, RESET:= oDelay_TON.Q, Q =>);
+
+wMotor := 5000;
+IF oObject_counter_CTU.Q THEN
+   wMotor := 0
+   start_delay := True;
+END_IF
+IF oDelay_TON.Q THEN
+   start_delay := False;
+END_IF
 ```
-Of course, this snippet does not include the I/O mapping and task configuration, which need to be done
-in separate areas of the CoDeSys development system.
+Of course, this snippet does not include the task configuration, which needs to be done
+separately.
 
 The following snippets show how the same could be programmed using this library.
 
@@ -48,21 +54,27 @@ The following snippets show how the same could be programmed using this library.
 ```python
 # main.py
 
-from wagoplc.fb import RS
+from wagoplc import main
+from wagoplc.fb import CTU, TON
 
-def light_ctrl(oLight_On_RS: RS, xSwitch: bool, xSwitch_off: bool, iStatus: int):
-    oLight_On_RS(s=xTSwitch, r=xSwitch_off)
-    match iStatus:
-        case 0:
-            if oLight_On_RS.q:
-                xLight = True
-                iStatus = 1
-        case 1:
-            if not oLight_On_RS.q:
-                xLight = False
-                iStatus = 0
+def conveyor_belt(light_barrier, object_counter: CTU, process_delay: TON, start_delay):
+    process_delay(start=start_delay, pt=4)
+    object_counter(cu=light_barrier, r=process_delay.q, pv=3)
 
-    return dict(oLight_On_RS=oLight_On_RS, xLight=xLight, iStatus=iStatus)
+    motor = 5000
+    if object_counter.q:
+        motor = 0
+        start_delay = True
+        # Processing...
+    if process_delay.q:
+        # Resuming...
+        start_delay = False
+
+    return dict(motor=motor, object_counter=object_counter,
+        process_delay=process_delay, start_delay=start_delay)
+
+if __name__ == "__main__":
+    main()
 ```
 
 ```yaml
@@ -73,10 +85,10 @@ itemNumber: 751-9301
 io_mapping:
   751-9301:
     pii:
-      di1:
+      di1: light_barrier
       di2:
-      di3: xTaster
-      di4: xTaster_Aus
+      di3:
+      di4:
       di5:
       di6:
       di7:
@@ -87,19 +99,21 @@ io_mapping:
       ai2: 
     piq:
       do1:
-      do2: xLuefter
+      do2:
       do3:
       do4:
-      ao1:
+      ao1: motor
       ao2:
 vars:
-  - name: oLight_On_RS
-    fb: RS
-  - name: iStatus
-    value: 0
+  - name: object_counter
+    fb: CTU
+  - name: process_delay
+    fb: TON
+  - name: start_delay
+    value: False
 tasks:
-  - name: Control the light
-    entry: main.light_ctrl
+  - name: Assembly line
+    entry: main.conveyor_belt
     cycle_ms: 10
     priority:
     sensitivity:
@@ -111,42 +125,41 @@ tasks:
 ```python
 # main.py
 
-from wagoplc import DI, main, Tasks
-from wagoplc.fb import RS
+from wagoplc import main, Tasks, DI, AO
+from wagoplc.fb import CTU, TON
 
 tasks = Tasks()
 
-# Define the task variables
 @tasks.setup
 def setup():
-    oLight_On_RS = RS()
-    xSwitch = DI(1)
-    xSwitch_off = DI(2)
-    xLight = DO(1)
+    light_barrier = DI(1)
+    motor = AO(1)
+    object_cnt = CTU(pv=2)
+    process_delay = TON(pt=4)
+    start_delay = False
 
     return locals()
 
-# Register the task
 @tasks.register(
-    name="Control the light",
-    cycle_ms="10"
+        name = "conveyor belt",
+        cycle_ms = 5
 )
-def light_ctrl(oLight_On_RS: RS, xSwitch: bool, xSwitch_off: bool, iStatus: int):
-    oLight_On_RS(s=xTSwitch, r=xSwitch_off)
-    match iStatus:
-        case 0:
-            if oLight_On_RS.q:
-                xLight = True
-                iStatus = 1
-        case 1:
-            if not oLight_On_RS.q:
-                xLight = False
-                iStatus = 0
+def conveyor_belt(light_barrier, object_counter: CTU, process_delay: TON, start_delay):
+    process_delay(start=start_delay)
+    object_counter(cu=light_barrier, r=process_delay.q)
 
-    # Return the variables for processing
-    return dict(oLight_On_RS=oLight_On_RS, xLight=xLight, iStatus=iStatus)
+    motor = 5000
+    if object_counter.q:
+        motor = 0
+        start_delay = True
+        # Processing...
+    if process_delay.q:
+        # Resuming...
+        start_delay = False
 
-# Let the library take over
+    return dict(motor=motor, object_counter=object_counter,
+        process_delay=process_delay, start_delay=start_delay)
+
 if __name__ == "__main__":
     main(tasks)
 ```
@@ -159,7 +172,7 @@ itemNumber: 751-9301
 The WAGO CC100 VS Code extension will automatically generate the proper config-file layout for your
 controller.
 
-After transferring the necessary files, start your PLC script by simply running the following command on your controller:
+After transferring the script and configuration files, start your PLC application by simply running the following command on your controller:
 
 ```
 python main.py
@@ -182,8 +195,7 @@ You can (hopefully soon) install this library from the Python package index:
 pip install python-wagoplc
 ```
 
-We recommend using it alongside the [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), though, which provides an easy-to-use interface for communicating with
-the controller, as well as a runtime environment.
+We recommend using it alongside the [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), though, which provides an easy-to-use interface for communicating with the controller, as well as a runtime environment.
 
 ## Contributing
 
