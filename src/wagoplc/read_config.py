@@ -27,7 +27,7 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
-def _get_controller(controller_id: str):
+def get_controller(controller_id: str) -> Controller:
     """Get controller object by item number.
     
     controller_id: item number
@@ -44,8 +44,9 @@ def _get_controller(controller_id: str):
         elif version == 9403:
             plc_obj = CC100_9403()
         plc_obj.init_fds()
+    # Inform runtime of controller item number
+    os.environ["CONTROLLER_ID"] = controller_id
 
-    logger.info(f"Using controller with item number '{controller_id}'")
     return plc_obj
 
 def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, Any], Controller]:
@@ -63,6 +64,7 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
         config = yaml.safe_load(f)
     if not "itemNumber" in config:
         raise InvalidConfigError(f"The field 'itemNumber' is missing.")
+    item_number = config["itemNumber"]
     
     # Get state variables
     var_mapping = {}
@@ -94,7 +96,8 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
     
     # Get task definitions
     tasks = []
-    plc_obj = _get_controller(config["itemNumber"])
+    plc_obj = get_controller(item_number)
+    logger.info(f"Using controller with item number '{item_number}'")
 
     # Add decorated task
     if tasks_obj is not None:
@@ -165,7 +168,7 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
 
     return tasks, var_mapping, plc_obj
 
-def validate_task(config):
+def validate_task(config) -> None:
     "Validate task schema."
 
     ENTRY_REGEX = r'^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$'
