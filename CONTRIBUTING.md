@@ -12,3 +12,8 @@ This module uses [uv](https://uv.pypa.io/en/stable/) as the build system. To set
 ```bash
 uv sync
 ```
+
+## Library structure
+
+Head over to [the development documentation](docs/development.md) to become familiar with the inner workings
+of this library.
