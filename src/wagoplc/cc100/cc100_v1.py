@@ -1,11 +1,12 @@
 import logging
 import os
 
+from wagoplc.constants import LOG_FILE
 from wagoplc.controller import Controller, IO, DI, DO, AI, AO, PT
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    filename="wagoplc.log",
+    filename=LOG_FILE,
     format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
     level=logging.DEBUG
 )

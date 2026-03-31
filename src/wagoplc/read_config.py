@@ -16,13 +16,13 @@ import yaml
 
 from wagoplc.cc100 import CC100_9301, CC100_9401, CC100_9403
 from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO, IO, Controller
-from wagoplc.constants import YAML_CONFIG, INPUT, OUTPUT
+from wagoplc.constants import YAML_CONFIG, INPUT, OUTPUT, LOG_FILE
 from wagoplc.exceptions import InvalidConfigError
 from wagoplc.tasks import Task, Tasks
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    filename="wagoplc.log",
+    filename=LOG_FILE,
     format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
     level=logging.DEBUG
 )
@@ -45,7 +45,8 @@ def get_controller(controller_id: str) -> Controller:
             plc_obj = CC100_9403()
         plc_obj.init_fds()
     # Inform runtime of controller item number
-    os.environ["CONTROLLER_ID"] = controller_id
+    with open(".controller-id.txt", "w") as f:
+        f.write(controller_id)
 
     return plc_obj
 
