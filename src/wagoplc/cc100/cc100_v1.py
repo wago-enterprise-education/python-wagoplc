@@ -191,7 +191,7 @@ class CC100_v1(Controller):
         path = self.file_map[iq]
         if isinstance(path, dict):
             path = path[output]
-        self.output_data[path] = value
+        self.output_data[path] = self.input_data[path] = value
 
     def read_inputs(self) :
         """Read compact controller inputs."""
