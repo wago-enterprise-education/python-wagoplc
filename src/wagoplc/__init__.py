@@ -15,7 +15,16 @@ import sys
 
 from wagoplc.constants import SCRIPT_PATH
 # All usable interfaces
-from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO
+from wagoplc.controller import (
+    DI as DI,
+    DO as DO,
+    AI as AI,
+    AO as AO,
+    NI as NI,
+    PT as PT,
+    DIO as DIO,
+    AIO as AIO
+)
 from wagoplc.read_config import read_config
 from wagoplc.tasks import Tasks, Scheduler
 

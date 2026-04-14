@@ -20,6 +20,47 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
+
+class IO:
+    """Generic I/O superclass to store interface id."""
+
+    def __init__(self, id: int, module: str = ""):
+        """Save interface and module numbers.
+
+        id: interface number
+        module: module number
+        """
+        if not isinstance(id, int):
+            raise ValueError("Expected and integer id.")
+        self.id = id
+        self.module = module
+
+    def __eq__(self, other):
+        return isinstance(self, other.__class__) and self.id == other.id
+    
+    def __str__(self):
+        return f"{type(self).__name__}({self.id})"
+
+class DI(IO): 
+    pass
+class DO(IO): 
+    pass
+class AI(IO): 
+    pass
+class AO(IO): 
+    pass
+class NI(IO): 
+    pass
+class PT(IO): 
+    pass
+class DIO(IO):
+    def __init__(self, id: int, type: int, module: str = ""):
+        super().__init__(id, module)
+        self.type = type
+class AIO(DIO): 
+    pass
+
+
 class Controller:
     """The controller interface and basic functionality.
     
@@ -249,35 +290,3 @@ class IOHandler:
             return self.plc_obj.digitalWrite(io.id, value, io.module)
         elif isinstance(io, AO):
             return self.plc_obj.analogWrite(io.id, value, io.module)
-
-class IO:
-    """Generic I/O superclass to store interface id."""
-
-    def __init__(self, id: int, module: str = ""):
-        """Save interface and module numbers.
-
-        id: interface number
-        module: module number
-        """
-        if not isinstance(id, int):
-            raise ValueError("Expected and integer id.")
-        self.id = id
-        self.module = module
-
-    def __eq__(self, other):
-        return isinstance(self, other.__class__) and self.id == other.id
-    
-    def __str__(self):
-        return f"{type(self).__name__}({self.id})"
-
-class DI(IO): pass
-class DO(IO): pass
-class AI(IO): pass
-class AO(IO): pass
-class NI(IO): pass
-class PT(IO): pass
-class DIO(IO):
-    def __init__(self, id: int, type: int, module: str = ""):
-        super().__init__(id, module)
-        self.type = type
-class AIO(DIO): pass

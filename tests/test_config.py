@@ -7,7 +7,7 @@ from wagoplc.controller import DI
 from wagoplc.exceptions import InvalidConfigError
 from wagoplc.fb import TON
 from wagoplc.read_config import read_config
-from wagoplc.tasks import Tasks, Task
+from wagoplc.tasks import Tasks
 
 def mock_get_controller(controller_id: str):
     return controller_id

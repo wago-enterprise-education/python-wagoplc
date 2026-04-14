@@ -5,7 +5,6 @@ from pyfakefs import fake_filesystem_unittest
 
 from wagoplc.cc100 import CC100_v1
 from wagoplc.cc100.cc100_9403 import CC100_9403
-from wagoplc.controller import DI, DO
 from wagoplc.exceptions import NonExistingIOError
 
 TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02

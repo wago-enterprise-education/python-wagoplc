@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 from wagoplc.controller import IOHandler
-from wagoplc.controller import DI, AI, PT, NI, DO, AO
+from wagoplc.controller import DI, AI, DO
 
 class DummyController:
     def read_inputs(self):

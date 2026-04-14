@@ -22,4 +22,13 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pyfakefs>=5.10.2",
+    "ruff>=0.15.10",
 ]
+
+[tool.ruff]
+target-version = "py312"
+exclude = [
+"docs", "plc-application"
+]
+per-file-ignores = {"test_tasks.py" = ["F841"],"wagoplc/__init__.py" = ["F401"]}
+

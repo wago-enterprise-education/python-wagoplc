@@ -35,3 +35,11 @@ Refer to this file for how to format your entry.
 
 Head over to [the development documentation](docs/development.md) to become familiar with the inner workings
 of this library.
+
+## Code linting
+
+We use ruff for linting. Before you commit, run the checks with:
+
+```bash
+ruff check
+```
