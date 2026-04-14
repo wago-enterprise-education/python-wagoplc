@@ -63,8 +63,8 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
         raise FileNotFoundError("'controller.yaml' does not exist.")
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
-    if not "itemNumber" in config:
-        raise InvalidConfigError(f"The field 'itemNumber' is missing.")
+    if "itemNumber" not in config:
+        raise InvalidConfigError("The field 'itemNumber' is missing.")
     item_number = config["itemNumber"]
     
     # Get state variables
@@ -88,7 +88,7 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                     fb = getattr(fb_module, func_name)
                     # Instantiate the function block
                     value = fb()
-                except ImportError, AttributeError:
+                except (ImportError, AttributeError):
                     raise InvalidConfigError(f"No such function block: '{var["fb"]}'")
             else:
                 # a plain variable with name and value
@@ -151,7 +151,7 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                 task["entry"] = getattr(module, func_name)                
                 tasks.append(Task(plc_obj, var_mapping, **task))
                 logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
-            except ModuleNotFoundError, AttributeError:
+            except (ModuleNotFoundError, AttributeError):
                 raise InvalidConfigError(f"Function '{entry}' for task '{task["name"]}' not defined!")
     
     if tasks_obj is not None:
