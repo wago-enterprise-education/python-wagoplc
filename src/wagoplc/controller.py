@@ -205,16 +205,21 @@ class IOHandler:
             lambda p: p[0] not in {**self.inputs, **self.outputs}, input_mapping.items()
         ))
 
-    def get_input_image(self) -> None:
+    def get_input_image(self) -> dict[str, Any]:
         self.plc_obj.read_inputs()
         input_image = {}
+        self.input_vars = set(self.inputs.keys())
         for var, io in self.inputs.items():
-                input_image[var] = self.read(io)
+            input_image[var] = self.read(io)
         input_image.update(self.state_vars)
         return input_image
 
     def process_output_image(self, output_image: dict[str, Any]) -> None:
         for var, value in output_image.items():
+            if var in self.input_vars:
+                raise ValueError(
+                f"Variable '{var}' is an input.")
+
             if var in self.outputs:
                 self.write(self.outputs[var], value)
             else:
