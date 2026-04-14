@@ -1,0 +1,41 @@
+itemNumber: 751-9301
+connection: usb-c
+ip: 192.168.42.42
+port: 22
+user: root
+autoupdate: on
+netmask: 255.255.255.0
+gateway: undefined
+io_mapping:
+  751-9301:
+    pii:
+      di1: normalbetrieb
+      di2: wartungsbetrieb
+      di3:
+      di4:
+      di5:
+      di6:
+      di7:
+      di8:
+      pt1: 
+      pt2: 
+      ai1: 
+      ai2:
+    piq:
+      do1: aRot
+      do2: aGelb
+      do3: aGruen
+      do4: bRot
+      ao1: bGelb
+      ao2: bGruen
+vars:
+  - {name: status, value: 0}
+  - {name: phase_wechsel_zeit, value: 0}
+  - {name: aGelb_zuletzt, value: False}
+tasks:
+  - name: Ampelschaltung
+    entry: main.ampelschaltung
+    cycle_ms: 1000
+    priority:
+    sensitivity:
+    watchdog_ms:

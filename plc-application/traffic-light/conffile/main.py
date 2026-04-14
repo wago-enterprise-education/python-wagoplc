@@ -1,29 +1,7 @@
-from wagoplc import main, Tasks, DI, DO, AO
+from wagoplc import main
 import time
 
-tasks = Tasks()
-
-@tasks.setup
-def setup():
-    xNormalbetrieb = DI(1)
-    xWartungsbetrieb = DI(2)
-    aRot = DO(1)
-    aGelb = DO(2)
-    aGruen = DO(3)
-    bRot = DO(4)
-    bGelb = AO(1)
-    bGruen = AO(2)
-    status = 0
-    phase_wechsel_zeit = 0
-    aGelb_zuletzt = False
-
-    return locals()
-
-@tasks.register(
-        name = "Ampelschaltung",
-        cycle_ms = 1000
-)
-def ampelschaltung(xNormalbetrieb, xWartungsbetrieb,status,phase_wechsel_zeit,aGelb_zuletzt):
+def ampelschaltung(normalbetrieb, wartungsbetrieb, status, phase_wechsel_zeit, aGelb_zuletzt):
     jetzt = time.time()
     aRot = False
     aGelb = False
@@ -32,7 +10,7 @@ def ampelschaltung(xNormalbetrieb, xWartungsbetrieb,status,phase_wechsel_zeit,aG
     bGelb = 0
     bGruen = 0
 
-    if xWartungsbetrieb:
+    if wartungsbetrieb:
         # Ampel Straße A
         aRot = False
         aGelb = aGelb_zuletzt = not aGelb_zuletzt
@@ -42,8 +20,7 @@ def ampelschaltung(xNormalbetrieb, xWartungsbetrieb,status,phase_wechsel_zeit,aG
         bRot = False
         bGelb = 10000 if aGelb else 0
         bGruen = 0
-
-    if xNormalbetrieb:
+    elif normalbetrieb:
 
         phasen_zeiten = {
             0: 2,   # beide Rot
@@ -64,38 +41,38 @@ def ampelschaltung(xNormalbetrieb, xWartungsbetrieb,status,phase_wechsel_zeit,aG
 
             # 0 — beide Rot
             case 0:
-                aRot = True;  aGelb = False; aGruen = False
-                bRot = True;  bGelb = 0;     bGruen = 0
+                aRot = True
+                bRot = True
 
             # 1 — Straße A Rot/Gelb
             case 1:
-                aRot = True;  aGelb = True;  aGruen = False
-                bRot = True;  bGelb = 0;     bGruen = 0
+                aRot = True;  aGelb = True
+                bRot = True
 
             # 2 — Straße A Grün
             case 2:
-                aRot = False; aGelb = False; aGruen = True
-                bRot = True;  bGelb = 0;     bGruen = 0
+                aGruen = True
+                bRot = True
 
             # 3 — Straße A Gelb
             case 3:
-                aRot = False; aGelb = True;  aGruen = False
-                bRot = True;  bGelb = 0;     bGruen = 0
+                aGelb = True
+                bRot = True
 
             # 4 — Straße B Rot/Gelb
             case 4:
-                aRot = True;  aGelb = False; aGruen = False
-                bRot = True;  bGelb = 10000; bGruen = 0
+                aRot = True
+                bRot = True;  bGelb = 10000
 
             # 5 — Straße B Grün
             case 5:
-                aRot = True;  aGelb = False; aGruen = False
-                bRot = False; bGelb = 0;     bGruen = 10000
+                aRot = True
+                bGruen = 10000
 
             # 6 — Straße B Gelb
             case 6:
-                aRot = True;  aGelb = False; aGruen = False
-                bRot = False; bGelb = 10000; bGruen = 0
+                aRot = True
+                bGelb = 10000
 
     return dict(
         aRot=aRot,aGelb=aGelb,aGruen=aGruen,
@@ -106,4 +83,4 @@ def ampelschaltung(xNormalbetrieb, xWartungsbetrieb,status,phase_wechsel_zeit,aG
     )
 
 if __name__ == "__main__":
-    main(tasks)
+    main()
