@@ -183,9 +183,10 @@ python main.py
 > [!NOTE]
 > Communication protocols (RS485 serial interface, CANopen, DALI, ...) are at the time unsupported.
 
-|  Device  |  Notes   |
-|  :----   |  :----:  |
-| 751-9301 |          |
+|  Device  |  Firmware   |  Notes  |
+|  :----   |  :----:     | :----:  |
+| 751-9301 |  30,28      |         |
+| 751-9401 |  28     |         |
 
 ## Installation
 
