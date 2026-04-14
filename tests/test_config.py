@@ -13,7 +13,7 @@ def mock_get_controller(controller_id: str):
     return controller_id
 
 @patch("wagoplc.read_config.YAML_CONFIG", "test_controller.yaml")
-@patch("wagoplc.read_config._get_controller", Mock(side_effect=mock_get_controller))
+@patch("wagoplc.read_config.get_controller", Mock(side_effect=mock_get_controller))
 class Test_config(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

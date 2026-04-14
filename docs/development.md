@@ -3,22 +3,32 @@
 Welcome to the `python-wagoplc` development documentation! Here you'll find everything you need to know
 about the library's internals.
 
-## Overview
+## Mode of operation
 
-The `python-wagoplc` was designed to enable programmers to build PLC applications with ease,
-and is currently usable for rather simple, standard automation tasks. It is open-source, Python-based and without the
-overhead of a complex graphical interface like the *Controller Development System* (CoDeSys). Given the lower entry hurdle, it could be used for educational purposes and hobby projects.
+What happens if you run `python main.py` at the command line? The following graphic illustrates the internal workflow.
 
-As of this writing (March 2026), it supports the older WAGO CC100 series (since 751-9301). Advanced operations like bus systems or communication protocols are at the time not supported, but all I/O elements can be accessed programmatically. It is planned to support both the newer CC100 versions and the PFC controllers (750 series) in the future. While the former have a static set of features on board, and are therefore suited for smaller projects, the latter can be fully customized with a large set of more than 500 modules.
+![python-wagoplc internal workflow](work_schedule.svg)
 
-`python-wagoplc` is intended to be used together with the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), which provides a graphical interface for communicating with the controller as well as a Docker-based runtime environment.
-
-## Structure
+The top-level `__init__.py` file contains the `main()` function, which is called when the application script executes. It is responsible for reading the configuration, creating a `Scheduler` instance and starting the task execution cycle.
 
 ### Configuration handling
 
+The `read_config` module contains a function of the same name, which is called by the `main()` function.
+It reads the configuration file `controller.yaml` and interprets an optional `Tasks` instance given from the script.
+With this in mind, it creates a unified variable mapping, a `Controller` object and a list of `Task` objects.
+In the process, any invalid configuration is identified and results in an exception. This involves validating the schema of the `tasks` section using the [`schema` library](https://pypi.org/project/schema/).
+
 ### Task management
+
+Task management happens inside the `tasks` module, which contains the `Tasks`, `Task` and `Scheduler` classes.
+At the moment, the scheduler supports running cyclic tasks, with support for event-based and periodic tasks planned.
+It runs until an external interrupt occurs, after which the PLC outputs are reset and any open file descriptors closed.
 
 ### Standard library
 
+`python-wagoplc` also contains a standard library of function blocks as defined by IEC 61131-3, which can be imported
+from the `fb` module. A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable by the programmer. The function block object is created behind the scenes in `read_config`, which imports the corresponding class either from the standard library or a user-defined module.
+
 ### Controller-specific functionality
+
+At the heart of the `python-wagoplc` are the packages that define controller-specific functionality. Each controller series must have its own package, each controller must have its own module and class. The first and base controller of a series must both define the `Controller` interface and be a superclass for each following version, if applicable. Inside a controller series, controllers may be grouped into generations. See the `CC100_v1` class and its subclasses as an example.

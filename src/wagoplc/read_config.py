@@ -53,14 +53,14 @@ def get_controller(controller_id: str) -> Controller:
 def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, Any], Controller]:
     """Read the configuration file.
     
-    Return the tasks, the I/O mapping and the controller object.
+    Return the tasks, the variable mapping and the controller object.
     Raise FileNotFoundError if the configuration file does not exist.
     Raise InvalidConfigError if the configuration does not include the itemNumber
     field, a function block or a task entry point do not exist, or if there are duplicates
     in the variable mapping.
     """
     if not os.path.exists(YAML_CONFIG):
-        raise FileNotFoundError("Configfile does not exist.")
+        raise FileNotFoundError("'controller.yaml' does not exist.")
     with open(YAML_CONFIG, "r") as f:
         config = yaml.safe_load(f)
     if not "itemNumber" in config:
