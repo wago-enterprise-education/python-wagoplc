@@ -94,35 +94,6 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                 # a plain variable with name and value
                 value = var["value"]
             var_mapping[var["name"]] = value
-    
-    # Get task definitions
-    tasks = []
-    plc_obj = get_controller(item_number)
-    logger.info(f"Using controller with item number '{item_number}'")
-
-    # Add decorated task
-    if tasks_obj is not None:
-        if task := tasks_obj.task:
-            task.update({"plc_obj": plc_obj})
-            tasks.append(Task(**task))
-
-    if "tasks" in config:
-        validate_task(config)
-        # Filter out None values
-        for task in config["tasks"]:
-            # Filter out None values
-            task = {k: v for k, v in task.items() if v is not None}
-            entry: str = task["entry"]
-            module_name, func_name = entry.rsplit(".")
-            # Get task definitions from config and retrieve the task function
-            try:
-                module = importlib.import_module(module_name)
-                task["entry"] = getattr(module, func_name)                
-                tasks.append(Task(plc_obj, var_mapping, **task))
-                logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
-            except ModuleNotFoundError, AttributeError:
-                raise InvalidConfigError(f"Function '{entry}' for task '{task["name"]}' not defined!")
-
 
     # Get I/O mapping
     if "io_mapping" in config:
@@ -154,6 +125,34 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                             elif interface == "aio":
                                 type = INPUT if section_name == "pii" else OUTPUT
                                 var_mapping[var] = AIO(index, module, type)
+    
+    # Get task definitions
+    tasks = []
+    plc_obj = get_controller(item_number)
+    logger.info(f"Using controller with item number '{item_number}'")
+
+    # Add decorated task
+    if tasks_obj is not None:
+        if task := tasks_obj.task:
+            task.update({"plc_obj": plc_obj})
+            tasks.append(Task(**task))
+
+    if "tasks" in config:
+        validate_task(config)
+        # Filter out None values
+        for task in config["tasks"]:
+            # Filter out None values
+            task = {k: v for k, v in task.items() if v is not None}
+            entry: str = task["entry"]
+            module_name, func_name = entry.rsplit(".")
+            # Get task definitions from config and retrieve the task function
+            try:
+                module = importlib.import_module(module_name)
+                task["entry"] = getattr(module, func_name)                
+                tasks.append(Task(plc_obj, var_mapping, **task))
+                logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
+            except ModuleNotFoundError, AttributeError:
+                raise InvalidConfigError(f"Function '{entry}' for task '{task["name"]}' not defined!")
     
     if tasks_obj is not None:
         var_mapping.update(tasks_obj.map)
