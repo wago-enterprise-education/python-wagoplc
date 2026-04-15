@@ -27,8 +27,28 @@ It runs until an external interrupt occurs, after which the PLC outputs are rese
 ### Standard library
 
 `python-wagoplc` also contains a standard library of function blocks as defined by IEC 61131-3, which can be imported
-from the `fb` module. A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable by the programmer. The function block object is created behind the scenes in `read_config`, which imports the corresponding class either from the standard library or a user-defined module.
+from the `fb` module. The function block object is created behind the scenes in `read_config`, which imports the corresponding class either from the standard library or a user-defined module.
 
 ### Controller-specific functionality
 
 At the heart of the `python-wagoplc` are the packages that define controller-specific functionality. Each controller series must have its own package, each controller must have its own module and class. The first and base controller of a series must both define the `Controller` interface and be a superclass for each following version, if applicable. Inside a controller series, controllers may be grouped into generations. See the `CC100_v1` class and its subclasses as an example.
+
+## Notes on CC100 versions awaiting support
+
+### 751-9401
+
+* Awaiting firmware update re-adding system files for analog inputs
+* CAN Bus support
+
+### 751-9403
+
+* DALI support
+
+### 751-9402
+
+* Multi-I/O handling
+* Outputs set via WDx
+
+## 751-9412
+
+* Yocto-based -> config-tools removed; how to control OMS?

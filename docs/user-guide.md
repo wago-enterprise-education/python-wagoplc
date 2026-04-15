@@ -3,6 +3,22 @@
 This guide provides you with general information and practical examples to work with the
 `python-wagoplc` programming library.
 
+## Integration with VS Code Extension WAGO CC100
+
+The following examples show how to create PLC application scripts and configuration. In order to actually
+run them, you'll need a CC100 of the first generation (before *751-9402*). In theory, transferring your project folder to the CC100 and running the following commands would be enough:
+
+```bash
+python -m pip install python-wagoplc
+cd plc-application/
+python main.py
+```
+
+Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
+requirements and a Python runtime for the CC100 has been created. It is highly recommended to make use of the
+[VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100),
+which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the *operating-mode switch (OMS)* and watching the status lights, like with CoDeSys.
+
 ## One-script PLC application: bottle filling plant
 
 At the bottle filling plant, the filled bottles are transferred to waiting crates using conveyor belts.
@@ -45,9 +61,11 @@ Task-related settings like the name and cycle time can be defined via another de
         cycle_ms = 5
 )
 def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
+    # count up/down if a rising edge of the input variable is registered
     bottle_counter(cu=light_barrier_in, cd=light_barrier_out)
     # set to 5 V (5000 mV)
     motor = 5000
+    # Counter has reached the threshold
     if bottle_counter.qu:
         # Turn motor off
         motor = 0
@@ -61,7 +79,7 @@ Last, but not least, your script needs to contain a call to the `main` function 
 library, since it is directly invoked by the runtime:
 
 ```python
-# Only run this if the script is directly executed
+# Only run the following if the script is directly executed
 if __name__ == "__main__":
     main(tasks)
 ```
@@ -108,7 +126,7 @@ from wagoplc import main
 from wagoplc.fb import CTUD
 
 def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
-    bottle_counter(cu=light_barrier_in, cd=light_barrier_out)
+    bottle_counter(cu=light_barrier_in, cd=light_barrier_out, pv=150)
     motor = 5000
     if bottle_counter.qu:
         motor = 0
@@ -118,4 +136,105 @@ def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
 if __name__ == "__main__":
     main()
 ```
+
+## Using own function blocks: factory gate control
+
+A *function block (fb)* is a kind of module that takes a fixed set of input variables to determine a fixed set of
+output variables. The programmer operates on instances of an fb in order to retain the internal state.
+In the example above, you already used an up-counter function block from the standard library.
+With `python-wagoplc`, you're also able to define your own function blocks for more complex setups.
+
+Imagine having a large assembly hall with multiple entrance gates you need to control.
+Each gate has an open and a close button as well as two limit switches.
+Rather than duplicating the necessary code for each gate, you could employ a function block.
+
+As always, your first step is to think about and define the variables and tasks you'll need, here in `controller.yaml`:
+
+```yaml
+itemNumber: 751-9301
+  751-9301:
+    pii:
+      di1: open_btn
+      di2: close_btn
+      di3: limit_switch_left
+      di4: limit_switch_right
+    piq:
+      do1: motor_open
+      do2: motor_close
+vars:
+  - name: gate_control_fb
+    # Retrieve class 'Gate_Control' from module 'gate_control.py'
+    fb: gate_control.Gate_Control
+tasks:
+  - name: gate control
+    entry: main.porta_westfalica
+    cycle_ms: 50
+    priority:
+    sensitivity:
+    watchdog_ms:
+```
+Next thing is to write `main.py`. In the following example, the input variables are collected and passed into a function block called `gate_control_fb`:
+
+```python
+from gate_control import Gate_Control
+
+def porta_westfalica(
+        gate_control_fb: Gate_Control, limit_switch_left,
+        limit_switch_right, open_btn, close_btn):
+    # Call to the function block
+    gate_control_fb(open_btn, close_btn, limit_switch_left, limit_switch_right)
+    print(gate_control_fb.open, gate_control_fb.closed)
+
+    # Motors controlled through output variables
+    return dict(gate_control_fb=gate_control_fb,
+                motor_open=gate_control_fb.motor_open,
+                motor_close=gate_control_fb.motor_close)
+```
+
+> [!NOTE]
+> When you define your variables in the script, you can bind an instance of your fb to
+> the `gate_control_fb` variable directly (which is what the library does, internally).
+
+Now to the function block, which according to the above code is a class `Gate_Control` defined in a module
+`gate_control.py` (in the same directory as `main.py`). A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable:
+
+```python
+# Function block superclass
+from wagoplc.fb import FB
+
+class Gate_Control(FB):
+
+    def __init__(self):
+        self.open = False
+        self.closed = True
+        self.motor_open = False
+        self.motor_close = False
+        self.state = 0
+    
+    def __call__(self, open_btn: bool, close_btn: bool, 
+        limit_switch_left: bool, limit_switch_right: bool):
+        match self.state:
+            case 0: # Gate closed
+                if open_btn:
+                    self.motor_open = True
+                    self.closed = False
+                    self.state = 1
+            case 1: # Gate opens
+                if not limit_switch_right:
+                    self.motor_open = False
+                    self.open = True
+                    self.state = 2
+            case 2: # Gate is open
+                if close_btn:
+                    self.motor_close = True
+                    self.open = False
+                    self.state = 3
+            case 3: # Gate closes
+                if not limit_switch_left:
+                    self.motor_close = False
+                    self.closed = True
+                    self.state = 0
+```
+
+
 
