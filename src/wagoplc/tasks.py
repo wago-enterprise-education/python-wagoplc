@@ -195,6 +195,16 @@ class Tasks:
             return decorator_task
         return decorator_task(_func)
 
+    def cycle(self) -> None:
+        """Run one task cycle."""
+        # Get input image (variables mapped to values)
+        input_image = self.iohandler.get_input_image()
+        # Get output image (variables mapped to values)
+        output_image = self.cycle_func(**input_image)
+        if not isinstance(output_image, dict):
+            raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
+        # Actually write outputs, return state variables
+        self.iohandler.process_output_image(output_image)
 
 class Scheduler:
     """A task scheduler.
@@ -253,15 +263,4 @@ class Scheduler:
             raise
         finally:
             self.plc_obj.reset()
-
-    def cycle(self) -> None:
-        """Run one task cycle."""
-        # Get input image (variables mapped to values)
-        input_image = self.iohandler.get_input_image()
-        # Get output image (variables mapped to values)
-        output_image = self.cycle_func(**input_image)
-        if not isinstance(output_image, dict):
-            raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
-        # Actually write outputs, return state variables
-        self.iohandler.process_output_image(output_image)
 
