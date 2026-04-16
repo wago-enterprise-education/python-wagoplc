@@ -22,7 +22,7 @@ The last command activates the virtual environment created by `uv` and needs to 
 `python-wagoplc` uses `unittest` for testing purposes. To run all tests, in the project root folder execute the following command:
 
 ```bash
-python -m unittest -s tests
+python -m unittest discover -s tests
 ```
 You can also execute an individual test file directly using Python.
 

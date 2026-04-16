@@ -28,6 +28,23 @@ logging.basicConfig(
 
 stop_time = stop_duration = 0
 task = None
+# Record time when switch is moved to 'stop' via signal handler
+def stop_handler(signum, frame):
+        logger.debug("Caught runtime signal, saving stop time")
+        global stop_time
+        stop_time = time.time() + 0.0001
+        return
+
+# Get stop duration and update running timers before resuming
+def cont_handler(signum, frame):
+        logger.debug("Resuming")
+        global stop_time, stop_duration, task
+        if task is not None:
+            stop_duration = time.time() - stop_time
+            task.iohandler.update_timers(stop_duration)
+        return
+signal.signal(signal.SIGUSR1, stop_handler)
+signal.signal(signal.SIGCONT, cont_handler)
 
 
 class Task:
@@ -60,7 +77,6 @@ class Task:
         sensitivity: sensitivity from 0 (highest) to 10
         """
         self.name = name or "<unnamed task>"
-        self.cycle_time = cycle_ms
         self.cycle_func = entry
         self.plc_obj = plc_obj
         if cycle_ms < 1:
@@ -90,48 +106,41 @@ class Task:
 
         self.next_run: float = time.time()
     
-def __lt__(self, other: Task) -> bool:
-        return self.priority < other.priority
+    def __lt__(self, other: Task) -> bool:
+            return self.priority < other.priority
 
-def __str__(self) -> str:
-        return f"Task(name={self.name}, entry={self.cycle_func}, cycle_ms={self.cycle_ms}, priority={self.priority}, watchdog_ms={self.watchdog_ms}, sensitivity={self.sensitivity})"
+    def __str__(self) -> str:
+            return f"Task(name={self.name}, entry={self.cycle_func}, cycle_ms={self.cycle_ms}, priority={self.priority}, watchdog_ms={self.watchdog_ms}, sensitivity={self.sensitivity})"
 
-def _get_input_vars(self, var_mapping: dict[str, Any]) -> dict[str, Any]:
-        """Compare defined variables and parameters and return input mapping.
-        
-        Raise NotDefinedError if a parameter is not defined as a variable.
+    def _get_input_vars(self, var_mapping: dict[str, Any]) -> dict[str, Any]:
+            """Compare defined variables and parameters and return input mapping.
+            
+            Raise NotDefinedError if a parameter is not defined as a variable.
 
-        var_mapping: map of user-defined variables 
-        """
-        func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
-        vars = var_mapping.keys()
-        if not_defined := list(filter(lambda p: p not in vars, func_params)):
-            raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
-        def is_input(pair):
-            k, _ = pair
-            if k in func_params:
-                return True
-            return False
-        return dict(filter(is_input, var_mapping.items()))
+            var_mapping: map of user-defined variables 
+            """
+            func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
+            vars = var_mapping.keys()
+            if not_defined := list(filter(lambda p: p not in vars, func_params)):
+                raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
+            def is_input(pair):
+                k, _ = pair
+                if k in func_params:
+                    return True
+                return False
+            return dict(filter(is_input, var_mapping.items()))
+    
+    def cycle(self) -> None:
+        """Run one task cycle."""
+        # Get input image (variables mapped to values)
+        input_image = self.iohandler.get_input_image()
+        # Get output image (variables mapped to values)
+        output_image = self.cycle_func(**input_image)
+        if not isinstance(output_image, dict):
+            raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
+        # Actually write outputs, return state variables
+        self.iohandler.process_output_image(output_image)
 
-
-# Record time when switch is moved to 'stop' via signal handler
-def stop_handler(signum, frame):
-    logger.debug("Caught runtime signal, saving stop time")
-    global stop_time
-    stop_time = time.time() + 0.0001
-    return
-
-# Get stop duration and update running timers before resuming
-def cont_handler(signum, frame):
-    logger.debug("Resuming")
-    global stop_time, stop_duration, task
-    if task is not None:
-          stop_duration = time.time() - stop_time
-          task.iohandler.update_timers(stop_duration)
-    return
-signal.signal(signal.SIGUSR1, stop_handler)
-signal.signal(signal.SIGCONT, cont_handler)
 
 class Tasks:
     """Manage task registration per program.
@@ -158,7 +167,7 @@ class Tasks:
                 raise InvalidConfigError("Expected setup function to return a dictionary of variables!")
 
         return decorator_setup(func)
-    
+
     def register(
             self,
             _func: Callable[..., dict[str, str | int | bool]] = None,
@@ -195,16 +204,6 @@ class Tasks:
             return decorator_task
         return decorator_task(_func)
 
-    def cycle(self) -> None:
-        """Run one task cycle."""
-        # Get input image (variables mapped to values)
-        input_image = self.iohandler.get_input_image()
-        # Get output image (variables mapped to values)
-        output_image = self.cycle_func(**input_image)
-        if not isinstance(output_image, dict):
-            raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
-        # Actually write outputs, return state variables
-        self.iohandler.process_output_image(output_image)
 
 class Scheduler:
     """A task scheduler.

@@ -11,5 +11,12 @@ class CC100_9403(CC100_v1):
         self.file_map.pop(AI)
         self.specs.pop(AI)
 
+    def get_read_paths(self) -> tuple[str]:
+        return (
+            self.DIN,
+            self.IN_VOLTAGE13_RAW,
+            self.IN_VOLTAGE1_RAW,
+        )
+
     def analogRead(self, input: int, module: str) -> None:
         raise NonExistingIOError("The 751-9403 has no analog inputs.")
