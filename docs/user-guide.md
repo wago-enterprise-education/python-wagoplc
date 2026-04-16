@@ -15,9 +15,33 @@ python main.py
 ```
 
 Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
-requirements and a Python runtime for the CC100 has been created. It is highly recommended to make use of the
-[VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100),
-which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the *operating-mode switch (OMS)* and watching the status lights, like with CoDeSys.
+requirements and a [Python runtime](https://github.com/wago-enterprise-education/docker-engine-cc100) for the CC100 has been created. It is highly recommended to make use of the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the *operating-mode switch (OMS)* and watching the status lights, like with CoDeSys.
+
+## The concept of PLC programming
+
+PLC programming is standardised in IEC 61131-3. This library loosely adheres to that standard. Most importantly,
+an SPS is a *multi-tasking system*: the system alternates between multiple *tasks*, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event. A single task execution is called a *cycle*. It has an input image (controller inputs) and an internal state and produces an output image (controller outputs).
+
+Each task has a specific *cycle time* that defines the execution interval as well as a priority.
+Moreover, you can define a *watchdog*, which is the maximum time a task may take before it is interrupted. A more advanced setting is the watchdog *sensitivity*. Each step adds a five percent tolerance to the watchdog time. See the docstring of the `Task` class for the allowed value ranges of all these settings.
+
+In this library, tasks are represented through Python functions: the function parameters are the input image,
+the return value (a dictionary) the output image. To keep track of the internal state, variables need to be defined outside of the function, passed into it and also returned from it. Example:
+
+```python
+def task_function(di1, di2, state):
+    # Do something with the variables
+    state = 0
+    do1 = True
+    if di1:
+        do1 = False
+        state = 1
+
+    # Return output and state variable
+    # Key is variable name
+    return dict(do1=do1, state=state)
+```
+For how to define the variables, see the examples below.
 
 ## One-script PLC application: bottle filling plant
 
@@ -29,7 +53,7 @@ The following steps show how to create the program for this plant using the WAGO
 ### `main.py`
 
 This script is the centerpiece of the PLC application, written by the programmer. It is directly invoked by the runtime. Thus, it must contain a call to the library's main function.
-Initially, you'll want to define a few variables for later use. You can do this using a function and an object of the `wagoplc.tasks.Tasks` class:
+Initially, you'll want to define a few variables for later use. To access controller I/O, you can use wrapper classes. Example using an object of the `wagoplc.tasks.Tasks` class for collection of variables and tasks:
 
 ```python
 from wagoplc import main, Tasks, DI, AO
@@ -39,6 +63,7 @@ tasks = Tasks()
 
 @tasks.setup
 def setup():
+    # Bind variable light_barrier_in to digital output 1
     light_barrier_in = DI(1)
     light_barrier_out = DI(2)
     motor = AO(1)
@@ -47,7 +72,6 @@ def setup():
 
     return locals()
 ```
-The light barriers and the motor are mapped to I/O using wrapper classes.
 The `return locals()` statement creates a dictionary of variable names and value and returns it.
 It is collected by the setup decorator and saved in the `Tasks` object.
 
@@ -74,16 +98,6 @@ def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
     return dict(motor=motor, bottle_counter=bottle_counter)
 ```
 In the output iamge, the `motor` variable is mapped to an analog output and its value is written after every cycle, while the `bottle_counter` is considered a state variable. It is passed into the task function unchanged in the next cycle and therefore needs to be defined as a parameter.
-
-Last, but not least, your script needs to contain a call to the `main` function provided by the `python-wagoplc`
-library, since it is directly invoked by the runtime:
-
-```python
-# Only run the following if the script is directly executed
-if __name__ == "__main__":
-    main(tasks)
-```
-Here, the tasks object is passed to the function. At this point, it holds both the variables and the task definition.
 
 ### `controller.yaml`
 
