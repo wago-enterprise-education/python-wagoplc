@@ -1,6 +1,9 @@
 """wagoplc.read_config
 
 Read the configuration file.
+
+Functions:
+
 - read_config: read and validate the configuration
 - validate_task: validate schema of tasks section to
 ensure all parameters are present.

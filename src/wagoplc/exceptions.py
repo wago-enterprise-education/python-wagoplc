@@ -1,4 +1,4 @@
-"""wagoplc.exceptions
+"""
 All library exceptions.
 """
 

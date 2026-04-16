@@ -1,4 +1,4 @@
-"""wagoplc.controller
+"""Generic controller functionality.
 
 This module holds the controller factory and I/O wrapper classes
 for use by both the programmer and the library.

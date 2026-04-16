@@ -26,6 +26,6 @@ This is the roadmap of the `python-wagoplc` library.
 * Multi-I/O handling
 * Set configuration and outputs via WDx
 
-## 751-9412
+### 751-9412
 
 * Yocto-based -> config-tools removed; control OMS via WDx

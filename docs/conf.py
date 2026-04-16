@@ -15,6 +15,7 @@ author = 'Johann Timm, Kilian Romberg'
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.githubpages',
     'myst_parser',
 ]

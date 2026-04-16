@@ -1,4 +1,4 @@
-"""wagoplc.cc100
+"""Controller-specific functionality for the CC100.
 
 This package consists of modules for all supported CC100 controllers.
 

@@ -1,4 +1,4 @@
-"""wagoplc.fb
+"""Standard library.
 This module holds function blocks defined by the PLC programming
 norm DIN EN 61131-3. They can be imported and used in a PLC program.
 

@@ -1,4 +1,4 @@
-"""wagoplc.tasks
+"""Task management.
 
 This module holds the classes responsible for task management.
 - Tasks: manage task and variable collection in an application script

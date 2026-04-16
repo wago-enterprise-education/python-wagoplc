@@ -12,4 +12,5 @@ As of this writing (March 2026), it supports the older WAGO CC100 generation (si
 :maxdepth: 2
 user-guide.md
 development.md
+reference.md
 ```
