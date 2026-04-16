@@ -1,0 +1,694 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>User guide &#8212; python-wagoplc  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user-guide';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Development" href="development.html" />
+    <link rel="prev" title="Python WAGO PLC Library Documentation" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">python-wagoplc  documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        User guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="development.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary" tabindex="0">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item">
+<nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        User guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="development.html">
+                        Development
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">User guide</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="user-guide">
+<h1>User guide<a class="headerlink" href="#user-guide" title="Permalink to this heading">#</a></h1>
+<p>This guide provides you with general information and practical examples to work with the
+<code class="docutils literal notranslate"><span class="pre">python-wagoplc</span></code> programming library.</p>
+<section id="integration-with-vs-code-extension-wago-cc100">
+<h2>Integration with VS Code Extension WAGO CC100<a class="headerlink" href="#integration-with-vs-code-extension-wago-cc100" title="Permalink to this heading">#</a></h2>
+<p>The following examples show how to create PLC application scripts and configuration. In order to actually
+run them, you’ll need a CC100 of the first generation (before <em>751-9402</em>). In theory, transferring your project folder to the CC100 and running the following commands would be enough:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>python-wagoplc
+<span class="nb">cd</span><span class="w"> </span>plc-application/
+python<span class="w"> </span>main.py
+</pre></div>
+</div>
+<p>Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
+requirements and a <a class="reference external" href="https://github.com/wago-enterprise-education/docker-engine-cc100">Python runtime</a> for the CC100 has been created. It is highly recommended to make use of the <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100">VS Code Extension WAGO CC100</a>, which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the <em>operating-mode switch (OMS)</em> and watching the status lights, like with CoDeSys.</p>
+</section>
+<section id="the-concept-of-plc-programming">
+<h2>The concept of PLC programming<a class="headerlink" href="#the-concept-of-plc-programming" title="Permalink to this heading">#</a></h2>
+<p>PLC programming is standardised in IEC 61131-3. This library loosely adheres to that standard. Most importantly,
+an SPS is a <em>multi-tasking system</em>: the system alternates between multiple <em>tasks</em>, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event. A single task execution is called a <em>cycle</em>. It has an input image (controller inputs) and an internal state and produces an output image (controller outputs).</p>
+<p>Each task has a specific <em>cycle time</em> that defines the execution interval as well as a priority.
+Moreover, you can define a <em>watchdog</em>, which is the maximum time a task may take before it is interrupted. A more advanced setting is the watchdog <em>sensitivity</em>. Each step adds a five percent tolerance to the watchdog time. See the docstring of the <code class="docutils literal notranslate"><span class="pre">Task</span></code> class for the allowed value ranges of all these settings.</p>
+<p>In this library, tasks are represented through Python functions: the function parameters are the input image,
+the return value (a dictionary) the output image. To keep track of the internal state, variables need to be defined outside of the function, passed into it and also returned from it. Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">task_function</span><span class="p">(</span><span class="n">di1</span><span class="p">,</span> <span class="n">di2</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+    <span class="c1"># Do something with the variables</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">do1</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">di1</span><span class="p">:</span>
+        <span class="n">do1</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Return output and state variable</span>
+    <span class="c1"># Key is variable name</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">do1</span><span class="o">=</span><span class="n">do1</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For how to define the variables, see the examples below.</p>
+</section>
+<section id="one-script-plc-application-bottle-filling-plant">
+<h2>One-script PLC application: bottle filling plant<a class="headerlink" href="#one-script-plc-application-bottle-filling-plant" title="Permalink to this heading">#</a></h2>
+<p>At the bottle filling plant, the filled bottles are transferred to waiting crates using conveyor belts.
+The full crates are afterwards loaded onto freight trains. To minimize the risk of delays or complications in this vital area, the plant contains a bottle buffer with a fixed capacity. Light barriers at the entrance and exit count the incoming and outgoing bottles. If the number of bottles exceeds the threshold, the motor is turned off.</p>
+<p>The following steps show how to create the program for this plant using the WAGO PLC <em>751-9301</em>. You can find the whole source code <a class="reference download internal" download="" href="_downloads/7e98ca55639df3de02a9059870244d65/main.py"><span class="xref download myst">here</span></a>.</p>
+<section id="main-py">
+<h3><code class="docutils literal notranslate"><span class="pre">main.py</span></code><a class="headerlink" href="#main-py" title="Permalink to this heading">#</a></h3>
+<p>This script is the centerpiece of the PLC application, written by the programmer. It is directly invoked by the runtime. Thus, it must contain a call to the library’s main function.
+Initially, you’ll want to define a few variables for later use. To access controller I/O, you can use wrapper classes. Example using an object of the <code class="docutils literal notranslate"><span class="pre">wagoplc.tasks.Tasks</span></code> class for collection of variables and tasks:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">wagoplc</span> <span class="kn">import</span> <span class="n">main</span><span class="p">,</span> <span class="n">Tasks</span><span class="p">,</span> <span class="n">DI</span><span class="p">,</span> <span class="n">AO</span>
+<span class="kn">from</span> <span class="nn">wagoplc.fb</span> <span class="kn">import</span> <span class="n">CTUD</span>
+
+<span class="n">tasks</span> <span class="o">=</span> <span class="n">Tasks</span><span class="p">()</span>
+
+<span class="nd">@tasks</span><span class="o">.</span><span class="n">setup</span>
+<span class="k">def</span> <span class="nf">setup</span><span class="p">():</span>
+    <span class="c1"># Bind variable light_barrier_in to digital output 1</span>
+    <span class="n">light_barrier_in</span> <span class="o">=</span> <span class="n">DI</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">light_barrier_out</span> <span class="o">=</span> <span class="n">DI</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">motor</span> <span class="o">=</span> <span class="n">AO</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># up-counter function block as per IEC 61131-3</span>
+    <span class="n">bottle_counter</span> <span class="o">=</span> <span class="n">CTUD</span><span class="p">(</span><span class="n">pv</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">locals()</span></code> statement creates a dictionary of variable names and value and returns it.
+It is collected by the setup decorator and saved in the <code class="docutils literal notranslate"><span class="pre">Tasks</span></code> object.</p>
+<p>Now, you write the actual program as a Python function, which represents a PLC task.
+Task-related settings like the name and cycle time can be defined via another decorator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@tasks</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;bottle buffer&quot;</span><span class="p">,</span>
+        <span class="c1"># Cycle time of 5ms</span>
+        <span class="n">cycle_ms</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">bottle_buffer</span><span class="p">(</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">light_barrier_out</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="p">:</span> <span class="n">CTUD</span><span class="p">):</span>
+    <span class="c1"># count up/down if a rising edge of the input variable is registered</span>
+    <span class="n">bottle_counter</span><span class="p">(</span><span class="n">cu</span><span class="o">=</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">cd</span><span class="o">=</span><span class="n">light_barrier_out</span><span class="p">)</span>
+    <span class="c1"># set to 5 V (5000 mV)</span>
+    <span class="n">motor</span> <span class="o">=</span> <span class="mi">5000</span>
+    <span class="c1"># Counter has reached the threshold</span>
+    <span class="k">if</span> <span class="n">bottle_counter</span><span class="o">.</span><span class="n">qu</span><span class="p">:</span>
+        <span class="c1"># Turn motor off</span>
+        <span class="n">motor</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Return the output image</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">motor</span><span class="o">=</span><span class="n">motor</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="o">=</span><span class="n">bottle_counter</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the output iamge, the <code class="docutils literal notranslate"><span class="pre">motor</span></code> variable is mapped to an analog output and its value is written after every cycle, while the <code class="docutils literal notranslate"><span class="pre">bottle_counter</span></code> is considered a state variable. It is passed into the task function unchanged in the next cycle and therefore needs to be defined as a parameter.</p>
+</section>
+<section id="controller-yaml">
+<h3><code class="docutils literal notranslate"><span class="pre">controller.yaml</span></code><a class="headerlink" href="#controller-yaml" title="Permalink to this heading">#</a></h3>
+<p>This file holds the application’s configuration. It is required to contain the <code class="docutils literal notranslate"><span class="pre">itemNumber</span></code> field with the controller’s item number. Based on this information, the library selects the correct controller:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">itemNumber</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span>
+</pre></div>
+</div>
+<p>With that, your application would be complete. But wait, that’s not all! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your <code class="docutils literal notranslate"><span class="pre">main.py</span></code> script slim:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">io_mapping</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Module name; for the CC100 controllers, the item number</span>
+<span class="w">  </span><span class="nt">751-9301</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># input image</span>
+<span class="w">    </span><span class="nt">pii</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">di1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">light_barrier_in</span>
+<span class="w">      </span><span class="nt">di2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">light_barrier_out</span>
+<span class="w">    </span><span class="c1"># output image</span>
+<span class="w">    </span><span class="nt">piq</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">ao1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motor</span>
+<span class="c1"># state variables</span>
+<span class="nt">vars</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bottle_counter</span>
+<span class="w">    </span><span class="nt">fb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CTUD</span>
+<span class="nt">tasks</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bottle buffer</span>
+<span class="w">    </span><span class="c1"># Script entry point</span>
+<span class="w">    </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main.bottle_buffer</span>
+<span class="w">    </span><span class="c1"># Cycle time</span>
+<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">priority</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sensitivity</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">watchdog_ms</span><span class="p">:</span>
+</pre></div>
+</div>
+<p>Using this config, your <code class="docutils literal notranslate"><span class="pre">main.py</span></code> script would look like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">wagoplc</span> <span class="kn">import</span> <span class="n">main</span>
+<span class="kn">from</span> <span class="nn">wagoplc.fb</span> <span class="kn">import</span> <span class="n">CTUD</span>
+
+<span class="k">def</span> <span class="nf">bottle_buffer</span><span class="p">(</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">light_barrier_out</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="p">:</span> <span class="n">CTUD</span><span class="p">):</span>
+    <span class="n">bottle_counter</span><span class="p">(</span><span class="n">cu</span><span class="o">=</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">cd</span><span class="o">=</span><span class="n">light_barrier_out</span><span class="p">,</span> <span class="n">pv</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+    <span class="n">motor</span> <span class="o">=</span> <span class="mi">5000</span>
+    <span class="k">if</span> <span class="n">bottle_counter</span><span class="o">.</span><span class="n">qu</span><span class="p">:</span>
+        <span class="n">motor</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">motor</span><span class="o">=</span><span class="n">motor</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="o">=</span><span class="n">bottle_counter</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="using-own-function-blocks-factory-gate-control">
+<h2>Using own function blocks: factory gate control<a class="headerlink" href="#using-own-function-blocks-factory-gate-control" title="Permalink to this heading">#</a></h2>
+<p>A <em>function block (fb)</em> is a kind of module that takes a fixed set of input variables to determine a fixed set of
+output variables. The programmer operates on instances of an fb in order to retain the internal state.
+In the example above, you already used an up-counter function block from the standard library.
+With <code class="docutils literal notranslate"><span class="pre">python-wagoplc</span></code>, you’re also able to define your own function blocks for more complex setups.</p>
+<p>Imagine having a large assembly hall with multiple entrance gates you need to control.
+Each gate has an open and a close button as well as two limit switches.
+Rather than duplicating the necessary code for each gate, you could employ a function block.</p>
+<p>As always, your first step is to think about and define the variables and tasks you’ll need, here in <code class="docutils literal notranslate"><span class="pre">controller.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">itemNumber</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="nt">pii</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">di1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">open_btn</span>
+<span class="w">      </span><span class="nt">di2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">close_btn</span>
+<span class="w">      </span><span class="nt">di3</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">limit_switch_left</span>
+<span class="w">      </span><span class="nt">di4</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">limit_switch_right</span>
+<span class="w">    </span><span class="nt">piq</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">do1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motor_open</span>
+<span class="w">      </span><span class="nt">do2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motor_close</span>
+<span class="nt">vars</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate_control_fb</span>
+<span class="w">    </span><span class="c1"># Retrieve class &#39;Gate_Control&#39; from module &#39;gate_control.py&#39;</span>
+<span class="w">    </span><span class="nt">fb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate_control.Gate_Control</span>
+<span class="nt">tasks</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate control</span>
+<span class="w">    </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main.porta_westfalica</span>
+<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">priority</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sensitivity</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">watchdog_ms</span><span class="p">:</span>
+</pre></div>
+</div>
+<p>Next thing is to write <code class="docutils literal notranslate"><span class="pre">main.py</span></code>. In the following example, the input variables are collected and passed into a function block called <code class="docutils literal notranslate"><span class="pre">gate_control_fb</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gate_control</span> <span class="kn">import</span> <span class="n">Gate_Control</span>
+
+<span class="k">def</span> <span class="nf">porta_westfalica</span><span class="p">(</span>
+        <span class="n">gate_control_fb</span><span class="p">:</span> <span class="n">Gate_Control</span><span class="p">,</span> <span class="n">limit_switch_left</span><span class="p">,</span>
+        <span class="n">limit_switch_right</span><span class="p">,</span> <span class="n">open_btn</span><span class="p">,</span> <span class="n">close_btn</span><span class="p">):</span>
+    <span class="c1"># Call to the function block</span>
+    <span class="n">gate_control_fb</span><span class="p">(</span><span class="n">open_btn</span><span class="p">,</span> <span class="n">close_btn</span><span class="p">,</span> <span class="n">limit_switch_left</span><span class="p">,</span> <span class="n">limit_switch_right</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">gate_control_fb</span><span class="o">.</span><span class="n">open</span><span class="p">,</span> <span class="n">gate_control_fb</span><span class="o">.</span><span class="n">closed</span><span class="p">)</span>
+
+    <span class="c1"># Motors controlled through output variables</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">gate_control_fb</span><span class="o">=</span><span class="n">gate_control_fb</span><span class="p">,</span>
+                <span class="n">motor_open</span><span class="o">=</span><span class="n">gate_control_fb</span><span class="o">.</span><span class="n">motor_open</span><span class="p">,</span>
+                <span class="n">motor_close</span><span class="o">=</span><span class="n">gate_control_fb</span><span class="o">.</span><span class="n">motor_close</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When you define your variables in the script, you can bind an instance of your fb to
+the <code class="docutils literal notranslate"><span class="pre">gate_control_fb</span></code> variable directly (which is what the library does, internally).</p>
+</div>
+<p>Now to the function block, which according to the above code is a class <code class="docutils literal notranslate"><span class="pre">Gate_Control</span></code> defined in a module
+<code class="docutils literal notranslate"><span class="pre">gate_control.py</span></code> (in the same directory as <code class="docutils literal notranslate"><span class="pre">main.py</span></code>). A function block in its current, simple form consists of a constructor setting any instance variables, and a <code class="docutils literal notranslate"><span class="pre">__call__()</span></code> method containing the actual functionality, which makes the instance callable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Function block superclass</span>
+<span class="kn">from</span> <span class="nn">wagoplc.fb</span> <span class="kn">import</span> <span class="n">FB</span>
+
+<span class="k">class</span> <span class="nc">Gate_Control</span><span class="p">(</span><span class="n">FB</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motor_open</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motor_close</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">open_btn</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">close_btn</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> 
+        <span class="n">limit_switch_left</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">limit_switch_right</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span>
+            <span class="k">case</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># Gate closed</span>
+                <span class="k">if</span> <span class="n">open_btn</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_open</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">case</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># Gate opens</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">limit_switch_right</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_open</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="k">case</span> <span class="mi">2</span><span class="p">:</span> <span class="c1"># Gate is open</span>
+                <span class="k">if</span> <span class="n">close_btn</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_close</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">3</span>
+            <span class="k">case</span> <span class="mi">3</span><span class="p">:</span> <span class="c1"># Gate closes</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">limit_switch_left</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_close</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Python WAGO PLC Library Documentation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="development.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Development</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-with-vs-code-extension-wago-cc100">Integration with VS Code Extension WAGO CC100</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-concept-of-plc-programming">The concept of PLC programming</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#one-script-plc-application-bottle-filling-plant">One-script PLC application: bottle filling plant</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#main-py"><code class="docutils literal notranslate"><span class="pre">main.py</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#controller-yaml"><code class="docutils literal notranslate"><span class="pre">controller.yaml</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-own-function-blocks-factory-gate-control">Using own function blocks: factory gate control</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="_sources/user-guide.md.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, Johann Timm, Kilian Romberg.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.14.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
