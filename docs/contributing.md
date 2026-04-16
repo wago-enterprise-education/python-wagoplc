@@ -2,7 +2,7 @@
 
 Thank you for considering a contribution to this project! Together we shall strive to make
 `python-wagoplc` a stable, feature-rich and widely-used programming library.
-Till then, it's still a long and rocky path, but rewarding! Check out [our todo list](TODO.md)
+Till then, it's still a long and rocky path, but rewarding! Check out [our roadmap](roadmap.md)
 to find the next milestones.
 
 ## Development setup
@@ -17,6 +17,11 @@ source .venv/bin/activate
 ```
 The last command activates the virtual environment created by `uv` and needs to be executed every time before you work on the project.
 
+## Library structure
+
+Head over to [the internals documentation](internals.md) to become familiar with the inner workings
+of this library.
+
 ## Tests
 
 `python-wagoplc` uses `unittest` for testing purposes. To run all tests, in the project root folder execute the following command:
@@ -28,17 +33,12 @@ You can also execute an individual test file directly using Python.
 
 ## Changelog
 
-Every change made to the functionality of this library should have an entry in [`CHANGELOG.md`](CHANGELOG.md).
+Every change made to the functionality of this library should have an entry in `CHANGELOG.md`.
 Refer to this file for how to format your entry.
-
-## Library structure
-
-Head over to [the development documentation](docs/development.md) to become familiar with the inner workings
-of this library.
 
 ## Code linting
 
-We use ruff for linting. Before you commit, run the checks with:
+We use [`ruff`](https://docs.astral.sh/ruff/) for linting. Before you commit, run the checks with:
 
 ```bash
 ruff check

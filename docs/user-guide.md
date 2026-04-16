@@ -205,9 +205,10 @@ def porta_westfalica(
                 motor_close=gate_control_fb.motor_close)
 ```
 
-> [!NOTE]
-> When you define your variables in the script, you can bind an instance of your fb to
-> the `gate_control_fb` variable directly (which is what the library does, internally).
+:::{note}
+When you define your variables in the script, you can bind an instance of your fb to
+the `gate_control_fb` variable directly (which is what the library does, internally).
+:::
 
 Now to the function block, which according to the above code is a class `Gate_Control` defined in a module
 `gate_control.py` (in the same directory as `main.py`). A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable:

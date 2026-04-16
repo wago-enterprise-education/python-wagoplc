@@ -24,6 +24,10 @@ dev = [
     "pyfakefs>=5.10.2",
     "ruff>=0.15.10",
 ]
+docs = [
+    "myst-parser>=3.0.1",
+    "sphinx>=7.1.2",
+]
 
 [tool.ruff]
 target-version = "py312"
