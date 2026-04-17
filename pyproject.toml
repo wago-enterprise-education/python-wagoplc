@@ -35,5 +35,5 @@ target-version = "py312"
 exclude = [
 "docs", "plc-application"
 ]
-per-file-ignores = {"test_tasks.py" = ["F841"],"wagoplc/__init__.py" = ["F401"]}
+lint.per-file-ignores = {"test_tasks.py" = ["F841"], "wagoplc/__init__.py" = ["F401"]}
 
