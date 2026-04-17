@@ -106,7 +106,7 @@ class Task:
 
         self.next_run: float = time.time()
     
-    def __lt__(self, other: Task) -> bool:
+    def __lt__(self, other: "Task") -> bool:
             return self.priority < other.priority
 
     def __str__(self) -> str:
@@ -122,7 +122,7 @@ class Task:
             func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
             vars = var_mapping.keys()
             if not_defined := list(filter(lambda p: p not in vars, func_params)):
-                raise NotDefinedError(f"Undefined variables: {", ".join(not_defined)}")
+                raise NotDefinedError(f"Undefined variables: {', '.join(not_defined)}")
             def is_input(pair):
                 k, _ = pair
                 if k in func_params:
@@ -226,7 +226,7 @@ class Scheduler:
         try:
             if not self.tasks:
                 return
-            logger.info(f"Found tasks {", ".join(t.name for t in self.tasks)}")
+            logger.info(f"Found tasks {', '.join(t.name for t in self.tasks)}")
 
             now = time.time()
             for t in self.tasks:

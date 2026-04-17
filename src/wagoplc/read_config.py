@@ -56,11 +56,10 @@ def get_controller(controller_id: str) -> Controller:
 def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, Any], Controller]:
     """Read the configuration file.
     
-    Return the tasks, the variable mapping and the controller object.
-    Raise FileNotFoundError if the configuration file does not exist.
-    Raise InvalidConfigError if the configuration does not include the itemNumber
-    field, a function block or a task entry point do not exist, or if there are duplicates
-    in the variable mapping.
+    :param tasks_obj: Optional Tasks object from the application script
+    :return: The tasks, the variable mapping and the controller object.
+    :raise FileNotFoundError: If the configuration file does not exist.
+    :raise exceptions.InvalidConfigError: if the configuration does not include the itemNumber field, a function block or a task entry point do not exist, or if there are duplicates in the variable mapping.
     """
     if not os.path.exists(YAML_CONFIG):
         raise FileNotFoundError("'controller.yaml' does not exist.")
@@ -92,7 +91,7 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                     # Instantiate the function block
                     value = fb()
                 except (ImportError, AttributeError):
-                    raise InvalidConfigError(f"No such function block: '{var["fb"]}'")
+                    raise InvalidConfigError(f"No such function block: '{var['fb']}'")
             else:
                 # a plain variable with name and value
                 value = var["value"]
@@ -153,9 +152,9 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                 module = importlib.import_module(module_name)
                 task["entry"] = getattr(module, func_name)                
                 tasks.append(Task(plc_obj, var_mapping, **task))
-                logger.debug(f"Task '{task["name"]}' with script entry point '{entry}' registered")
+                logger.debug(f"Task '{task['name']}' with script entry point '{entry}' registered")
             except (ModuleNotFoundError, AttributeError):
-                raise InvalidConfigError(f"Function '{entry}' for task '{task["name"]}' not defined!")
+                raise InvalidConfigError(f"Function '{entry}' for task '{task['name']}' not defined!")
     
     if tasks_obj is not None:
         var_mapping.update(tasks_obj.map)

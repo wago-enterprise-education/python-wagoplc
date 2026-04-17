@@ -1,7 +1,11 @@
 name: "Sphinx: Render docs"
 
-on: push
-
+on:
+  push:
+    branches:
+      - 'main'
+      - 'Develop'
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,14 +17,19 @@ jobs:
         persist-credentials: false
     - name: Build HTML
       uses: ammaraskar/sphinx-action@7.1.2
+      with:
+        docs-folder: "docs/"
+        # Rebuild API docs every time
+        build-command: "sphinx-build -b html . _build reference.rst"
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: html-docs
-        path: docs/_build/html/
+        path: docs/_build
+    - run: git status
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/Develop'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/_build/html
+        publish_dir: docs/_build
+        keep_files: true

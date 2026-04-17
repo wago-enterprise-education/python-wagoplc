@@ -3,6 +3,7 @@
 This package consists of modules for all supported CC100 controllers.
 
 Modules:
+
 - cc100_v1: the older CC100 generation
 - cc100_9301: CC100 751-9301
 - cc100_9401: CC100 751-9401
