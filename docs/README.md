@@ -200,4 +200,4 @@ We recommend using it alongside the [VS Code Extension](https://marketplace.visu
 
 ## Contributing
 
-Contributions of all kind are very welcome! To get you started, head over to our [contributing instructions](CONTRIBUTING.md).
+Contributions of all kind are very welcome! To get you started, head over to our [contributing instructions](contributing.md).

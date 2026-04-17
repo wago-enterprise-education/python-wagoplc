@@ -30,4 +30,4 @@ from the `fb` module. The function block object is created behind the scenes in 
 
 ### Controller-specific functionality
 
-At the heart of the `python-wagoplc` are the packages that define controller-specific functionality. Each controller series must have its own package, each controller must have its own module and class. The first and base controller of a series must both define the `Controller` interface and be a superclass for each following version, if applicable. Inside a controller series, controllers may be grouped into generations. See the `CC100_v1` class and its subclasses as an example.
+At the heart of the `python-wagoplc` are the packages that define controller-specific functionality. Each controller series must have its own package, each controller must have its own module and class. The first and base controller of a series must both define the `Controller` interface and be a superclass for each following version, if applicable. Inside a controller package, controllers may also be grouped into generations. See the `CC100_v1` class and its subclasses as an example.
