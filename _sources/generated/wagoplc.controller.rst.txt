@@ -1,0 +1,22 @@
+wagoplc.controller
+==================
+
+.. automodule:: wagoplc.controller
+
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AI
+      AIO
+      AO
+      Controller
+      DI
+      DIO
+      DO
+      IO
+      IOHandler
+      NI
+      PT
+   

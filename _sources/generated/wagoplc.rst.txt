@@ -1,0 +1,25 @@
+﻿wagoplc
+=======
+
+.. automodule:: wagoplc
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      main
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   cc100
+   constants
+   controller
+   exceptions
+   fb
+   read_config
+   tasks

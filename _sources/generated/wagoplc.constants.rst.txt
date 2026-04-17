@@ -1,0 +1,6 @@
+wagoplc.constants
+=================
+
+.. automodule:: wagoplc.constants
+
+   

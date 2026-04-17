@@ -1,0 +1,21 @@
+wagoplc.tasks
+=============
+
+.. automodule:: wagoplc.tasks
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      cont_handler
+      stop_handler
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Scheduler
+      Task
+      Tasks
+   

@@ -1,0 +1,6 @@
+wagoplc.read\_config
+====================
+
+.. currentmodule:: wagoplc
+
+.. autofunction:: read_config

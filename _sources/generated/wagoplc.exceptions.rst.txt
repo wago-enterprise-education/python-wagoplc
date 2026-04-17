@@ -1,0 +1,16 @@
+wagoplc.exceptions
+==================
+
+.. automodule:: wagoplc.exceptions
+
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      InvalidConfigError
+      NonExistingIOError
+      NotDefinedError
+      WAGOPlcError
+      WatchdogTimeoutError
+   
