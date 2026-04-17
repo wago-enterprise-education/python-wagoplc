@@ -351,7 +351,7 @@ to find the next milestones.</p>
 <p>This module uses <a class="reference external" href="https://docs.astral.sh/uv/">uv</a> as the build system. First of all, <a class="reference external" href="https://docs.astral.sh/uv/getting-started/installation/">install uv</a>. To get the source code and set up a development environment, execute the following commands in your favourite terminal emulator:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/wago-enterprise-education/python-wagoplc
 <span class="nb">cd</span><span class="w"> </span>python-wagoplc
-uv<span class="w"> </span>sync
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>docs
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </pre></div>
 </div>
@@ -378,9 +378,17 @@ Refer to this file for how to format your entry.</p>
 <section id="code-linting">
 <h2>Code linting<a class="headerlink" href="#code-linting" title="Link to this heading">#</a></h2>
 <p>We use <a class="reference external" href="https://docs.astral.sh/ruff/"><code class="docutils literal notranslate"><span class="pre">ruff</span></code></a> for linting. Before you commit, run the checks with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ruff<span class="w"> </span>check
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ruff<span class="w"> </span>check<span class="w"> </span>--target-version<span class="w"> </span>py38
 </pre></div>
 </div>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h2>
+<p>The documentation is built using <a class="reference external" href="https://www.sphinx-doc.org/">Sphinx</a>. In order to build it locally, run the following command in the project root folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sphinx-build<span class="w"> </span>docs/<span class="w"> </span>docs/_build<span class="w"> </span>docs/reference.rst
+</pre></div>
+</div>
+<p>Automatic generation happens every time a commit is pushed to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch, using a GitHub Actions workflow.</p>
 </section>
 </section>
 
@@ -436,6 +444,7 @@ Refer to this file for how to format your entry.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tests">Tests</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#changelog">Changelog</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#code-linting">Code linting</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
 </ul>
   </nav></div>
 

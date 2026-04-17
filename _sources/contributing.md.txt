@@ -12,7 +12,7 @@ This module uses [uv](https://docs.astral.sh/uv/) as the build system. First of 
 ```bash
 git clone https://github.com/wago-enterprise-education/python-wagoplc
 cd python-wagoplc
-uv sync
+uv sync --group docs
 source .venv/bin/activate
 ```
 The last command activates the virtual environment created by `uv` and needs to be executed every time before you work on the project.
@@ -41,5 +41,15 @@ Refer to this file for how to format your entry.
 We use [`ruff`](https://docs.astral.sh/ruff/) for linting. Before you commit, run the checks with:
 
 ```bash
-ruff check
+ruff check --target-version py38
 ```
+
+## Documentation
+
+The documentation is built using [Sphinx](https://www.sphinx-doc.org/). In order to build it locally, run the following command in the project root folder:
+
+```bash
+sphinx-build docs/ docs/_build docs/reference.rst
+```
+
+Automatic generation happens every time a commit is pushed to the `main` branch, using a GitHub Actions workflow.
