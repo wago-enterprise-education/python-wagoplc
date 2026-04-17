@@ -15,15 +15,15 @@ python main.py
 ```
 
 Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
-requirements and a [Python runtime](https://github.com/wago-enterprise-education/docker-engine-cc100) for the CC100 has been created. It is highly recommended to make use of the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the *operating-mode switch (OMS)* and watching the status lights, like with CoDeSys.
+requirements and a [Python runtime](https://github.com/wago-enterprise-education/docker-engine-cc100) for WAGO PLCs has been created. It is highly recommended to make use of the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the *operating-mode switch (OMS)* and watching the status lights, like with CoDeSys.
 
 ## The concept of PLC programming
 
 PLC programming is standardised in IEC 61131-3. This library loosely adheres to that standard. Most importantly,
-an SPS is a *multi-tasking system*: the system alternates between multiple *tasks*, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event. A single task execution is called a *cycle*. It has an input image (controller inputs) and an internal state and produces an output image (controller outputs).
+a PLC is a *multi-tasking system*: the kernel alternates between multiple *tasks*, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event, or periodically (which is currently not supported). A single task execution is called a *cycle*. It has an input image (read from the controller inputs) and an internal state and produces an output image (written to the controller outputs).
 
-Each task has a specific *cycle time* that defines the execution interval as well as a priority.
-Moreover, you can define a *watchdog*, which is the maximum time a task may take before it is interrupted. A more advanced setting is the watchdog *sensitivity*. Each step adds a five percent tolerance to the watchdog time. See the docstring of the `Task` class for the allowed value ranges of all these settings.
+Each task has a specific *cycle time* that defines the interval between executions as well as a priority.
+Moreover, you can define a *watchdog*, which is the maximum time a task may take to execute before it is interrupted. A more advanced setting is the watchdog *sensitivity*. Each step adds a five percent tolerance to the watchdog time. See the docstring of the `Task` class for the allowed value ranges of these settings.
 
 In this library, tasks are represented through Python functions: the function parameters are the input image,
 the return value (a dictionary) the output image. To keep track of the internal state, variables need to be defined outside of the function, passed into it and also returned from it. Example:
@@ -72,7 +72,7 @@ def setup():
 
     return locals()
 ```
-The `return locals()` statement creates a dictionary of variable names and value and returns it.
+The `return locals()` statement creates a dictionary of variable names and values and returns it.
 It is collected by the setup decorator and saved in the `Tasks` object.
 
 Now, you write the actual program as a Python function, which represents a PLC task.
@@ -97,7 +97,7 @@ def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
     # Return the output image
     return dict(motor=motor, bottle_counter=bottle_counter)
 ```
-In the output iamge, the `motor` variable is mapped to an analog output and its value is written after every cycle, while the `bottle_counter` is considered a state variable. It is passed into the task function unchanged in the next cycle and therefore needs to be defined as a parameter.
+In the output iamge, the `motor` variable is mapped to an analog output and its value is written after every cycle, while the `bottle_counter` is considered a state variable. It is passed into the task function unchanged before the next cycle and therefore needs to be defined as a parameter.
 
 ### `controller.yaml`
 
@@ -106,7 +106,7 @@ This file holds the application's configuration. It is required to contain the `
 ```yaml
 itemNumber: 751-9301
 ```
-With that, your application would be complete. But wait, that's not all! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your `main.py` script slim:
+With that, your application would be complete. But wait, there's more! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your `main.py` script slim:
 
 ```yaml
 io_mapping:
@@ -128,7 +128,7 @@ tasks:
     # Script entry point
     entry: main.bottle_buffer
     # Cycle time
-    cycle_ms: 50
+    cycle_ms: 10
     priority:
     sensitivity:
     watchdog_ms:
@@ -182,7 +182,7 @@ vars:
 tasks:
   - name: gate control
     entry: main.porta_westfalica
-    cycle_ms: 50
+    cycle_ms: 20
     priority:
     sensitivity:
     watchdog_ms:
@@ -211,7 +211,7 @@ the `gate_control_fb` variable directly (which is what the library does, interna
 :::
 
 Now to the function block, which according to the above code is a class `Gate_Control` defined in a module
-`gate_control.py` (in the same directory as `main.py`). A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable:
+`gate_control.py` (in the same directory as `main.py` and `controller.yaml`). A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable:
 
 ```python
 # Function block superclass

@@ -49,7 +49,7 @@ ruff check --target-version py38
 The documentation is built using [Sphinx](https://www.sphinx-doc.org/). In order to build it locally, run the following command in the project root folder:
 
 ```bash
-sphinx-build docs/ docs/_build docs/reference.rst
+sphinx-build docs/ docs/_build
 ```
-
+Consider looking into the [sphinx-autobuild project](https://pypi.org/project/sphinx-autobuild/), which offers a local development server with live-rebuild on documentation change. 
 Automatic generation happens every time a commit is pushed to the `main` branch, using a GitHub Actions workflow.

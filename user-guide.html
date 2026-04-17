@@ -346,14 +346,14 @@ python<span class="w"> </span>main.py
 </pre></div>
 </div>
 <p>Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
-requirements and a <a class="reference external" href="https://github.com/wago-enterprise-education/docker-engine-cc100">Python runtime</a> for the CC100 has been created. It is highly recommended to make use of the <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100">VS Code Extension WAGO CC100</a>, which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the <em>operating-mode switch (OMS)</em> and watching the status lights, like with CoDeSys.</p>
+requirements and a <a class="reference external" href="https://github.com/wago-enterprise-education/docker-engine-cc100">Python runtime</a> for WAGO PLCs has been created. It is highly recommended to make use of the <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100">VS Code Extension WAGO CC100</a>, which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the <em>operating-mode switch (OMS)</em> and watching the status lights, like with CoDeSys.</p>
 </section>
 <section id="the-concept-of-plc-programming">
 <h2>The concept of PLC programming<a class="headerlink" href="#the-concept-of-plc-programming" title="Link to this heading">#</a></h2>
 <p>PLC programming is standardised in IEC 61131-3. This library loosely adheres to that standard. Most importantly,
-an SPS is a <em>multi-tasking system</em>: the system alternates between multiple <em>tasks</em>, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event. A single task execution is called a <em>cycle</em>. It has an input image (controller inputs) and an internal state and produces an output image (controller outputs).</p>
-<p>Each task has a specific <em>cycle time</em> that defines the execution interval as well as a priority.
-Moreover, you can define a <em>watchdog</em>, which is the maximum time a task may take before it is interrupted. A more advanced setting is the watchdog <em>sensitivity</em>. Each step adds a five percent tolerance to the watchdog time. See the docstring of the <code class="docutils literal notranslate"><span class="pre">Task</span></code> class for the allowed value ranges of all these settings.</p>
+a PLC is a <em>multi-tasking system</em>: the kernel alternates between multiple <em>tasks</em>, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event, or periodically (which is currently not supported). A single task execution is called a <em>cycle</em>. It has an input image (read from the controller inputs) and an internal state and produces an output image (written to the controller outputs).</p>
+<p>Each task has a specific <em>cycle time</em> that defines the interval between executions as well as a priority.
+Moreover, you can define a <em>watchdog</em>, which is the maximum time a task may take to execute before it is interrupted. A more advanced setting is the watchdog <em>sensitivity</em>. Each step adds a five percent tolerance to the watchdog time. See the docstring of the <code class="docutils literal notranslate"><span class="pre">Task</span></code> class for the allowed value ranges of these settings.</p>
 <p>In this library, tasks are represented through Python functions: the function parameters are the input image,
 the return value (a dictionary) the output image. To keep track of the internal state, variables need to be defined outside of the function, passed into it and also returned from it. Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">task_function</span><span class="p">(</span><span class="n">di1</span><span class="p">,</span> <span class="n">di2</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
@@ -397,7 +397,7 @@ Initially, you’ll want to define a few variables for later use. To access cont
     <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">locals()</span></code> statement creates a dictionary of variable names and value and returns it.
+<p>The <code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">locals()</span></code> statement creates a dictionary of variable names and values and returns it.
 It is collected by the setup decorator and saved in the <code class="docutils literal notranslate"><span class="pre">Tasks</span></code> object.</p>
 <p>Now, you write the actual program as a Python function, which represents a PLC task.
 Task-related settings like the name and cycle time can be defined via another decorator:</p>
@@ -420,7 +420,7 @@ Task-related settings like the name and cycle time can be defined via another de
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">motor</span><span class="o">=</span><span class="n">motor</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="o">=</span><span class="n">bottle_counter</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In the output iamge, the <code class="docutils literal notranslate"><span class="pre">motor</span></code> variable is mapped to an analog output and its value is written after every cycle, while the <code class="docutils literal notranslate"><span class="pre">bottle_counter</span></code> is considered a state variable. It is passed into the task function unchanged in the next cycle and therefore needs to be defined as a parameter.</p>
+<p>In the output iamge, the <code class="docutils literal notranslate"><span class="pre">motor</span></code> variable is mapped to an analog output and its value is written after every cycle, while the <code class="docutils literal notranslate"><span class="pre">bottle_counter</span></code> is considered a state variable. It is passed into the task function unchanged before the next cycle and therefore needs to be defined as a parameter.</p>
 </section>
 <section id="controller-yaml">
 <h3><code class="docutils literal notranslate"><span class="pre">controller.yaml</span></code><a class="headerlink" href="#controller-yaml" title="Link to this heading">#</a></h3>
@@ -428,7 +428,7 @@ Task-related settings like the name and cycle time can be defined via another de
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">itemNumber</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span>
 </pre></div>
 </div>
-<p>With that, your application would be complete. But wait, that’s not all! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your <code class="docutils literal notranslate"><span class="pre">main.py</span></code> script slim:</p>
+<p>With that, your application would be complete. But wait, there’s more! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your <code class="docutils literal notranslate"><span class="pre">main.py</span></code> script slim:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">io_mapping</span><span class="p">:</span>
 <span class="w">  </span><span class="c1"># Module name; for the CC100 controllers, the item number</span>
 <span class="w">  </span><span class="nt">751-9301</span><span class="p">:</span>
@@ -448,7 +448,7 @@ Task-related settings like the name and cycle time can be defined via another de
 <span class="w">    </span><span class="c1"># Script entry point</span>
 <span class="w">    </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main.bottle_buffer</span>
 <span class="w">    </span><span class="c1"># Cycle time</span>
-<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 <span class="w">    </span><span class="nt">priority</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">sensitivity</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">watchdog_ms</span><span class="p">:</span>
@@ -499,7 +499,7 @@ Rather than duplicating the necessary code for each gate, you could employ a fun
 <span class="nt">tasks</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate control</span>
 <span class="w">    </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main.porta_westfalica</span>
-<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
 <span class="w">    </span><span class="nt">priority</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">sensitivity</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">watchdog_ms</span><span class="p">:</span>
@@ -527,7 +527,7 @@ Rather than duplicating the necessary code for each gate, you could employ a fun
 the <code class="docutils literal notranslate"><span class="pre">gate_control_fb</span></code> variable directly (which is what the library does, internally).</p>
 </div>
 <p>Now to the function block, which according to the above code is a class <code class="docutils literal notranslate"><span class="pre">Gate_Control</span></code> defined in a module
-<code class="docutils literal notranslate"><span class="pre">gate_control.py</span></code> (in the same directory as <code class="docutils literal notranslate"><span class="pre">main.py</span></code>). A function block in its current, simple form consists of a constructor setting any instance variables, and a <code class="docutils literal notranslate"><span class="pre">__call__()</span></code> method containing the actual functionality, which makes the instance callable:</p>
+<code class="docutils literal notranslate"><span class="pre">gate_control.py</span></code> (in the same directory as <code class="docutils literal notranslate"><span class="pre">main.py</span></code> and <code class="docutils literal notranslate"><span class="pre">controller.yaml</span></code>). A function block in its current, simple form consists of a constructor setting any instance variables, and a <code class="docutils literal notranslate"><span class="pre">__call__()</span></code> method containing the actual functionality, which makes the instance callable:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Function block superclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">wagoplc.fb</span><span class="w"> </span><span class="kn">import</span> <span class="n">FB</span>
 

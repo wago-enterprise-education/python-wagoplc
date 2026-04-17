@@ -385,10 +385,11 @@ Refer to this file for how to format your entry.</p>
 <section id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h2>
 <p>The documentation is built using <a class="reference external" href="https://www.sphinx-doc.org/">Sphinx</a>. In order to build it locally, run the following command in the project root folder:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sphinx-build<span class="w"> </span>docs/<span class="w"> </span>docs/_build<span class="w"> </span>docs/reference.rst
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sphinx-build<span class="w"> </span>docs/<span class="w"> </span>docs/_build
 </pre></div>
 </div>
-<p>Automatic generation happens every time a commit is pushed to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch, using a GitHub Actions workflow.</p>
+<p>Consider looking into the <a class="reference external" href="https://pypi.org/project/sphinx-autobuild/">sphinx-autobuild project</a>, which offers a local development server with live-rebuild on documentation change.
+Automatic generation happens every time a commit is pushed to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch, using a GitHub Actions workflow.</p>
 </section>
 </section>
 
