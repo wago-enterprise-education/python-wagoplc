@@ -1,3 +1,6 @@
+"""
+The CC100 751-9401 with CAN support.
+"""
 from wagoplc.cc100.cc100_v1 import CC100_v1
 
 class CC100_9401(CC100_v1):

@@ -1,3 +1,7 @@
+"""
+The CC100 751-9403 with DALI support, but without analog inputs.
+"""
+
 from wagoplc.cc100.cc100_v1 import CC100_v1
 from wagoplc.controller import AI
 from wagoplc.exceptions import NonExistingIOError

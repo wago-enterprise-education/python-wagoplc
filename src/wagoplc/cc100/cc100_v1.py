@@ -1,3 +1,7 @@
+"""
+Generic superclass for the older CC100 generation.
+"""
+
 import logging
 import os
 
@@ -10,9 +14,6 @@ logging.basicConfig(
     format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
     level=logging.DEBUG
 )
-
-TEST_DATA = os.getenv("TESTDATA", os.getcwd() + "/test_data")
-
 class CC100_v1(Controller):
     # data paths on CC100 751-9301 (V1)
     DOUT_DATA ="/sys/kernel/dout_drv/DOUT_DATA"
@@ -79,15 +80,15 @@ class CC100_v1(Controller):
 
     def init_fds(self):
         """Get system file descriptors for the CC100 v1."""
-        self._read_fds = {path: open(TEST_DATA + path, "r") for path in self.get_read_paths()}
+        self._read_fds = {path: open(path, "r") for path in self.get_read_paths()}
         # Read digital output file initially and add it to the input image.
         # The value is updated after every write, the file is kept open
         # in write mode.  Otherwise, it would be necessary to use update file mode
         # (r+), which is too costly.
         for path in self.get_read_once_paths():
-            with open(TEST_DATA + path, "r") as f:
+            with open(path, "r") as f:
                 self.input_data[path] = f.read()
-        self._write_fds = {path: open(TEST_DATA + path, "w") for path in self.get_write_paths()}
+        self._write_fds = {path: open(path, "w") for path in self.get_write_paths()}
 
     def analogWrite(self, output: int, voltage: int, module: str) -> bool:
         """Switch the output to the specified voltage.
