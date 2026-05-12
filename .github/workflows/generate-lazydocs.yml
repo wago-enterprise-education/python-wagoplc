@@ -1,4 +1,4 @@
-name: "Docs: Generate API Markdown (lazydocs)"
+name: "Docs: Generate API Markdown with lazydocs"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

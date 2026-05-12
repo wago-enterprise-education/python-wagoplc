@@ -5,10 +5,12 @@ lang: en
 lang-ref: index
 ---
 
+## User guide
+
 This guide provides you with general information and practical examples to work with the
 `python-wagoplc` programming library.
 
-## Integration with VS Code Extension WAGO CC100
+### Integration with VS Code Extension WAGO CC100
 
 The following examples show how to create PLC application scripts and configuration. In order to actually
 run them, you'll need a CC100 of the first generation (before *751-9402*). In theory, transferring your project folder to the CC100 and running the following commands would be enough:
@@ -22,7 +24,7 @@ python main.py
 Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
 requirements and a [Python runtime](https://github.com/wago-enterprise-education/docker-engines-wagoplc) for WAGO PLCs has been created. It is highly recommended to make use of the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the *operating-mode switch (OMS)* and watching the status lights, like with CoDeSys.
 
-## The concept of PLC programming
+### The concept of PLC programming
 
 PLC programming is standardised in IEC 61131-3. This library loosely adheres to that standard. Most importantly,
 a PLC is a *multi-tasking system*: the kernel alternates between multiple *tasks*, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event, or periodically (which is currently not supported). A single task execution is called a *cycle*. It has an input image (read from the controller inputs) and an internal state and produces an output image (written to the controller outputs).
@@ -49,14 +51,14 @@ def task_function(di1, di2, state):
 
 For how to define the variables, see the examples below.
 
-## One-script PLC application: bottle filling plant
+### One-script PLC application: bottle filling plant
 
 At the bottle filling plant, the filled bottles are transferred to waiting crates using conveyor belts.
 The full crates are afterwards loaded onto freight trains. To minimize the risk of delays or complications in this vital area, the plant contains a bottle buffer with a fixed capacity. Light barriers at the entrance and exit count the incoming and outgoing bottles. If the number of bottles exceeds the threshold, the motor is turned off.
 
 The following steps show how to create the program for this plant using the WAGO PLC *751-9301*. You can find the whole source code [in this script](../plc-application/main.py).
 
-### `main.py`
+#### `main.py`
 
 This script is the centerpiece of the PLC application, written by the programmer. It is directly invoked by the runtime. Thus, it must contain a call to the library's main function.
 Initially, you'll want to define a few variables for later use. To access controller I/O, you can use wrapper classes. Example using an object of the `wagoplc.tasks.Tasks` class for collection of variables and tasks:
@@ -107,7 +109,7 @@ def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
 
 In the output image, the `motor` variable is mapped to an analog output and its value is written after every cycle, while the `bottle_counter` is considered a state variable. It is passed into the task function unchanged before the next cycle and therefore needs to be defined as a parameter.
 
-### `controller.yaml`
+#### `controller.yaml`
 
 This file holds the application's configuration. It is required to contain the `itemNumber` field with the controller's item number. Based on this information, the library selects the correct controller:
 
@@ -161,7 +163,7 @@ if __name__ == "__main__":
     main()
 ```
 
-## Using own function blocks: factory gate control
+### Using own function blocks: factory gate control
 
 A *function block (fb)* is a kind of module that takes a fixed set of input variables to determine a fixed set of
 output variables. The programmer operates on instances of an fb in order to retain the internal state.

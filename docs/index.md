@@ -7,8 +7,7 @@ lang-ref: index
 
 This library provides a simple interface to interact with WAGO PLCs (-Programmable Logic Controllers*) using Python. It allows you to read and write data to the PLC, making it easier to integrate WAGO PLCs into your Python applications.
 
-> [!CAUTION]
-> **This repository is a development repository that was created as part of a student project and is not regularly maintained. It is neither a stable version nor an official repository of WAGO GmbH & Co. KG.**
+> **Caution:** This repository is a development repository that was created as part of a student project and is not regularly maintained. It is neither a stable version nor an official repository of WAGO GmbH & Co. KG.
 
 ## Content
 
@@ -296,8 +295,7 @@ python main.py
 
 ## Supported controllers
 
-> [!NOTE]
-> Communication protocols (RS485 serial interface, CANopen, DALI, ...) are at the time unsupported.
+> **Note:** Communication protocols (RS485 serial interface, CANopen, DALI, ...) are currently unsupported.
 
 |  Device  |  Firmware   |  Notes  |
 |  :----   |  :----:     | :----:  |
