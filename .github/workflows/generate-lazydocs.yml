@@ -1,5 +1,8 @@
 name: "Docs: Generate API Markdown (lazydocs)"
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches-ignore:
@@ -7,7 +10,7 @@ on:
     paths:
       - "src/**"
       - "pyproject.toml"
-      - ".github/workflows/lazydocs.yml"
+      - ".github/workflows/generate-lazydocs.yml"
   workflow_dispatch:
 
 permissions:
