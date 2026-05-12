@@ -1,5 +1,0 @@
-# Requirements for the Sphinx GH Action
-myst-parser>=3.0.1
-pydata-sphinx-theme>=0.14.4
-# Install wagoplc for autodoc
-file:.
