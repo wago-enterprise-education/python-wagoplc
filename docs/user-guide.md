@@ -1,4 +1,9 @@
-# User guide
+---
+layout: page
+title: Python WAGO PLC Library - Userguide
+lang: en
+lang-ref: index
+---
 
 This guide provides you with general information and practical examples to work with the
 `python-wagoplc` programming library.
@@ -49,7 +54,7 @@ For how to define the variables, see the examples below.
 At the bottle filling plant, the filled bottles are transferred to waiting crates using conveyor belts.
 The full crates are afterwards loaded onto freight trains. To minimize the risk of delays or complications in this vital area, the plant contains a bottle buffer with a fixed capacity. Light barriers at the entrance and exit count the incoming and outgoing bottles. If the number of bottles exceeds the threshold, the motor is turned off.
 
-The following steps show how to create the program for this plant using the WAGO PLC *751-9301*. You can find the whole source code [here](../plc-application/main.py).
+The following steps show how to create the program for this plant using the WAGO PLC *751-9301*. You can find the whole source code [in this script](../plc-application/main.py).
 
 ### `main.py`
 
@@ -73,6 +78,7 @@ def setup():
 
     return locals()
 ```
+
 The `return locals()` statement creates a dictionary of variable names and values and returns it.
 It is collected by the setup decorator and saved in the `Tasks` object.
 
@@ -98,7 +104,8 @@ def bottle_buffer(light_barrier_in, light_barrier_out, bottle_counter: CTUD):
     # Return the output image
     return dict(motor=motor, bottle_counter=bottle_counter)
 ```
-In the output iamge, the `motor` variable is mapped to an analog output and its value is written after every cycle, while the `bottle_counter` is considered a state variable. It is passed into the task function unchanged before the next cycle and therefore needs to be defined as a parameter.
+
+In the output image, the `motor` variable is mapped to an analog output and its value is written after every cycle, while the `bottle_counter` is considered a state variable. It is passed into the task function unchanged before the next cycle and therefore needs to be defined as a parameter.
 
 ### `controller.yaml`
 
@@ -107,6 +114,7 @@ This file holds the application's configuration. It is required to contain the `
 ```yaml
 itemNumber: 751-9301
 ```
+
 With that, your application would be complete. But wait, there's more! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your `main.py` script slim:
 
 ```yaml

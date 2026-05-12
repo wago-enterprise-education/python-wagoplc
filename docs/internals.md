@@ -1,4 +1,9 @@
-# `python-wagoplc` internals
+---
+layout: page
+title: Python WAGO PLC Library - internals
+lang: en
+lang-ref: index
+---
 
 This page describes the internal structure of the `python-wagoplc` library. 
 

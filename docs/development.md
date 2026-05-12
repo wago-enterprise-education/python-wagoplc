@@ -1,4 +1,9 @@
-# Development guide
+---
+layout: page
+title: Python WAGO PLC Library - Development guide
+lang: en
+lang-ref: index
+---
 
 Welcome to the `python-wagoplc` development documentation! Here you'll find everything you need to know
 about the library's internals.

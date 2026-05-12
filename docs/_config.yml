@@ -1,0 +1,12 @@
+name: Python WAGO PLC Library
+title: Python WAGO PLC Library
+description: A Python programming library for WAGO PLCs.
+author: WAGO Education
+url: https://wago-enterprise-education.github.io/python-wagoplc/
+remote_theme: wago-enterprise-education/wago-github-pages-theme
+lang: en
+markdown: kramdown
+plugins:
+- jemoji
+- jekyll-redirect-from
+- jekyll-relative-links

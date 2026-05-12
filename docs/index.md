@@ -1,6 +1,11 @@
-# Python WAGO PLC Library
+---
+layout: page
+title: Python WAGO PLC Library
+lang: en
+lang-ref: index
+---
 
-This library provides a simple interface to interact with WAGO PLCs (*Programmable Logic Controllers*) using Python. It allows you to read and write data to the PLC, making it easier to integrate WAGO PLCs into your Python applications.
+This library provides a simple interface to interact with WAGO PLCs (-Programmable Logic Controllers*) using Python. It allows you to read and write data to the PLC, making it easier to integrate WAGO PLCs into your Python applications.
 
 > [!CAUTION]
 > **This repository is a development repository that was created as part of a student project and is not regularly maintained. It is neither a stable version nor an official repository of WAGO GmbH & Co. KG.**
@@ -12,10 +17,10 @@ This library provides a simple interface to interact with WAGO PLCs (*Programmab
 - [Configuration model](#configuration-model)
 - [Function blocks](#function-blocks)
 - [How it works](#how-it-works)
+- [Documentation and examples](#documentation-and-examples)
 - [Usage example](#usage-example)
   - [Configuration in the config file](#configuration-in-the-config-file)
   - [Configuration directly in the script](#configuration-directly-in-the-script)
-- [Documentation](#documentation)
 - [Supported controllers](#supported-controllers)
 - [Installation](#installation)
 
@@ -116,6 +121,14 @@ At runtime, the library:
 2. Loads variable mappings and tasks from YAML and/or script decorators.
 3. Instantiates a controller implementation based on `itemNumber`.
 4. Runs a scheduler that executes cyclic tasks, applies watchdog limits, and writes outputs.
+
+## Documentation and examples
+
+- [User guide](user-guide.md)
+- [Internal architecture](internals.md)
+- [Development setup and checks](development.md)
+- [API Reference](api/api-reference.md)
+- [Examples](examples/examples.md)
 
 ## Usage example
 
@@ -280,11 +293,6 @@ After transferring the script and configuration files, start your PLC applicatio
 ```bash
 python main.py
 ```
-
-## Documentation
-
-- GitHub Pages: [https://wago-enterprise-education.github.io/python-wagoplc/](https://wago-enterprise-education.github.io/python-wagoplc/)
-- Documentation source in this repository: [https://github.com/wago-enterprise-education/python-wagoplc/tree/main/docs](https://github.com/wago-enterprise-education/python-wagoplc/tree/main/docs)
 
 ## Supported controllers
 
