@@ -98,7 +98,7 @@ You can also provide your own function block classes and reference them in YAML 
 
 At runtime, the library:
 
-1. Reads and validates `controller.yaml`.
+1. Reads and validates the `controller.yaml`.
 2. Loads variable mappings and tasks from YAML and/or script decorators.
 3. Instantiates a controller implementation based on `itemNumber`.
 4. Runs a scheduler that executes cyclic tasks, applies watchdog limits, and writes outputs.
