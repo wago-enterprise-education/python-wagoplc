@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate-api-docs:
@@ -44,6 +44,18 @@ jobs:
             --overview-file api-reference.md \
             --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
             src/wagoplc
+
+      - name: Commit and push generated API docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/api/
+          if git diff --cached --quiet; then
+            echo "No changes in API docs"
+          else
+            git commit -m "docs: auto-generate API documentation with lazydocs"
+            git push
+          fi
 
       - name: Upload generated docs artifact
         uses: actions/upload-artifact@v4
