@@ -9,7 +9,6 @@ on:
       - main
     paths:
       - "src/**"
-      - "pyproject.toml"
       - ".github/workflows/generate-lazydocs.yml"
   workflow_dispatch:
 

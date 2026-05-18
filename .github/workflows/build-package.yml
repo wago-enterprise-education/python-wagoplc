@@ -1,46 +1,108 @@
-name: "Build: Package with uv"
+# This workflow builds the Python package using uv and uploads it to the GitHub release.
+# Triggered when a new release is created and manually via workflow_dispatch for specific commits or branches.
+# Follows specific build steps: checkout, version extraction, Python setup, uv installation, cleaning, dependency sync, building, and uploading.
+
+name: Build Python Package
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   release:
-    types: [published]
+    types: [created]
   workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Specific commit SHA (leave empty to use selected branch/tag HEAD)"
+        required: false
+        type: string
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   build-package:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v2
         with:
-          version: "latest"
+          ref: ${{ inputs.commit_sha || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Build package with uv
+      - name: Get version and commit info for manual builds
+        if: github.event_name == 'workflow_dispatch'
+        id: version-info
+        run: |
+          VERSION=$(python - <<'PY'
+          import tomllib
+          with open("pyproject.toml", "rb") as f:
+              print(tomllib.load(f)["project"]["version"])
+          PY
+          )
+          COMMIT_HASH=$(git rev-parse --short=8 HEAD)
+          ARTIFACT_NAME="python-wagoplc-dist-v${VERSION}-${COMMIT_HASH}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "commit-hash=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
+          echo "artifact-name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+
+          echo "Version: $VERSION"
+          echo "Commit: $COMMIT_HASH"
+          echo "Artifact name: $ARTIFACT_NAME"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Clean build artifacts
+        run: |
+          rm -rf dist build
+          find . -maxdepth 2 -type d -name "*.egg-info" -exec rm -rf {} +
+
+      - name: Verify uv cache
+        run: |
+          uv cache dir
+
+      - name: Install dependencies with sync
+        run: |
+          uv sync --frozen
+
+      - name: Build Python package
         run: |
           uv build
 
-      - name: Upload distribution artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-wagoplc-dist
-          path: dist/
+      - name: Find distribution files
+        id: find-dist
+        run: |
+          WHEEL_FILE=$(find dist -maxdepth 1 -name "*.whl" | head -1)
+          SDIST_FILE=$(find dist -maxdepth 1 -name "*.tar.gz" | head -1)
+          if [ -z "$WHEEL_FILE" ] || [ -z "$SDIST_FILE" ]; then
+            echo "Error: Missing built package files in dist/"
+            exit 1
+          fi
+          echo "wheel-file=$WHEEL_FILE" >> "$GITHUB_OUTPUT"
+          echo "sdist-file=$SDIST_FILE" >> "$GITHUB_OUTPUT"
+          echo "Found wheel: $WHEEL_FILE"
+          echo "Found sdist: $SDIST_FILE"
 
-      - name: Attach package to GitHub release
+      - name: Upload package to release (automatic)
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} dist/* --clobber
+
+      - name: Upload package as workflow artifact (manual builds only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version-info.outputs.artifact-name }}
+          path: dist/*
+          retention-days: 30

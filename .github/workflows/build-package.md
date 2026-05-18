@@ -4,107 +4,95 @@
 
 ## Overview
 
-Builds Python distribution packages (wheel and source distribution) using [uv](https://docs.astral.sh/uv/) and automatically attaches them to GitHub releases. Supports both automated release builds and manual testing builds from any branch.
+Builds Python distribution packages (wheel and source distribution) with [uv](https://docs.astral.sh/uv/).
+
+The workflow supports two modes:
+
+1. Automatic build when a release is created.
+2. Manual build with an optional commit SHA.
+
+On release builds, generated files are uploaded to the GitHub release.
+On manual builds, generated files are uploaded as workflow artifacts.
 
 ## Triggers
 
-- **Release published** – Automatically when a GitHub release is created/published
-- **Manual trigger** via `workflow_dispatch` (GitHub Actions UI) – For testing from any branch/tag
+- Release created (`release.types: [created]`)
+- Manual trigger (`workflow_dispatch`)
+
+Manual trigger input:
+
+- `commit_sha` (optional): specific commit to build
+
+If `commit_sha` is empty, the workflow builds the selected branch/tag HEAD.
+
+## Workflow Name
+
+The workflow appears in GitHub Actions as:
+
+- `Build Python Package`
 
 ## What It Does
 
-1. Checks out the repository
-2. Installs `uv` build tool
-3. Sets up Python 3.11
-4. Builds distributions with `uv build`:
-   - Wheel (`.whl`) – Binary distribution
-   - Source distribution (`.tar.gz`) – Source package
-5. Uploads distributions as workflow artifact `python-wagoplc-dist`
-6. **On release:** Attaches distributions to the GitHub release
+1. Checks out the repository at `inputs.commit_sha` or `github.sha`.
+2. On manual runs, extracts version from `pyproject.toml` and computes short commit hash.
+3. Creates manual artifact name format: `python-wagoplc-dist-v<version>-<short-hash>`.
+4. Sets up Python 3.11.
+5. Installs `uv`.
+6. Cleans old build outputs (`dist`, `build`, `*.egg-info`).
+7. Verifies uv cache availability.
+8. Installs dependencies with `uv sync --frozen`.
+9. Builds package files with `uv build`.
+10. Validates that both `.whl` and `.tar.gz` exist in `dist/`.
+11. Uploads output:
 
-## Generated Artifacts
+- Release run: uploads `dist/*` to the release assets.
+- Manual run: uploads `dist/*` as workflow artifact (retention 30 days).
 
-The build produces two package formats in `dist/`:
+## Generated Files
 
-### Wheel (`.whl`)
-```
-dist/python_wagoplc-0.1.0-py3-none-any.whl
-```
-- Binary distribution – ready to install
-- No compilation needed on user's machine
-- Preferred format for pip installation
+Expected build outputs in `dist/`:
 
-### Source Distribution (`.tar.gz`)
+```text
+dist/python_wagoplc-<version>-py3-none-any.whl
+dist/python-wagoplc-<version>.tar.gz
 ```
-dist/python-wagoplc-0.1.0.tar.gz
-```
-- Original source code + metadata
-- Allows custom builds or system integrations
-- Required for PyPI and package managers
 
 ## Automatic Release Build
 
-When you create a GitHub release:
+When creating a GitHub release:
 
-1. Go to **Releases** → **Create a new release**
-2. Set a tag and release name (e.g., `v0.2.0`)
-3. Click **Publish release**
-4. Workflow automatically:
-   - Builds wheel and source distribution
-   - Attaches both to the release
-   - Makes them available for download
+1. Go to Releases and create a new release.
+2. Set tag and release title.
+3. Publish the release.
+4. Workflow builds package files and uploads them as release assets.
 
-**Release download page will show:**
-- `python_wagoplc-0.X.Y-py3-none-any.whl`
-- `python-wagoplc-0.X.Y.tar.gz`
+## Manual Build
 
-## Manual Build (Testing)
+To build without creating a release:
 
-To build from any branch without releasing:
+1. Open Actions.
+2. Select `Build Python Package`.
+3. Click Run workflow.
+4. Optionally provide `commit_sha`.
+5. Download artifact after completion.
 
-1. Go to **Actions** tab
-2. Select **"Build: Package with uv"** workflow
-3. Click **Run workflow**
-4. Select branch/tag to build from
-5. Download artifact `python-wagoplc-dist` after run completes
+Manual artifact naming:
 
-Manual builds **do not** attach to releases.
-
-## Installation from Built Package
-
-### From Released Wheel
-```bash
-pip install python_wagoplc-0.1.0-py3-none-any.whl
+```text
+python-wagoplc-dist-v<version>-<short-commit-hash>
 ```
 
-### From Released Source
-```bash
-pip install python-wagoplc-0.1.0.tar.gz
-```
+## Local Build
 
-### From Local Build
 ```bash
 uv build
-pip install dist/python_wagoplc-*.whl
 ```
 
-## Local Building
-
-Build distributions locally without CI/CD:
-
-```bash
-# Install uv
-pip install uv
-
-# Or use the pre-installed uv from astral-sh/setup-uv action
-uv build
-```
-
-Built packages appear in `dist/` directory.
+Output files are placed in `dist/`.
 
 ## Build Configuration
 
-Build settings are defined in `pyproject.toml`:
+Build metadata comes from `pyproject.toml`.
 
 ```toml
 [build-system]
@@ -118,39 +106,29 @@ version = "0.1.0"
 
 ## Permissions
 
-- **contents:** write – Create/modify release assets
-- **id-token:** write – Authenticate with GitHub token
+Required workflow permissions:
 
-## PyPI Publishing (Future)
-
-Once configured for PyPI, you can extend this workflow to automatically publish:
-
-```yaml
-# Example: Add after successful build
-- name: Publish to PyPI
-  uses: pypa/gh-action-pypi-publish@release/v1
-  with:
-    password: ${{ secrets.PYPI_API_TOKEN }}
-```
+- `contents: write`
 
 ## Troubleshooting
 
-### Build fails with "module not found"
-- Ensure `pyproject.toml` is valid
-- Check that Python 3.11 is available
-- Verify `src/wagoplc/` contains Python packages
+### Missing build files in `dist/`
 
-### Wheel has wrong name
-- Wheel name is generated from `pyproject.toml` metadata
-- Update `name` and `version` fields if needed
+- Confirm `uv build` succeeds locally.
+- Confirm `pyproject.toml` is valid.
 
-### Release attachment failed
-- Ensure release was created (not a draft)
-- Check GitHub token permissions (contents: write needed)
+### Release asset upload failed
+
+- Ensure the release event is `created`.
+- Ensure workflow has `contents: write` permission.
+
+### Manual build used wrong revision
+
+- Verify `commit_sha` exists in the repository.
+- If `commit_sha` is empty, verify selected branch/tag before running.
 
 ## Related Files
 
-- Build config: `pyproject.toml`
-- Source code: `src/wagoplc/`
-- Dependencies: `pyproject.toml` [project]
-- Build system: `uv_build` backend
+- `pyproject.toml`
+- `src/wagoplc/`
+- `.github/workflows/build-package.yml`

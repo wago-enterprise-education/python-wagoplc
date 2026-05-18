@@ -1,0 +1,121 @@
+# GitHub Action to start a new release branch from main.
+# Follows the procedure described in development.md:
+#   1. Bump project version in pyproject.toml with the selected pre-release type
+#   2. Create and push a release/v<x.y.z> branch
+#   3. Commit with message "start release branch"
+#
+# Restricted to maintainers via the "release" GitHub environment
+# (configure deployment protection rules under Settings → Environments).
+
+name: Start Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: prerelease
+        type: choice
+        options:
+          - prerelease
+          - preminor
+          - premajor
+
+jobs:
+  start-release-branch:
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      deployment: false
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version in pyproject.toml
+        id: bump
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          bump_type = "${{ inputs.bump_type }}"
+          pyproject_path = Path("pyproject.toml")
+          content = pyproject_path.read_text(encoding="utf-8")
+
+          match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', content, re.MULTILINE)
+          if not match:
+            raise SystemExit("Could not find project version in pyproject.toml")
+
+          current = match.group(1)
+          core = current.split("-")[0]
+          parts = core.split(".")
+          if len(parts) != 3:
+            raise SystemExit(f"Unsupported version format: {current}")
+
+          major, minor, patch = map(int, parts)
+
+          if bump_type == "prerelease":
+            patch += 1
+          elif bump_type == "preminor":
+            minor += 1
+            patch = 0
+          elif bump_type == "premajor":
+            major += 1
+            minor = 0
+            patch = 0
+          else:
+            raise SystemExit(f"Unsupported bump_type: {bump_type}")
+
+          base_version = f"{major}.{minor}.{patch}"
+          new_version = f"{base_version}-dev.0"
+          branch_name = f"release/v{base_version}"
+
+          new_content = re.sub(
+              r'^version\s*=\s*"[^"]+"\s*$',
+              f'version = "{new_version}"',
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          pyproject_path.write_text(new_content, encoding="utf-8")
+
+          out = Path("$GITHUB_OUTPUT")
+          with out.open("a", encoding="utf-8") as fh:
+            fh.write(f"new-version={new_version}\n")
+            fh.write(f"base-version={base_version}\n")
+            fh.write(f"branch-name={branch_name}\n")
+
+          print(f"Current version: {current}")
+          print(f"New version: {new_version}")
+          print(f"Release branch: {branch_name}")
+          PY
+
+      - name: Derive release branch name
+        run: |
+          echo "Bumped to ${{ steps.bump.outputs.new-version }}"
+          echo "Branch: ${{ steps.bump.outputs.branch-name }}"
+
+      - name: Create release branch
+        run: git switch -c ${{ steps.bump.outputs.branch-name }}
+
+      - name: Commit version bump
+        run: |
+          git add pyproject.toml
+          git commit -m "start release branch"
+
+      - name: Push release branch
+        run: git push -u origin ${{ steps.bump.outputs.branch-name }}
