@@ -1,0 +1,63 @@
+name: "Docs: Generate API Markdown with lazydocs"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - "src/**"
+      - ".github/workflows/generate-lazydocs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-api-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . lazydocs
+
+      - name: Generate API docs with lazydocs
+        run: |
+          rm -rf docs/api
+          lazydocs \
+            --output-path docs/api \
+            --overview-file api-reference.md \
+            --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
+            src/wagoplc
+
+      - name: Commit and push generated API docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/api/
+          if git diff --cached --quiet; then
+            echo "No changes in API docs"
+          else
+            git commit -m "docs: auto-generate API documentation with lazydocs"
+            git push
+          fi
+
+      - name: Upload generated docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs-markdown
+          path: docs/api
