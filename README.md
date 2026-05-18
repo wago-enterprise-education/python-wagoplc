@@ -1,35 +1,58 @@
 # Python WAGO PLC Library
 
-This library provides a simple interface to interact with WAGO PLCs (*Programmable Logic Controllers*) using Python. It allows you to read and write data to the PLC, making it easier to integrate WAGO PLCs into your Python applications.
+[![Docs: Generate API Markdown with lazydocs](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml)
+[![Build: Package with uv](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml)
+
+[![Tests](https://img.shields.io/badge/tests-pytest-informational)](tests)
+
+[![Python >=3.8](https://img.shields.io/badge/python-%3E%3D3.8-blue)](https://pypi.org/project/python-wagoplc/)
+[![PyPI](https://img.shields.io/pypi/v/python-wagoplc)](https://pypi.org/project/python-wagoplc/)
+
+Python WAGO PLC Library is a Python interface for interacting with WAGO PLCs (*Programmable Logic Controllers*). It lets you read and write controller data and build PLC applications in Python.
 
 > [!CAUTION]
 > **This repository is a development repository that was created as part of a student project and is not regularly maintained. It is neither a stable version nor an official repository of WAGO GmbH & Co. KG.**
 
-## Content
+## Table of Contents
 
 - [Features](#features)
-- [Quick start](#quick-start)
-- [Configuration model](#configuration-model)
-- [Function blocks](#function-blocks)
-- [How it works](#how-it-works)
-- [Usage example](#usage-example)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Function Blocks](#function-blocks)
+- [Supported Controllers](#supported-controllers)
+- [Usage Example](#usage-example)
   - [Configuration in the config file](#configuration-in-the-config-file)
   - [Configuration directly in the script](#configuration-directly-in-the-script)
 - [Documentation](#documentation)
-- [Supported controllers](#supported-controllers)
-- [Installation](#installation)
+- [Development](#development)
 
 ## Features
 
-- blistering pace: cycle times of below 4ms possible
-- easily configurable: directly in the script or via config file
-- modern programming: seamless integration with the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100)
-- familiar: CODESYS developers will feel at home in no time
-- well-equipped: standard library of function blocks according to IEC 61131-3
-- customizable: definition of own function blocks supported
-- versatile: ever-growing list of supported controllers
+- Fast cyclic execution with cycle times below 4 ms possible
+- Easy configuration either in Python code or via `controller.yaml`
+- Integration with the [VS Code Extension WAGO CC100](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100)
+- IEC 61131-3 style standard function blocks for familiar PLC programming patterns
+- Support for custom function blocks
+- Multiple supported controller types
 
-## Quick start
+## Installation
+
+Python 3.8+ is required.
+
+```bash
+pip install python-wagoplc
+```
+
+For local development:
+
+```bash
+git clone https://github.com/wago-enterprise-education/python-wagoplc
+cd python-wagoplc
+uv sync
+```
+
+## Quick Start
 
 Minimal project layout:
 
@@ -45,9 +68,10 @@ plc-application/
 itemNumber: 751-9301
 ```
 
-Basic task script:
+Example application:
 
 ```python
+# main.py
 from wagoplc import main, Tasks, DI, AO
 from wagoplc.fb import CTUD
 
@@ -71,22 +95,22 @@ if __name__ == "__main__":
     main(tasks)
 ```
 
-Run on target:
+Run the application on the controller with:
 
 ```bash
 python main.py
 ```
 
-## Configuration model
+## Configuration
 
 You can configure applications in two ways:
 
 1. Script-first: define I/O, state variables, and task registration via `Tasks` decorators.
-2. YAML-first: put I/O mapping, variables, and task metadata in `controller.yaml`.
+2. YAML-first: define I/O mapping, variables, and task metadata in `controller.yaml`.
 
 When both are used, script-defined variables are merged with YAML-defined variables.
 
-Example task section in YAML:
+Example task configuration in YAML:
 
 ```yaml
 tasks:
@@ -98,65 +122,34 @@ tasks:
     sensitivity: 0
 ```
 
-## Function blocks
+## Function Blocks
 
 Included standard library blocks:
 
 - Counters: CTU, CTD, CTUD
 - Timers: TP, TON, TOF
-- Latches/triggers: RS, SR, R_TRIG, F_TRIG
+- Latches and triggers: RS, SR, R_TRIG, F_TRIG
 
-You can also provide your own function block classes and reference them in YAML using module-qualified names.
+Custom function block classes can also be referenced from YAML using module-qualified names.
 
-## How it works
+## Supported Controllers
 
-At runtime, the library:
+> [!NOTE]
+> Communication protocols such as RS485 serial interface, CANopen, and DALI are currently unsupported.
 
-1. Reads and validates the `controller.yaml`.
-2. Loads variable mappings and tasks from YAML and/or script decorators.
-3. Instantiates a controller implementation based on `itemNumber`.
-4. Runs a scheduler that executes cyclic tasks, applies watchdog limits, and writes outputs.
+| Device | Firmware | Notes |
+| :---- | :----: | :----: |
+| 751-9301 | 30, 28 | |
+| 751-9401 | 28 | |
 
-## Usage example
+## Usage Example
 
-Consider the following CODESYS program, which operates a conveyor belt. A light barrier
-registers every passing object and sends an impulse to the up-counter function block (CTU).
-When the count value increases to 3, the motor is turned off for 4 seconds (processing time),
-after which it is turned on again and the counter is reset.
-
-```st
-PROGRAM PLC_PRG
-VAR
-    xLightBarrier AT %IX0.0: BOOL;
-    wMotor        AT %QW1  : INT; 
-    oObject_counter_CTU: CTU;
-    oDelay_TON: TON;
-    start_delay: BOOL := False;
-END_VAR
-
-oDelay_TON(IN := start_delay, PT := 4, Q =>);
-oObject_counter_CTU(CU := xLightBarrier, PV := 3, RESET:= oDelay_TON.Q, Q =>);
-
-wMotor := 5000;
-IF oObject_counter_CTU.Q THEN
-   wMotor := 0
-   start_delay := True;
-END_IF
-IF oDelay_TON.Q THEN
-   start_delay := False;
-END_IF
-```
-
-Of course, this snippet does not include the task configuration, which needs to be done
-separately.
-
-The following snippets show how the same could be programmed using this library.
+The library can model the same logic that is often written in a CODESYS program. A light barrier counts objects, and once a threshold is reached, the motor is stopped for a delay before it starts again.
 
 ### Configuration in the config file
 
 ```python
 # main.py
-
 from wagoplc import main
 from wagoplc.fb import CTU, TON
 
@@ -168,20 +161,24 @@ def conveyor_belt(light_barrier, object_counter: CTU, process_delay: TON, start_
     if object_counter.q:
         motor = 0
         start_delay = True
-        # Processing...
     if process_delay.q:
-        # Resuming...
         start_delay = False
 
-    return dict(motor=motor, object_counter=object_counter,
-        process_delay=process_delay, start_delay=start_delay)
+    return dict(
+        motor=motor,
+        object_counter=object_counter,
+        process_delay=process_delay,
+        start_delay=start_delay,
+    )
 
 if __name__ == "__main__":
     main()
 ```
 
+When configuration is done in configguration file, the individual I/O and variables are not defined in the script, but only referenced as function arguments. The `controller.yaml` file contains the actual variable definitions and I/O mapping:
+
 ```yaml
-# controller.yaml -- the bulk of this will be generated
+# controller.yaml 
 ...
 # the controller item number
 itemNumber: 751-9301
@@ -227,7 +224,6 @@ tasks:
 
 ```python
 # main.py
-
 from wagoplc import main, Tasks, DI, AO
 from wagoplc.fb import CTU, TON
 
@@ -243,10 +239,7 @@ def setup():
 
     return locals()
 
-@tasks.register(
-        name = "conveyor belt",
-        cycle_ms = 5
-)
+@tasks.register(name="conveyor belt", cycle_ms=5)
 def conveyor_belt(light_barrier, object_counter: CTU, process_delay: TON, start_delay):
     process_delay(start=start_delay)
     object_counter(cu=light_barrier, r=process_delay.q)
@@ -255,61 +248,49 @@ def conveyor_belt(light_barrier, object_counter: CTU, process_delay: TON, start_
     if object_counter.q:
         motor = 0
         start_delay = True
-        # Processing...
     if process_delay.q:
-        # Resuming...
         start_delay = False
 
-    return dict(motor=motor, object_counter=object_counter,
-        process_delay=process_delay, start_delay=start_delay)
+    return dict(
+        motor=motor,
+        object_counter=object_counter,
+        process_delay=process_delay,
+        start_delay=start_delay,
+    )
 
 if __name__ == "__main__":
     main(tasks)
 ```
 
+When configuration is done in the script, the only required entry in `controller.yaml` is the controller item number:
+
 ```yaml
-# controller.yaml -- needs to contain at least the controller item number
+# controller.yaml 
 itemNumber: 751-9301
 ```
 
-The WAGO CC100 VS Code extension will automatically generate the proper config-file layout for your
-controller.
-
-After transferring the script and configuration files, start your PLC application by simply running the following command on your controller:
-
-```bash
-python main.py
-```
+The WAGO CC100 VS Code extension can generate the controller config layout for supported devices.
 
 ## Documentation
 
-- GitHub Pages: [https://wago-enterprise-education.github.io/python-wagoplc/](https://wago-enterprise-education.github.io/python-wagoplc/)
-- Documentation source in this repository: [https://github.com/wago-enterprise-education/python-wagoplc/tree/main/docs](https://github.com/wago-enterprise-education/python-wagoplc/tree/main/docs)
+- GitHub Pages: https://wago-enterprise-education.github.io/python-wagoplc/
+- Documentation source: https://github.com/wago-enterprise-education/python-wagoplc/tree/main/docs
 
-## Supported controllers
+## Development
 
-> [!NOTE]
-> Communication protocols (RS485 serial interface, CANopen, DALI, ...) are at the time unsupported.
-
-|  Device  |  Firmware   |  Notes  |
-|  :----   |  :----:     | :----:  |
-| 751-9301 |  30,28      |         |
-| 751-9401 |  28         |         |
-
-## Installation
-
-Python 3.8+ is required.
+Local development uses `uv`:
 
 ```bash
-pip install python-wagoplc
-```
-
-For local development:
-
-```bash
-git clone https://github.com/wago-enterprise-education/python-wagoplc
-cd python-wagoplc
 uv sync
 ```
 
-We recommend using it alongside the [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100), though, which provides an easy-to-use interface for communicating with the controller, as well as a runtime environment.
+Useful follow-up commands:
+
+```bash
+pytest
+uv run ruff check .
+```
+
+## License
+
+See [LICENSE](LICENSE) for the license text.
