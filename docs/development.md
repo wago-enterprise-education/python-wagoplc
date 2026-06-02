@@ -33,10 +33,12 @@ of this library.
 `python-wagoplc` uses `unittest` for testing purposes. To run all tests, in the project root folder execute the following command:
 
 ```bash
-p#ython -m unittest discover -s tests
+python -m unittest discover -s tests
 ```
 
 You can also execute an individual test file directly using Python.
+
+For a full overview of the available tests, coverage, prerequisites, and detailed test execution commands, see [Tests](tests.md).
 
 #### Changelog
 

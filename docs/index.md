@@ -126,6 +126,7 @@ At runtime, the library:
 - [User guide](user-guide.md)
 - [Internal architecture](internals.md)
 - [Development setup and checks](development.md)
+- [Tests](tests.md)
 - [API Reference](api/api-reference.md)
 - [Examples](examples/examples.md)
 

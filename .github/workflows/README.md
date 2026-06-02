@@ -30,3 +30,4 @@ The release automation is organized as follows:
 | `create-github-release.yml` | Create GitHub release after merge of `release/v*` into `main` | Pull request closed+merged into `main` | [create-github-release.md](create-github-release.md) |
 | `build-package.yml` | Build wheel + sdist and upload assets/artifacts | Release created or manual (`workflow_dispatch`) | [build-package.md](build-package.md) |
 | `generate-lazydocs.yml` | Generate API docs from docstrings and commit updates | Push to non-main (`src/**`, workflow file) or manual | [generate-lazydocs.md](generate-lazydocs.md) |
+| `run-tests.yml` | Run the unittest suite and upload JUnit XML results | Push to non-main and PR to `main` for code/test changes, or manual | [run-tests.md](run-tests.md) |
