@@ -51,13 +51,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --frozen --group dev
+          uv sync --python ${{ matrix.python-version }} --frozen --group dev
 
       - name: Run unit tests
         shell: bash
         run: |
           mkdir -p test-results
-          uv run python - <<'PY'
+          uv run --python ${{ matrix.python-version }} python - <<'PY'
           import os
           import sys
           import unittest
