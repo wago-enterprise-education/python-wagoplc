@@ -18,7 +18,6 @@ TEST_CALIB_DATA = """PT1 PT2 AI1 AI2 A01 A02
 
 class Test_CC100_v1(fake_filesystem_unittest.TestCase):
     @classmethod
-    @unittest.mock.patch("wagoplc.cc100.cc100_v1.TEST_DATA", "")
     def setUpClass(cls):
         cls.setUpClassPyfakefs()
         cls.cc = CC100_v1()
