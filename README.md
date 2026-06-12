@@ -2,11 +2,11 @@
 
 [![Docs: Generate API Markdown with lazydocs](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml)
 
+[![Run Unittests](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/run-tests.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/run-tests.yml)
+
 [![Build: Package with uv](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml)
 
 [![Tests](https://img.shields.io/badge/tests-pytest-informational)](tests)
-
-[![Python >=3.8](https://img.shields.io/badge/python-%3E%3D3.8-blue)](https://pypi.org/project/python-wagoplc/)
 
 [![PyPI](https://img.shields.io/pypi/v/python-wagoplc)](https://pypi.org/project/python-wagoplc/)
 
