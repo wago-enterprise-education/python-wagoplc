@@ -187,7 +187,7 @@ class Tasks:
         """
         if self.task:
             raise InvalidConfigError("Only one task per program allowed!")
-        def decorator_task(func: Callable[...]):
+        def decorator_task(func: Callable[..., Any]):
             self.task = dict(name=name,
                 plc_obj=None,
                 var_mapping=self.map,
