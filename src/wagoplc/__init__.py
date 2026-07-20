@@ -30,7 +30,7 @@ from wagoplc.controller import (
     DIO as DIO,
     AIO as AIO
 )
-from wagoplc.read_config import read_config
+import wagoplc.read_config as read_config
 from wagoplc.tasks import Tasks, Scheduler
 
 def main(tasks_object: Tasks | None = None):
@@ -39,6 +39,6 @@ def main(tasks_object: Tasks | None = None):
     tasks_object: a task registrator given from the main script
     """
     sys.path.append(SCRIPT_PATH)
-    tasks, _, plc_obj = read_config(tasks_object)
+    tasks, _, plc_obj = read_config.read_config(tasks_object)
     scheduler = Scheduler(tasks, plc_obj)
     scheduler.run_tasks()
