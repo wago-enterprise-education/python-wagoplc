@@ -23,8 +23,8 @@ The workflow runs when one of the following events occurs:
 The workflow:
 
 1. Checks out the repository.
-2. Sets up Python 3.11 and 3.12 via a matrix build.
-3. Installs project and development dependencies using `uv sync --frozen --group dev`.
+2. Sets up Python 3.8, 3.9, 3.10, 3.11, 3.12, and 3.13 via a matrix build.
+3. Installs project and development dependencies using `uv sync --python ${{ matrix.python-version }} --frozen --group dev`.
 4. Runs the `unittest` test suite from `tests/`.
 5. Writes a short result summary to the GitHub Actions job summary.
 6. Uploads the JUnit XML report as a workflow artifact.

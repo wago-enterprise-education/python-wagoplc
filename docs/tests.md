@@ -147,7 +147,7 @@ The workflow runs automatically:
 - on pull requests targeting `main` when the same relevant paths change
 - manually via `workflow_dispatch`
 
-In CI, the tests are executed on Python 3.11 and 3.12.
+CI execution details, including the current Python version matrix, are documented in [run-tests.md](../.github/workflows/run-tests.md).
 The workflow uses `ubuntu-latest` as runner because parts of the current task handling code rely on Unix signals that are not available on Windows.
 The results are stored in three places:
 
