@@ -6,6 +6,8 @@ This module holds the classes responsible for task management.
 - Scheduler: task scheduler
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import Any
 

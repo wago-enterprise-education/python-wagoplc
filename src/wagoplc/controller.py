@@ -7,6 +7,8 @@ for use by both the programmer and the library.
 - IOHandler: handle the I/O wrapper classes and state variables for a task
 - IO: base class for an I/O interface, child classes: DI, DO, AI, AO, PT, NI, DIO, AIO
 """
+from __future__ import annotations
+
 from typing import Any
 import logging
 

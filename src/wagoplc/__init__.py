@@ -14,6 +14,8 @@ Modules:
 * tasks: task management for all controllers
 """
 
+from __future__ import annotations
+
 import sys
 
 from wagoplc.constants import SCRIPT_PATH
