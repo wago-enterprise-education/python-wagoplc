@@ -19,9 +19,17 @@ git clone https://github.com/wago-enterprise-education/python-wagoplc
 cd python-wagoplc
 uv sync --group docs
 source .venv/bin/activate
-`#``
+```
 
 The last command activates the virtual environment created by `uv` and needs to be executed every time before you work on the project.
+
+On Windows PowerShell, activate the environment with:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+If you prefer to avoid shell activation, you can also use `uv run` for one-off commands such as `uv run python -m unittest discover -s tests`.
 
 #### Library structure
 
@@ -70,3 +78,9 @@ lazydocs \
 #### Automated Workflow
 
 - **lazydocs generation**: Triggered on push to all branches except `main` when `src/` or `pyproject.toml` changes; artifacts available in workflow runs via `generate-lazydocs.yml`
+
+---
+
+Previous: [API Reference](api/api-reference.md)
+
+Next: [Internals](internals.md)

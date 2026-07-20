@@ -10,10 +10,23 @@ lang-ref: index
 This guide provides you with general information and practical examples to work with the
 `python-wagoplc` programming library.
 
+## How application execution works
+
+When you start a project with `python main.py`, the library reads `controller.yaml`, combines that configuration with any optional `Tasks` object from the script, selects the controller implementation from `itemNumber`, and starts the task scheduler.
+
+From a user perspective, the runtime flow is usually:
+
+1. Define controller information and optional mapping in `controller.yaml`.
+2. Define task logic in Python, either with `Tasks` decorators or as plain task functions referenced from YAML.
+3. Start the application with `main()`.
+4. Let the scheduler execute cyclic tasks, update state variables, and write the output image back to the controller.
+
+This is the key mental model for working with the library: configuration defines what is connected, task functions define what happens every cycle, and the scheduler coordinates execution.
+
 ### Integration with VS Code Extension WAGO CC100
 
 The following examples show how to create PLC application scripts and configuration. In order to actually
-run them, you'll need a CC100 of the first generation (before *751-9402*). In theory, transferring your project folder to the CC100 and running the following commands would be enough:
+run them, you'll need a CC100. In theory, transferring your project folder to the CC100 and running the following commands would be enough:
 
 ```bash
 python -m pip install python-wagoplc
@@ -50,6 +63,16 @@ def task_function(di1, di2, state):
 ```
 
 For how to define the variables, see the examples below.
+
+### Runtime building blocks
+
+Three concepts shape most applications built with this library:
+
+- `controller.yaml`: declares the controller model and can also hold I/O mapping, variables, and task metadata.
+- `Tasks` and `Task`: collect setup state and describe the cyclic units of work that should run on the controller.
+- `Scheduler`: executes the registered tasks according to cycle time, priority, and watchdog settings.
+
+If you need implementation-level details about how these modules interact internally, see [Internals](internals.md).
 
 ### One-script PLC application: bottle filling plant
 
@@ -263,3 +286,9 @@ class Gate_Control(FB):
                     self.closed = True
                     self.state = 0
 ```
+
+  ---
+
+  Previous: [Getting Started](getting-started.md)
+
+  Next: [API Reference](api/api-reference.md)
