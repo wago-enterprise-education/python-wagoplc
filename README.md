@@ -1,4 +1,4 @@
-# wagoplc - A Python Library for WAGO PLCs
+# wagoplc: A Python Library for WAGO PLCs
 
 [![Docs: Generate API Markdown with lazydocs](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml)
 
@@ -10,10 +10,12 @@
 
 [![PyPI](https://img.shields.io/pypi/v/python-wagoplc)](https://pypi.org/project/python-wagoplc/)
 
-Python WAGO PLC Library is a Python interface for interacting with WAGO PLCs (*Programmable Logic Controllers*). It lets you read and write controller data and build PLC applications in Python.
-
 > [!CAUTION]
 > **This repository is a development repository that was created as part of a student project and is not regularly maintained. It is neither a stable version nor an official repository of WAGO GmbH & Co. KG.**
+
+## What is it?
+
+Python WAGO PLC Library is a Python interface for interacting with WAGO PLCs (*Programmable Logic Controllers*). It can be used to map controller I/O, read and write process values, run cyclic control tasks, and build PLC applications directly in Python. The library brings common PLC concepts such as cyclic execution, configurable I/O mapping, and IEC 61131-3 style function blocks into Python. You can define applications either in code or through `controller.yaml`, which makes it suitable for prototyping control logic, structuring educational examples, and implementing compact controller applications around supported WAGO devices.
 
 ## Table of Contents
 
@@ -44,14 +46,6 @@ Python 3.8+ is required.
 
 ```bash
 pip install python-wagoplc
-```
-
-For local development:
-
-```bash
-git clone https://github.com/wago-enterprise-education/python-wagoplc
-cd python-wagoplc
-uv sync
 ```
 
 ## Quick Start
@@ -137,7 +131,7 @@ Custom function block classes can also be referenced from YAML using module-qual
 ## Supported Controllers
 
 > [!NOTE]
-> Communication protocols such as RS485 serial interface, CANopen, and DALI are currently unsupported.
+> Communication protocols such as RS485 serial interface, CANopen, and DALI are currently not supported.
 
 | Device | Firmware | Notes |
 | :---- | :----: | :----: |
@@ -275,14 +269,19 @@ The WAGO CC100 VS Code extension can generate the controller config layout for s
 
 ## Documentation
 
-- GitHub Pages: https://wago-enterprise-education.github.io/python-wagoplc/
-- Documentation source: https://github.com/wago-enterprise-education/python-wagoplc/tree/main/docs
+The official documentation is hosted on [GitHub Pages](https://wago-enterprise-education.github.io/python-wagoplc/)
+
+## Getting Help
+
+For usage questions, the best place to go are the [GitHub Issues](https://github.com/wago-enterprise-education/python-wagoplc/issues)
 
 ## Development
 
 Local development uses `uv`:
 
 ```bash
+git clone https://github.com/wago-enterprise-education/python-wagoplc
+cd python-wagoplc
 uv sync
 ```
 
