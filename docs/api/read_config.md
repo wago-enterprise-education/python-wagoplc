@@ -22,12 +22,12 @@ Functions:
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/read_config.py#L33"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/read_config.py#L35"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `get_controller`
 
 ```python
-get_controller(controller_id: str) → Controller
+get_controller(controller_id: 'str') → Controller
 ```
 
 Get controller object by item number. 
@@ -37,13 +37,13 @@ controller_id: item number
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/read_config.py#L56"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/read_config.py#L58"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `read_config`
 
 ```python
 read_config(
-    tasks_obj: Tasks | None = None
+    tasks_obj: 'Tasks | None' = None
 ) → tuple[list[Task], dict[str, Any], Controller]
 ```
 
@@ -54,7 +54,7 @@ Read the configuration file.
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/read_config.py#L173"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/read_config.py#L175"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `validate_task`
 

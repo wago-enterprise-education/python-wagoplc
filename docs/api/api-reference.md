@@ -65,9 +65,3 @@
 ---
 
 _This file was automatically generated via [lazydocs](https://github.com/ml-tooling/lazydocs)._
-
----
-
-Previous: [User Guide](../user-guide.md)
-
-Next: [Development Guide](../development.md)
