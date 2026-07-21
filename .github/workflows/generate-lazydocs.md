@@ -10,6 +10,7 @@ Generates API reference Markdown from Python docstrings using `lazydocs` and upd
 
 - Push to non-main branches when any of these paths change:
 - `src/**`
+- `pyproject.toml`
 - `.github/workflows/generate-lazydocs.yml`
 - Manual trigger (`workflow_dispatch`)
 
@@ -17,7 +18,7 @@ Generates API reference Markdown from Python docstrings using `lazydocs` and upd
 
 1. Checks out repository history.
 2. Sets up Python 3.11.
-3. Installs package and `lazydocs`.
+3. Installs dependencies with `uv` using the `docs` dependency group from `pyproject.toml`.
 4. Regenerates `docs/api/` with these options:
 
 - `--output-path docs/api`
@@ -41,8 +42,8 @@ Generated files include:
 ## Local Run
 
 ```bash
-python -m pip install . lazydocs
-lazydocs \
+uv sync --group docs
+uv run lazydocs \
   --output-path docs/api \
   --overview-file api-reference.md \
   --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \

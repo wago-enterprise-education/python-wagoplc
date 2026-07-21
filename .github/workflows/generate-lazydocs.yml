@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - "src/**"
+      - "pyproject.toml"
       - ".github/workflows/generate-lazydocs.yml"
   workflow_dispatch:
 
@@ -30,15 +31,19 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install . lazydocs
+          uv sync --frozen --group docs
 
       - name: Generate API docs with lazydocs
         run: |
           rm -rf docs/api
-          lazydocs \
+          uv run lazydocs \
             --output-path docs/api \
             --overview-file api-reference.md \
             --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \

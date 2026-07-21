@@ -68,7 +68,8 @@ The API reference is generated from Python docstrings using [lazydocs](https://g
 To generate locally:
 
 ```bash
-lazydocs \
+uv sync --group docs
+uv run lazydocs \
   --output-path docs/api \
   #--overview-file api-reference.md \
   --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
