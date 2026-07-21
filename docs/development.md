@@ -17,7 +17,7 @@ This module uses [uv](https://docs.astral.sh/uv/) as the build system. First of 
 ```bash
 git clone https://github.com/wago-enterprise-education/python-wagoplc
 cd python-wagoplc
-uv sync --group docs
+uv sync --group dev
 source .venv/bin/activate
 ```
 
@@ -71,7 +71,7 @@ To generate locally:
 uv sync --group docs
 uv run lazydocs \
   --output-path docs/api \
-  #--overview-file api-reference.md \
+  --overview-file api-reference.md \
   --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
   src/wagoplc
 ```
