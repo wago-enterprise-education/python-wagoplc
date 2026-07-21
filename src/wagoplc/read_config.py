@@ -109,7 +109,7 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                         if var:
                             # Separate interface name from number
                             interface = "".join(g for g in id if g.isalpha()) 
-                            index = int(id.removeprefix(interface))
+                            index = int(id[len(interface):])
                             if interface == "di":
                                 var_mapping[var] = DI(index, module)    
                             elif interface == "do":
