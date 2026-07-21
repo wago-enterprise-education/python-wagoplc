@@ -30,7 +30,7 @@ All changes should be categorized into one of the following types. These are H3 
 - Support for user-defined function blocks via module-qualified names in config
 - CC100 controller implementations: 751-9301, 751-9401, 751-9403
 - Watchdog support for cyclic tasks with configurable timeout and sensitivity
-- Unit tests for CC100, `read_config`, `Task`, and `Tasks` classes with CI execution across Python 3.8 to 3.13
+- Unit tests for CC100, `read_config`, `Task`, and `Tasks` classes with CI execution across Python 3.8 to 3.14
 - GitHub Actions workflows for unit tests, lazydocs API Markdown generation, package builds, release branch creation, and GitHub release creation
 - Public documentation including landing page, getting started guide, user guide, development guide, internals, tests, examples, and API reference
 - Example PLC applications and focused code examples for traffic lights, conveyor belts, bottle filling, gate control, Arduino-style usage, cycle time handling, and variable mapping
