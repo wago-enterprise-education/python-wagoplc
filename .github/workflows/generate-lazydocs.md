@@ -18,8 +18,9 @@ Generates API reference Markdown from Python docstrings using `lazydocs` and upd
 
 1. Checks out repository history.
 2. Sets up Python 3.11.
-3. Installs dependencies with `uv` using the `docs` dependency group from `pyproject.toml`.
-4. Regenerates `docs/api/` with these options:
+3. Forces `uv` to use Python 3.11 (`UV_PYTHON=3.11`) for compatibility with `lazydocs`.
+4. Installs dependencies with `uv` using the `docs` dependency group from `pyproject.toml`.
+5. Regenerates `docs/api/` with these options:
 
 - `--output-path docs/api`
 - `--overview-file api-reference.md`
@@ -43,7 +44,7 @@ Generated files include:
 
 ```bash
 uv sync --group docs
-uv run lazydocs \
+uv run --python 3.11 lazydocs \
   --output-path docs/api \
   --overview-file api-reference.md \
   --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
@@ -60,3 +61,8 @@ uv run lazydocs \
 
 - Verify branch is not `main`.
 - Verify one of the configured paths changed.
+
+### `AttributeError("'FileFinder' object has no attribute 'find_module'")`
+
+- This typically means `lazydocs` ran on Python 3.12+.
+- The workflow enforces Python 3.11 for `uv` to avoid this incompatibility.

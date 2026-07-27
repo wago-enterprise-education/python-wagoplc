@@ -19,6 +19,8 @@ permissions:
 jobs:
   generate-api-docs:
     runs-on: ubuntu-latest
+    env:
+      UV_PYTHON: "3.11"
 
     steps:
       - name: Checkout
@@ -38,12 +40,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --frozen --group docs
+          uv sync --frozen --group docs --python 3.11
 
       - name: Generate API docs with lazydocs
         run: |
           rm -rf docs/api
-          uv run lazydocs \
+          uv run --python 3.11 lazydocs \
             --output-path docs/api \
             --overview-file api-reference.md \
             --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
