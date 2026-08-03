@@ -95,9 +95,9 @@ jobs:
 
           out = Path("$GITHUB_OUTPUT")
           with out.open("a", encoding="utf-8") as fh:
-            fh.write(f"new-version={new_version}\n")
-            fh.write(f"base-version={base_version}\n")
-            fh.write(f"branch-name={branch_name}\n")
+            fh.write(f"new_version={new_version}\n")
+            fh.write(f"base_version={base_version}\n")
+            fh.write(f"branch_name={branch_name}\n")
 
           print(f"Current version: {current}")
           print(f"New version: {new_version}")
@@ -106,11 +106,35 @@ jobs:
 
       - name: Derive release branch name
         run: |
-          echo "Bumped to ${{ steps.bump.outputs.new-version }}"
-          echo "Branch: ${{ steps.bump.outputs.branch-name }}"
+          echo "Bumped to ${{ steps.bump.outputs.new_version }}"
+          echo "Branch: ${{ steps.bump.outputs.branch_name }}"
+
+      - name: Validate release branch name
+        shell: bash
+        run: |
+          BRANCH="${{ steps.bump.outputs.branch_name }}"
+          if [[ -z "$BRANCH" ]]; then
+            echo "Error: branch_name output is empty"
+            exit 1
+          fi
+
+          if [[ ! "$BRANCH" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: invalid branch format: $BRANCH"
+            exit 1
+          fi
+
+      - name: Ensure release branch does not already exist on origin
+        shell: bash
+        run: |
+          BRANCH="${{ steps.bump.outputs.branch_name }}"
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null; then
+            echo "Error: remote branch already exists: $BRANCH"
+            exit 1
+          fi
 
       - name: Create release branch
-        run: git switch -c ${{ steps.bump.outputs.branch-name }}
+        shell: bash
+        run: git switch -c "${{ steps.bump.outputs.branch_name }}"
 
       - name: Commit version bump
         run: |
@@ -118,4 +142,5 @@ jobs:
           git commit -m "start release branch"
 
       - name: Push release branch
-        run: git push -u origin ${{ steps.bump.outputs.branch-name }}
+        shell: bash
+        run: git push -u origin "${{ steps.bump.outputs.branch_name }}"

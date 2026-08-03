@@ -40,9 +40,11 @@ Example:
 1. Checks out `main`.
 2. Sets up Python 3.11.
 3. Updates `version = "..."` in `pyproject.toml`.
-4. Creates and switches to `release/vX.Y.Z`.
-5. Commits `pyproject.toml` with message `start release branch`.
-6. Pushes the new branch.
+4. Validates that the generated branch name is not empty and matches `release/vX.Y.Z`.
+5. Checks that the branch does not already exist on `origin`.
+6. Creates and switches to `release/vX.Y.Z`.
+7. Commits `pyproject.toml` with message `start release branch`.
+8. Pushes the new branch.
 
 ## Running It
 
@@ -69,6 +71,16 @@ gh workflow run start-release-branch.yml -f bump_type=prerelease
 
 - Verify workflow token has push permission.
 - Verify branch protection rules allow workflow pushes.
+
+### Release branch name is empty or invalid
+
+- Verify the bump step completed successfully.
+- Verify `pyproject.toml` has a parseable `version = "X.Y.Z"` entry.
+
+### Release branch already exists
+
+- Delete the remote branch if it was created by mistake, or
+- Run the workflow again after selecting a bump type that produces a new version.
 
 ## Related Workflows
 
