@@ -12,6 +12,7 @@ The workflow:
 2. Extracts release notes for that version from `CHANGELOG.md`.
 3. Creates release tag `vX.Y.Z` targeting `main`.
 4. Calls `build-package.yml` via `workflow_call` with the created tag.
+5. After successful completion, `publish-pypi.yml` is triggered via `workflow_run`.
 
 The called build workflow then builds and uploads package files to that release.
 
@@ -76,3 +77,4 @@ Extraction behavior:
 
 - Previous: [start-release-branch.md](start-release-branch.md)
 - Next: [build-package.md](build-package.md)
+- Then: [publish-pypi.md](publish-pypi.md)

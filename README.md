@@ -4,11 +4,11 @@
 
 [![Run Unittests](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/run-tests.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/run-tests.yml)
 
-[![Build: Package with uv](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml)
+[![Build Package with uv](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/build-package.yml)
 
-[![Tests](https://img.shields.io/badge/tests-pytest-informational)](tests)
+[![Publish to PyPI](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/publish-pypi.yml)
 
-[![PyPI](https://img.shields.io/pypi/v/python-wagoplc)](https://pypi.org/project/python-wagoplc/)
+[![PyPI](https://img.shields.io/pypi/v/wagoplc)](https://pypi.org/project/wagoplc/)
 
 > [!CAUTION]
 > **This repository is a development repository that was created as part of a student project and is not regularly maintained. It is neither a stable version nor an official repository of WAGO GmbH & Co. KG.**

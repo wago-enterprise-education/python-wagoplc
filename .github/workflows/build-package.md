@@ -138,3 +138,4 @@ Required workflow permissions:
 - `pyproject.toml`
 - `src/wagoplc/`
 - `.github/workflows/build-package.yml`
+- `.github/workflows/publish-pypi.yml`

@@ -1,0 +1,78 @@
+name: Publish to PyPI
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_run:
+    workflows: ["Build Python Package", "Create GitHub Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag name to publish (e.g. v0.2.6)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-pypi:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          github.event.workflow_run.event == 'release' ||
+          github.event.workflow_run.name == 'Create GitHub Release'
+        )
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download package files from release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_INPUT="${{ inputs.tag_name }}"
+
+          if [[ -n "$TAG_INPUT" ]]; then
+            TAG="$TAG_INPUT"
+          else
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            if [[ "$BRANCH" == release/v* ]]; then
+              TAG="v${BRANCH#release/v}"
+            elif [[ "$BRANCH" == v* ]]; then
+              TAG="$BRANCH"
+            else
+              echo "Error: Cannot determine release tag from branch: $BRANCH"
+              exit 1
+            fi
+          fi
+
+          echo "Downloading package assets from release: $TAG"
+          mkdir -p dist
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --dir dist \
+            --pattern "*.whl" \
+            --pattern "*.tar.gz"
+
+      - name: Verify distribution files
+        run: |
+          WHEEL_FILE=$(find dist -maxdepth 1 -name "*.whl" | head -1)
+          SDIST_FILE=$(find dist -maxdepth 1 -name "*.tar.gz" | head -1)
+          if [ -z "$WHEEL_FILE" ] || [ -z "$SDIST_FILE" ]; then
+            echo "Error: Missing built package files in dist/"
+            exit 1
+          fi
+          echo "Found wheel: $WHEEL_FILE"
+          echo "Found sdist: $SDIST_FILE"
+
+      - name: Publish package to PyPI
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ env.PYPI_API_TOKEN }}
