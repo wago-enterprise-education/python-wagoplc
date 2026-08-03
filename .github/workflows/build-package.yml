@@ -10,6 +10,12 @@ env:
 on:
   release:
     types: [created]
+  workflow_call:
+    inputs:
+      tag_name:
+        description: "Release tag name (e.g. v0.2.6)"
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       commit_sha:
@@ -28,7 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.commit_sha || github.sha }}
+          ref: ${{ inputs.tag_name || inputs.commit_sha || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -93,11 +99,12 @@ jobs:
           echo "Found sdist: $SDIST_FILE"
 
       - name: Upload package to release (automatic)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.tag_name
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.release.tag_name }} dist/* --clobber
+          TAG="${{ github.event.release.tag_name || inputs.tag_name }}"
+          gh release upload "$TAG" dist/* --clobber
 
       - name: Upload package as workflow artifact (manual builds only)
         if: github.event_name == 'workflow_dispatch'

@@ -27,6 +27,8 @@ jobs:
     environment:
       name: release
       deployment: false
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     # Only run if PR was merged AND head branch matches release/v* pattern
     if: >-
       github.event.pull_request.merged == true &&
@@ -122,3 +124,10 @@ jobs:
           if [ -n "$RELEASE_NOTES_FILE" ] && [ -f "$RELEASE_NOTES_FILE" ]; then
             rm -f "$RELEASE_NOTES_FILE"
           fi
+
+  build-package:
+    needs: create-release
+    uses: ./.github/workflows/build-package.yml
+    with:
+      tag_name: ${{ needs.create-release.outputs.tag }}
+    secrets: inherit

@@ -11,8 +11,9 @@ The workflow:
 1. Extracts the version from branch name `release/vX.Y.Z`.
 2. Extracts release notes for that version from `CHANGELOG.md`.
 3. Creates release tag `vX.Y.Z` targeting `main`.
+4. Calls `build-package.yml` via `workflow_call` with the created tag.
 
-After release creation, `build-package.yml` is triggered by the `release` event.
+The called build workflow then builds and uploads package files to that release.
 
 ## Trigger Conditions
 

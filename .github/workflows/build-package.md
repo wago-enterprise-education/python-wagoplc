@@ -9,7 +9,8 @@ Builds Python distribution packages (wheel and source distribution) with [uv](ht
 The workflow supports two modes:
 
 1. Automatic build when a release is created.
-2. Manual build with an optional commit SHA.
+2. Called build from another workflow with a required release tag.
+3. Manual build with an optional commit SHA.
 
 On release builds, generated files are uploaded to the GitHub release.
 On manual builds, generated files are uploaded as workflow artifacts.
@@ -17,7 +18,12 @@ On manual builds, generated files are uploaded as workflow artifacts.
 ## Triggers
 
 - Release created (`release.types: [created]`)
+- Reusable call (`workflow_call`) with required `tag_name`
 - Manual trigger (`workflow_dispatch`)
+
+Reusable call input:
+
+- `tag_name` (required): release tag to build and upload to
 
 Manual trigger input:
 
@@ -33,7 +39,7 @@ The workflow appears in GitHub Actions as:
 
 ## What It Does
 
-1. Checks out the repository at `inputs.commit_sha` or `github.sha`.
+1. Checks out the repository at `inputs.tag_name`, or `inputs.commit_sha`, or `github.sha`.
 2. On manual runs, extracts version from `pyproject.toml` and computes short commit hash.
 3. Creates manual artifact name format: `python-wagoplc-dist-v<version>-<short-hash>`.
 4. Sets up Python 3.11.
@@ -45,7 +51,7 @@ The workflow appears in GitHub Actions as:
 10. Validates that both `.whl` and `.tar.gz` exist in `dist/`.
 11. Uploads output:
 
-- Release run: uploads `dist/*` to the release assets.
+- Release or workflow_call run: uploads `dist/*` to the release assets.
 - Manual run: uploads `dist/*` as workflow artifact (retention 30 days).
 
 ## Generated Files
