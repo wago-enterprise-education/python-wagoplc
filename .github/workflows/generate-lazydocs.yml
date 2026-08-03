@@ -5,8 +5,8 @@ env:
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - "**"
     paths:
       - "src/**"
       - "pyproject.toml"
@@ -59,7 +59,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes in API docs"
           else
-            git commit -m "docs: auto-generate API documentation with lazydocs"
+            git commit -m "docs: auto-generate API documentation with lazydocs [skip ci]"
             git push
           fi
 

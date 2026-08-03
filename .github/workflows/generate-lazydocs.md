@@ -8,7 +8,7 @@ Generates API reference Markdown from Python docstrings using `lazydocs` and upd
 
 ## Triggers
 
-- Push to non-main branches when any of these paths change:
+- Push to all branches (including `main`) when any of these paths change:
 - `src/**`
 - `pyproject.toml`
 - `.github/workflows/generate-lazydocs.yml`
@@ -27,7 +27,8 @@ Generates API reference Markdown from Python docstrings using `lazydocs` and upd
 - `--src-base-url https://github.com/wago-enterprise-education/python-wagoplc/tree/main`
 
 1. Commits and pushes changes if generated files differ.
-2. Uploads `docs/api` as artifact `api-docs-markdown`.
+2. Uses `[skip ci]` in the bot commit message to avoid recursive workflow runs.
+3. Uploads `docs/api` as artifact `api-docs-markdown`.
 
 ## Output
 
@@ -59,7 +60,7 @@ uv run --python 3.11 lazydocs \
 
 ### Workflow does not trigger on push
 
-- Verify branch is not `main`.
+- Verify the push target branch is a branch ref (not only a tag push).
 - Verify one of the configured paths changed.
 
 ### `AttributeError("'FileFinder' object has no attribute 'find_module'")`

@@ -6,12 +6,7 @@ This workflow automatically runs the project's unit tests for relevant code chan
 
 The workflow runs when one of the following events occurs:
 
-- Push to any non-`main` branch if one of these paths changes:
-  - `src/**`
-  - `tests/**`
-  - `pyproject.toml`
-  - `.github/workflows/run-tests.yml`
-- Pull request targeting `main` if one of these paths changes:
+- Push to any branch (including `main`) if one of these paths changes:
   - `src/**`
   - `tests/**`
   - `pyproject.toml`
