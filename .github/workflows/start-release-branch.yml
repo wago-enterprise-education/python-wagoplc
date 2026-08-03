@@ -1,6 +1,6 @@
 # GitHub Action to start a new release branch from main.
 # Follows the procedure described in development.md:
-#   1. Bump project version in pyproject.toml with the selected pre-release type
+#   1. Bump project version in pyproject.toml with uv and selected pre-release type
 #   2. Create and push a release/v<x.y.z> branch
 #   3. Commit with message "start release branch"
 #
@@ -40,6 +40,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
       - name: Configure git identity
         run: |
           git config user.name "github-actions[bot]"
@@ -47,62 +52,39 @@ jobs:
 
       - name: Bump version in pyproject.toml
         id: bump
+        shell: bash
         run: |
-          python - <<'PY'
-          import re
-          from pathlib import Path
+          case "${{ inputs.bump_type }}" in
+            prerelease)
+              uv_bump="patch"
+              ;;
+            preminor)
+              uv_bump="minor"
+              ;;
+            premajor)
+              uv_bump="major"
+              ;;
+            *)
+              echo "Unsupported bump_type: ${{ inputs.bump_type }}"
+              exit 1
+              ;;
+          esac
 
-          bump_type = "${{ inputs.bump_type }}"
-          pyproject_path = Path("pyproject.toml")
-          content = pyproject_path.read_text(encoding="utf-8")
+          base_version="$(uv version --bump "$uv_bump" --dry-run --output-format json | python -c 'import json, sys; print(json.load(sys.stdin)["version"])')"
+          new_version="${base_version}.dev0"
+          branch_name="release/v${base_version}"
 
-          match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', content, re.MULTILINE)
-          if not match:
-            raise SystemExit("Could not find project version in pyproject.toml")
+          uv version "$new_version" --frozen --no-sync
+          actual_version="$(uv version --short)"
 
-          current = match.group(1)
-          core = current.split("-")[0]
-          parts = core.split(".")
-          if len(parts) != 3:
-            raise SystemExit(f"Unsupported version format: {current}")
+          {
+            echo "new_version=$actual_version"
+            echo "base_version=$base_version"
+            echo "branch_name=$branch_name"
+          } >> "$GITHUB_OUTPUT"
 
-          major, minor, patch = map(int, parts)
-
-          if bump_type == "prerelease":
-            patch += 1
-          elif bump_type == "preminor":
-            minor += 1
-            patch = 0
-          elif bump_type == "premajor":
-            major += 1
-            minor = 0
-            patch = 0
-          else:
-            raise SystemExit(f"Unsupported bump_type: {bump_type}")
-
-          base_version = f"{major}.{minor}.{patch}"
-          new_version = f"{base_version}-dev.0"
-          branch_name = f"release/v{base_version}"
-
-          new_content = re.sub(
-              r'^version\s*=\s*"[^"]+"\s*$',
-              f'version = "{new_version}"',
-              content,
-              count=1,
-              flags=re.MULTILINE,
-          )
-          pyproject_path.write_text(new_content, encoding="utf-8")
-
-          out = Path("$GITHUB_OUTPUT")
-          with out.open("a", encoding="utf-8") as fh:
-            fh.write(f"new_version={new_version}\n")
-            fh.write(f"base_version={base_version}\n")
-            fh.write(f"branch_name={branch_name}\n")
-
-          print(f"Current version: {current}")
-          print(f"New version: {new_version}")
-          print(f"Release branch: {branch_name}")
-          PY
+          echo "New version: $actual_version"
+          echo "Release branch: $branch_name"
 
       - name: Derive release branch name
         run: |

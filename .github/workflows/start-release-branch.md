@@ -4,7 +4,7 @@
 
 ## Overview
 
-Creates a new release branch from `main` and bumps the project version in `pyproject.toml` to a `-dev.0` prerelease.
+Creates a new release branch from `main` and bumps the project version in `pyproject.toml` via `uv version` to a `.dev0` prerelease.
 
 Generated branch pattern:
 
@@ -24,27 +24,28 @@ Input:
 
 Starting from current project version (base semantic version):
 
-- `prerelease`: increments patch (`X.Y.Z -> X.Y.(Z+1)-dev.0`)
-- `preminor`: increments minor (`X.Y.Z -> X.(Y+1).0-dev.0`)
-- `premajor`: increments major (`X.Y.Z -> (X+1).0.0-dev.0`)
+- `prerelease`: increments patch (`X.Y.Z -> X.Y.(Z+1).dev0`)
+- `preminor`: increments minor (`X.Y.Z -> X.(Y+1).0.dev0`)
+- `premajor`: increments major (`X.Y.Z -> (X+1).0.0.dev0`)
 
-Branch name always uses the base version without `-dev.0`.
+Branch name always uses the base version without `.dev0`.
 
 Example:
 
-- New version: `0.2.0-dev.0`
+- New version: `0.2.0.dev0`
 - Branch: `release/v0.2.0`
 
 ## What the Workflow Does
 
 1. Checks out `main`.
 2. Sets up Python 3.11.
-3. Updates `version = "..."` in `pyproject.toml`.
-4. Validates that the generated branch name is not empty and matches `release/vX.Y.Z`.
-5. Checks that the branch does not already exist on `origin`.
-6. Creates and switches to `release/vX.Y.Z`.
-7. Commits `pyproject.toml` with message `start release branch`.
-8. Pushes the new branch.
+3. Installs `uv`.
+4. Uses `uv version` to compute the base version bump and writes the normalized `.dev0` version to `pyproject.toml`.
+5. Validates that the generated branch name is not empty and matches `release/vX.Y.Z`.
+6. Checks that the branch does not already exist on `origin`.
+7. Creates and switches to `release/vX.Y.Z`.
+8. Commits `pyproject.toml` with message `start release branch`.
+9. Pushes the new branch.
 
 ## Running It
 
@@ -65,7 +66,7 @@ gh workflow run start-release-branch.yml -f bump_type=prerelease
 
 ### Commit failed due to no changes
 
-- Verify current `pyproject.toml` version is parseable semantic version.
+- Verify current `pyproject.toml` version is parseable by `uv version`.
 
 ### Push failed
 
