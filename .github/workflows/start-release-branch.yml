@@ -74,7 +74,7 @@ jobs:
           new_version="${base_version}.dev0"
           branch_name="release/v${base_version}"
 
-          uv version "$new_version" --frozen --no-sync
+          uv version "$new_version" --frozen
           actual_version="$(uv version --short)"
 
           {
