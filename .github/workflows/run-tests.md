@@ -10,6 +10,7 @@ The workflow runs when one of the following events occurs:
   - `src/**`
   - `tests/**`
   - `pyproject.toml`
+  - `uv.lock`
   - `.github/workflows/run-tests.yml`
 - Manual run via `workflow_dispatch`
 

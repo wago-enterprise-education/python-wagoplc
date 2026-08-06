@@ -11,6 +11,7 @@ Generates API reference Markdown from Python docstrings using `lazydocs` and upd
 - Push to all branches (including `main`) when any of these paths change:
 - `src/**`
 - `pyproject.toml`
+- `uv.lock`
 - `.github/workflows/generate-lazydocs.yml`
 - Manual trigger (`workflow_dispatch`)
 
