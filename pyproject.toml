@@ -1,6 +1,6 @@
 [project]
 name = "wagoplc"
-version = "0.1.1.dev0"
+version = "0.1.1"
 description = "Python library to interact with WAGO PLCs using Python."
 readme = "README.md"
 license = { file = "LICENSE" }
