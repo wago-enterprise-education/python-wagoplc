@@ -18,6 +18,20 @@ All changes should be categorized into one of the following types. These are H3 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-06
+
+### Changed
+
+- uv.lock is used as trigger for `run-tests` and `generate-lazydocs` workflows to ensure they run when dependencies change, even if source code does not.
+
+### Fixed
+
+- Update packages
+
+### Security
+
+- CVE-2026-4539 Pygments has Regular Expression Denial of Service (ReDoS) due to Inefficient Regex for GUID Matching
+
 ## [0.1.0] - 2026-07-21
 
 ### Added

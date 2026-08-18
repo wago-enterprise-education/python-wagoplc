@@ -10,6 +10,7 @@ on:
     paths:
       - "src/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/generate-lazydocs.yml"
   workflow_dispatch:
 
