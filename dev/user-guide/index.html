@@ -1,0 +1,1433 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A Python programming library for WAGO PLCs.">
+      
+      
+      
+        <link rel="canonical" href="https://wago-enterprise-education.github.io/python-wagoplc/dev/user-guide/">
+      
+      
+        <link rel="prev" href="../getting-started/">
+      
+      
+        <link rel="next" href="../api/api-reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon-32x32.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>User Guide - Python WAGO PLC Library</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/wago-extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Python WAGO PLC Library" class="md-header__button md-logo" aria-label="Python WAGO PLC Library" data-md-component="logo">
+      
+  <img src="../assets/images/wago-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Python WAGO PLC Library
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/wago-enterprise-education/python-wagoplc" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wago-enterprise-education/python-wagoplc
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Python WAGO PLC Library" class="md-nav__button md-logo" aria-label="Python WAGO PLC Library" data-md-component="logo">
+      
+  <img src="../assets/images/wago-logo.png" alt="logo">
+
+    </a>
+    Python WAGO PLC Library
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/wago-enterprise-education/python-wagoplc" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wago-enterprise-education/python-wagoplc
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-application-execution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How application execution works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How application execution works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-with-vs-code-extension-wago-cc100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration with VS Code Extension WAGO CC100
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-of-plc-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The concept of PLC programming
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-building-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime building blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-script-plc-application-bottle-filling-plant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One-script PLC application: bottle filling plant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="One-script PLC application: bottle filling plant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        main.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controlleryaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        controller.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-own-function-blocks-factory-gate-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using own function blocks: factory gate control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/controller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    controller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/fb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fb
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/constants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    constants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    exceptions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/read_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    read_config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cc100/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cc100
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cc100.cc100_9301/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cc100.cc100_9301
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cc100.cc100_9401/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cc100.cc100_9401
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cc100.cc100_9403/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cc100.cc100_9403
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cc100.cc100_v1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cc100.cc100_v1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-application-execution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How application execution works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How application execution works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-with-vs-code-extension-wago-cc100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration with VS Code Extension WAGO CC100
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-concept-of-plc-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The concept of PLC programming
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-building-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime building blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-script-plc-application-bottle-filling-plant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One-script PLC application: bottle filling plant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="One-script PLC application: bottle filling plant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        main.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controlleryaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        controller.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-own-function-blocks-factory-gate-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using own function blocks: factory gate control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/wago-enterprise-education/python-wagoplc/edit/main/docs/user-guide.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="user-guide">User guide<a class="headerlink" href="#user-guide" title="Permanent link">&para;</a></h1>
+<p>This guide provides you with general information and practical examples to work with the
+<code>python-wagoplc</code> programming library.</p>
+<h2 id="how-application-execution-works">How application execution works<a class="headerlink" href="#how-application-execution-works" title="Permanent link">&para;</a></h2>
+<p>When you start a project with <code>python main.py</code>, the library reads <code>controller.yaml</code>, combines that configuration with any optional <code>Tasks</code> object from the script, selects the controller implementation from <code>itemNumber</code>, and starts the task scheduler.</p>
+<p>From a user perspective, the runtime flow is usually:</p>
+<ol>
+<li>Define controller information and optional mapping in <code>controller.yaml</code>.</li>
+<li>Define task logic in Python, either with <code>Tasks</code> decorators or as plain task functions referenced from YAML.</li>
+<li>Start the application with <code>main()</code>.</li>
+<li>Let the scheduler execute cyclic tasks, update state variables, and write the output image back to the controller.</li>
+</ol>
+<p>This is the key mental model for working with the library: configuration defines what is connected, task functions define what happens every cycle, and the scheduler coordinates execution.</p>
+<h3 id="integration-with-vs-code-extension-wago-cc100">Integration with VS Code Extension WAGO CC100<a class="headerlink" href="#integration-with-vs-code-extension-wago-cc100" title="Permanent link">&para;</a></h3>
+<p>The following examples show how to create PLC application scripts and configuration. In order to actually
+run them, you'll need a CC100. In theory, transferring your project folder to the CC100 and running the following commands would be enough:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>python-wagoplc
+<span class="nb">cd</span><span class="w"> </span>plc-application/
+python<span class="w"> </span>main.py
+</code></pre></div>
+<p>Unfortunately, not all CC100 firmware versions have Python on board. Hence, a Docker image containing all
+requirements and a <a href="https://github.com/wago-enterprise-education/docker-engines-wagoplc">Python runtime</a> for WAGO PLCs has been created. It is highly recommended to make use of the <a href="https://marketplace.visualstudio.com/items?itemName=WAGO-education.vscode-wago-cc100">VS Code Extension WAGO CC100</a>, which installs that Docker image for you, transfers all files and manages the Docker container; you are then able to control your application by using the <em>operating-mode switch (OMS)</em> and watching the status lights, like with CoDeSys.</p>
+<h3 id="the-concept-of-plc-programming">The concept of PLC programming<a class="headerlink" href="#the-concept-of-plc-programming" title="Permanent link">&para;</a></h3>
+<p>PLC programming is standardised in IEC 61131-3. This library loosely adheres to that standard. Most importantly,
+a PLC is a <em>multi-tasking system</em>: the kernel alternates between multiple <em>tasks</em>, which appears to the user as if they were concurrently executed. A task can also be triggered once by an event, or periodically (which is currently not supported). A single task execution is called a <em>cycle</em>. It has an input image (read from the controller inputs) and an internal state and produces an output image (written to the controller outputs).</p>
+<p>Each task has a specific <em>cycle time</em> that defines the interval between executions as well as a priority.
+Moreover, you can define a <em>watchdog</em>, which is the maximum time a task may take to execute before it is interrupted. A more advanced setting is the watchdog <em>sensitivity</em>. Each step adds a five percent tolerance to the watchdog time. See the docstring of the <code>Task</code> class for the allowed value ranges of these settings.</p>
+<p>In this library, tasks are represented through Python functions: the function parameters are the input image,
+the return value (a dictionary) the output image. To keep track of the internal state, variables need to be defined outside of the function, passed into it and also returned from it. Example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">task_function</span><span class="p">(</span><span class="n">di1</span><span class="p">,</span> <span class="n">di2</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+    <span class="c1"># Do something with the variables</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">do1</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">di1</span><span class="p">:</span>
+        <span class="n">do1</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Return output and state variable</span>
+    <span class="c1"># Key is variable name</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">do1</span><span class="o">=</span><span class="n">do1</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
+</code></pre></div>
+<p>For how to define the variables, see the examples below.</p>
+<h3 id="runtime-building-blocks">Runtime building blocks<a class="headerlink" href="#runtime-building-blocks" title="Permanent link">&para;</a></h3>
+<p>Three concepts shape most applications built with this library:</p>
+<ul>
+<li><code>controller.yaml</code>: declares the controller model and can also hold I/O mapping, variables, and task metadata.</li>
+<li><code>Tasks</code> and <code>Task</code>: collect setup state and describe the cyclic units of work that should run on the controller.</li>
+<li><code>Scheduler</code>: executes the registered tasks according to cycle time, priority, and watchdog settings.</li>
+</ul>
+<p>If you need implementation-level details about how these modules interact internally, see <a href="../internals/">Internals</a>.</p>
+<h3 id="one-script-plc-application-bottle-filling-plant">One-script PLC application: bottle filling plant<a class="headerlink" href="#one-script-plc-application-bottle-filling-plant" title="Permanent link">&para;</a></h3>
+<p>At the bottle filling plant, the filled bottles are transferred to waiting crates using conveyor belts.
+The full crates are afterwards loaded onto freight trains. To minimize the risk of delays or complications in this vital area, the plant contains a bottle buffer with a fixed capacity. Light barriers at the entrance and exit count the incoming and outgoing bottles. If the number of bottles exceeds the threshold, the motor is turned off.</p>
+<p>The following steps show how to create the program for this plant using the WAGO PLC <em>751-9301</em>. You can find the whole source code <a href="https://github.com/wago-enterprise-education/python-wagoplc/blob/main/plc-application/main.py">in this script</a>.</p>
+<h4 id="mainpy"><code>main.py</code><a class="headerlink" href="#mainpy" title="Permanent link">&para;</a></h4>
+<p>This script is the centerpiece of the PLC application, written by the programmer. It is directly invoked by the runtime. Thus, it must contain a call to the library's main function.
+Initially, you'll want to define a few variables for later use. To access controller I/O, you can use wrapper classes. Example using an object of the <code>wagoplc.tasks.Tasks</code> class for collection of variables and tasks:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">wagoplc</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span><span class="p">,</span> <span class="n">Tasks</span><span class="p">,</span> <span class="n">DI</span><span class="p">,</span> <span class="n">AO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wagoplc.fb</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTUD</span>
+
+<span class="n">tasks</span> <span class="o">=</span> <span class="n">Tasks</span><span class="p">()</span>
+
+<span class="nd">@tasks</span><span class="o">.</span><span class="n">setup</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">():</span>
+    <span class="c1"># Bind variable light_barrier_in to digital output 1</span>
+    <span class="n">light_barrier_in</span> <span class="o">=</span> <span class="n">DI</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">light_barrier_out</span> <span class="o">=</span> <span class="n">DI</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">motor</span> <span class="o">=</span> <span class="n">AO</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># up-counter function block as per IEC 61131-3</span>
+    <span class="n">bottle_counter</span> <span class="o">=</span> <span class="n">CTUD</span><span class="p">(</span><span class="n">pv</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span>
+</code></pre></div>
+<p>The <code>return locals()</code> statement creates a dictionary of variable names and values and returns it.
+It is collected by the setup decorator and saved in the <code>Tasks</code> object.</p>
+<p>Now, you write the actual program as a Python function, which represents a PLC task.
+Task-related settings like the name and cycle time can be defined via another decorator:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@tasks</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;bottle buffer&quot;</span><span class="p">,</span>
+        <span class="c1"># Cycle time of 5ms</span>
+        <span class="n">cycle_ms</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">bottle_buffer</span><span class="p">(</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">light_barrier_out</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="p">:</span> <span class="n">CTUD</span><span class="p">):</span>
+    <span class="c1"># count up/down if a rising edge of the input variable is registered</span>
+    <span class="n">bottle_counter</span><span class="p">(</span><span class="n">cu</span><span class="o">=</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">cd</span><span class="o">=</span><span class="n">light_barrier_out</span><span class="p">)</span>
+    <span class="c1"># set to 5 V (5000 mV)</span>
+    <span class="n">motor</span> <span class="o">=</span> <span class="mi">5000</span>
+    <span class="c1"># Counter has reached the threshold</span>
+    <span class="k">if</span> <span class="n">bottle_counter</span><span class="o">.</span><span class="n">qu</span><span class="p">:</span>
+        <span class="c1"># Turn motor off</span>
+        <span class="n">motor</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Return the output image</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">motor</span><span class="o">=</span><span class="n">motor</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="o">=</span><span class="n">bottle_counter</span><span class="p">)</span>
+</code></pre></div>
+<p>In the output image, the <code>motor</code> variable is mapped to an analog output and its value is written after every cycle, while the <code>bottle_counter</code> is considered a state variable. It is passed into the task function unchanged before the next cycle and therefore needs to be defined as a parameter.</p>
+<h4 id="controlleryaml"><code>controller.yaml</code><a class="headerlink" href="#controlleryaml" title="Permanent link">&para;</a></h4>
+<p>This file holds the application's configuration. It is required to contain the <code>itemNumber</code> field with the controller's item number. Based on this information, the library selects the correct controller:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">itemNumber</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span>
+</code></pre></div>
+<p>With that, your application would be complete. But wait, there's more! You can also make use of the config file to define I/O mapping, state variables, and tasks, which keeps your <code>main.py</code> script slim:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">io_mapping</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Module name; for the CC100 controllers, the item number</span>
+<span class="w">  </span><span class="nt">751-9301</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># input image</span>
+<span class="w">    </span><span class="nt">pii</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">di1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">light_barrier_in</span>
+<span class="w">      </span><span class="nt">di2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">light_barrier_out</span>
+<span class="w">    </span><span class="c1"># output image</span>
+<span class="w">    </span><span class="nt">piq</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">ao1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motor</span>
+<span class="c1"># state variables</span>
+<span class="nt">vars</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bottle_counter</span>
+<span class="w">    </span><span class="nt">fb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CTUD</span>
+<span class="nt">tasks</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bottle buffer</span>
+<span class="w">    </span><span class="c1"># Script entry point</span>
+<span class="w">    </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main.bottle_buffer</span>
+<span class="w">    </span><span class="c1"># Cycle time</span>
+<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">priority</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sensitivity</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">watchdog_ms</span><span class="p">:</span>
+</code></pre></div>
+<p>Using this config, your <code>main.py</code> script would look like this:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">wagoplc</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wagoplc.fb</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTUD</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bottle_buffer</span><span class="p">(</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">light_barrier_out</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="p">:</span> <span class="n">CTUD</span><span class="p">):</span>
+    <span class="n">bottle_counter</span><span class="p">(</span><span class="n">cu</span><span class="o">=</span><span class="n">light_barrier_in</span><span class="p">,</span> <span class="n">cd</span><span class="o">=</span><span class="n">light_barrier_out</span><span class="p">,</span> <span class="n">pv</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+    <span class="n">motor</span> <span class="o">=</span> <span class="mi">5000</span>
+    <span class="k">if</span> <span class="n">bottle_counter</span><span class="o">.</span><span class="n">qu</span><span class="p">:</span>
+        <span class="n">motor</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">motor</span><span class="o">=</span><span class="n">motor</span><span class="p">,</span> <span class="n">bottle_counter</span><span class="o">=</span><span class="n">bottle_counter</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="using-own-function-blocks-factory-gate-control">Using own function blocks: factory gate control<a class="headerlink" href="#using-own-function-blocks-factory-gate-control" title="Permanent link">&para;</a></h3>
+<p>A <em>function block (fb)</em> is a kind of module that takes a fixed set of input variables to determine a fixed set of
+output variables. The programmer operates on instances of an fb in order to retain the internal state.
+In the example above, you already used an up-counter function block from the standard library.
+With <code>python-wagoplc</code>, you're also able to define your own function blocks for more complex setups.</p>
+<p>Imagine having a large assembly hall with multiple entrance gates you need to control.
+Each gate has an open and a close button as well as two limit switches.
+Rather than duplicating the necessary code for each gate, you could employ a function block.</p>
+<p>As always, your first step is to think about and define the variables and tasks you'll need, here in <code>controller.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">itemNumber</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">751-9301</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="nt">pii</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">di1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">open_btn</span>
+<span class="w">      </span><span class="nt">di2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">close_btn</span>
+<span class="w">      </span><span class="nt">di3</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">limit_switch_left</span>
+<span class="w">      </span><span class="nt">di4</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">limit_switch_right</span>
+<span class="w">    </span><span class="nt">piq</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">do1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motor_open</span>
+<span class="w">      </span><span class="nt">do2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motor_close</span>
+<span class="nt">vars</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate_control_fb</span>
+<span class="w">    </span><span class="c1"># Retrieve class &#39;Gate_Control&#39; from module &#39;gate_control.py&#39;</span>
+<span class="w">    </span><span class="nt">fb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate_control.Gate_Control</span>
+<span class="nt">tasks</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gate control</span>
+<span class="w">    </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main.porta_westfalica</span>
+<span class="w">    </span><span class="nt">cycle_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">    </span><span class="nt">priority</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sensitivity</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">watchdog_ms</span><span class="p">:</span>
+</code></pre></div>
+<p>Next thing is to write <code>main.py</code>. In the following example, the input variables are collected and passed into a function block called <code>gate_control_fb</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">gate_control</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gate_Control</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">porta_westfalica</span><span class="p">(</span>
+        <span class="n">gate_control_fb</span><span class="p">:</span> <span class="n">Gate_Control</span><span class="p">,</span> <span class="n">limit_switch_left</span><span class="p">,</span>
+        <span class="n">limit_switch_right</span><span class="p">,</span> <span class="n">open_btn</span><span class="p">,</span> <span class="n">close_btn</span><span class="p">):</span>
+    <span class="c1"># Call to the function block</span>
+    <span class="n">gate_control_fb</span><span class="p">(</span><span class="n">open_btn</span><span class="p">,</span> <span class="n">close_btn</span><span class="p">,</span> <span class="n">limit_switch_left</span><span class="p">,</span> <span class="n">limit_switch_right</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">gate_control_fb</span><span class="o">.</span><span class="n">open</span><span class="p">,</span> <span class="n">gate_control_fb</span><span class="o">.</span><span class="n">closed</span><span class="p">)</span>
+
+    <span class="c1"># Motors controlled through output variables</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">gate_control_fb</span><span class="o">=</span><span class="n">gate_control_fb</span><span class="p">,</span>
+                <span class="n">motor_open</span><span class="o">=</span><span class="n">gate_control_fb</span><span class="o">.</span><span class="n">motor_open</span><span class="p">,</span>
+                <span class="n">motor_close</span><span class="o">=</span><span class="n">gate_control_fb</span><span class="o">.</span><span class="n">motor_close</span><span class="p">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When you define your variables in the script, you can bind an instance of your fb to
+the <code>gate_control_fb</code> variable directly (which is what the library does, internally).</p>
+</div>
+<p>Now to the function block, which according to the above code is a class <code>Gate_Control</code> defined in a module
+<code>gate_control.py</code> (in the same directory as <code>main.py</code> and <code>controller.yaml</code>). A function block in its current, simple form consists of a constructor setting any instance variables, and a <code>__call__()</code> method containing the actual functionality, which makes the instance callable:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Function block superclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wagoplc.fb</span><span class="w"> </span><span class="kn">import</span> <span class="n">FB</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Gate_Control</span><span class="p">(</span><span class="n">FB</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motor_open</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">motor_close</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">open_btn</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">close_btn</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> 
+        <span class="n">limit_switch_left</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">limit_switch_right</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">:</span>
+            <span class="k">case</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># Gate closed</span>
+                <span class="k">if</span> <span class="n">open_btn</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_open</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">case</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># Gate opens</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">limit_switch_right</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_open</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="k">case</span> <span class="mi">2</span><span class="p">:</span> <span class="c1"># Gate is open</span>
+                <span class="k">if</span> <span class="n">close_btn</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_close</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">open</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">3</span>
+            <span class="k">case</span> <span class="mi">3</span><span class="p">:</span> <span class="c1"># Gate closes</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">limit_switch_left</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">motor_close</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="mi">0</span>
+</code></pre></div>
+<hr />
+<p>Previous: <a href="../getting-started/">Getting Started</a></p>
+<p>Next: <a href="../api/api-reference/">API Reference</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
