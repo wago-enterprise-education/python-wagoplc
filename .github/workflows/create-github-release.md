@@ -12,7 +12,8 @@ The workflow:
 2. Extracts release notes for that version from `CHANGELOG.md`.
 3. Creates release tag `vX.Y.Z` targeting `main`.
 4. Calls `build-package.yml` via `workflow_call` with the created tag.
-5. After successful completion, `publish-pypi.yml` is triggered via `workflow_run`.
+5. Deploys versioned documentation for `X.Y` with [mike](https://github.com/jimporter/mike) and updates the `latest` alias.
+6. After successful completion, `publish-pypi.yml` is triggered via `workflow_run`.
 
 The called build workflow then builds and uploads package files to that release.
 
@@ -52,7 +53,7 @@ Extraction behavior:
 
 ## Required Permissions
 
-- `contents: write` (create release)
+- `contents: write` (create release, push `gh-pages` docs)
 - `pull-requests: read` (read PR metadata)
 
 ## Troubleshooting
@@ -78,3 +79,4 @@ Extraction behavior:
 - Previous: [start-release-branch.md](start-release-branch.md)
 - Next: [build-package.md](build-package.md)
 - Then: [publish-pypi.md](publish-pypi.md)
+- Also triggers: [docs-deploy-dev.md](docs-deploy-dev.md) (documentation deploy job)

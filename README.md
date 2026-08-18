@@ -1,6 +1,6 @@
 # wagoplc: A Python Library for WAGO PLCs
 
-[![Docs: Generate API Markdown with lazydocs](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/generate-lazydocs.yml)
+[![Docs](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/docs-deploy-dev.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/docs-deploy-dev.yml)
 
 [![Run Unittests](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/run-tests.yml/badge.svg)](https://github.com/wago-enterprise-education/python-wagoplc/actions/workflows/run-tests.yml)
 

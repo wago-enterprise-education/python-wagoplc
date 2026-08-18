@@ -1,11 +1,4 @@
----
-layout: page
-title: Python WAGO PLC Library - Getting Started
-lang: en
-lang-ref: getting-started
----
-
-## Getting Started
+# Getting Started
 
 This guide walks through the shortest path from installation to a first running PLC application. It covers the minimum project structure, the required configuration file, a first cyclic task, and the two ways to configure an application.
 

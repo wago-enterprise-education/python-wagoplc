@@ -1,11 +1,4 @@
----
-layout: page
-title: Python WAGO PLC Library - Examples
-lang: en
-lang-ref: index
----
-
-## Examples
+# Examples
 
 This folder contains design and behavior examples for Python WAGO PLC programs.
 

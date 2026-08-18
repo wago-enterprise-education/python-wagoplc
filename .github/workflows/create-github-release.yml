@@ -131,3 +131,46 @@ jobs:
     with:
       tag_name: ${{ needs.create-release.outputs.tag }}
     secrets: inherit
+
+  deploy-docs:
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --frozen --group docs
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine docs version
+        id: docs-version
+        run: |
+          TAG="${{ needs.create-release.outputs.tag }}"
+          VERSION="${TAG#v}"
+          DOCS_VERSION="$(echo "$VERSION" | cut -d. -f1,2)"
+          echo "docs_version=${DOCS_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy release docs with mike
+        run: |
+          uv run mike deploy --push --update-aliases "${{ steps.docs-version.outputs.docs_version }}" latest
+          uv run mike set-default --push latest

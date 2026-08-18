@@ -1,11 +1,4 @@
----
-layout: page
-title: Python WAGO PLC Library - Internals
-lang: en
-lang-ref: index
----
-
-## Internal Architecture
+# Internal Architecture
 
 This page describes the maintainer-facing internal structure of the `python-wagoplc` library. If you want to learn how to use the library in an application, start with the [User Guide](user-guide.md).
 

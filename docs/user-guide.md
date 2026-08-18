@@ -1,11 +1,4 @@
----
-layout: page
-title: Python WAGO PLC Library - Userguide
-lang: en
-lang-ref: index
----
-
-## User guide
+# User guide
 
 This guide provides you with general information and practical examples to work with the
 `python-wagoplc` programming library.
@@ -79,7 +72,7 @@ If you need implementation-level details about how these modules interact intern
 At the bottle filling plant, the filled bottles are transferred to waiting crates using conveyor belts.
 The full crates are afterwards loaded onto freight trains. To minimize the risk of delays or complications in this vital area, the plant contains a bottle buffer with a fixed capacity. Light barriers at the entrance and exit count the incoming and outgoing bottles. If the number of bottles exceeds the threshold, the motor is turned off.
 
-The following steps show how to create the program for this plant using the WAGO PLC *751-9301*. You can find the whole source code [in this script](../plc-application/main.py).
+The following steps show how to create the program for this plant using the WAGO PLC *751-9301*. You can find the whole source code [in this script](https://github.com/wago-enterprise-education/python-wagoplc/blob/main/plc-application/main.py).
 
 #### `main.py`
 
@@ -241,10 +234,9 @@ def porta_westfalica(
                 motor_close=gate_control_fb.motor_close)
 ```
 
-:::{note}
-When you define your variables in the script, you can bind an instance of your fb to
-the `gate_control_fb` variable directly (which is what the library does, internally).
-:::
+!!! note
+    When you define your variables in the script, you can bind an instance of your fb to
+    the `gate_control_fb` variable directly (which is what the library does, internally).
 
 Now to the function block, which according to the above code is a class `Gate_Control` defined in a module
 `gate_control.py` (in the same directory as `main.py` and `controller.yaml`). A function block in its current, simple form consists of a constructor setting any instance variables, and a `__call__()` method containing the actual functionality, which makes the instance callable:

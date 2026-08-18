@@ -1,0 +1,28 @@
+/* WAGO CI colors, taken from wago-enterprise-education/wago-github-pages-theme (_sass/wago.scss) */
+:root {
+  --wago-brand-color: #6ec800;
+  --wago-dark-color: #1f2837;
+  --wago-accent-color: #f66a0a;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--wago-dark-color);
+  --md-accent-fg-color: var(--wago-brand-color);
+  --md-typeset-a-color: var(--wago-brand-color);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--wago-dark-color);
+  --md-accent-fg-color: var(--wago-brand-color);
+  --md-typeset-a-color: var(--wago-brand-color);
+}
+
+.md-typeset .admonition.warning,
+.md-typeset .admonition.caution {
+  border-color: var(--wago-accent-color);
+}
+
+.md-typeset .admonition.warning > .admonition-title,
+.md-typeset .admonition.caution > .admonition-title {
+  background-color: rgba(246, 106, 10, 0.1);
+}

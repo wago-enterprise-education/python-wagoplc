@@ -1,0 +1,80 @@
+site_name: Python WAGO PLC Library
+site_description: A Python programming library for WAGO PLCs.
+site_url: https://wago-enterprise-education.github.io/python-wagoplc/
+repo_url: https://github.com/wago-enterprise-education/python-wagoplc
+repo_name: wago-enterprise-education/python-wagoplc
+docs_dir: docs
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/images/wago-logo.png
+  favicon: assets/images/favicon-32x32.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+
+extra_css:
+  - stylesheets/wago-extra.css
+
+extra:
+  version:
+    provider: mike
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - User Guide: user-guide.md
+  - API Reference:
+      - Overview: api/api-reference.md
+      - controller: api/controller.md
+      - tasks: api/tasks.md
+      - fb: api/fb.md
+      - constants: api/constants.md
+      - exceptions: api/exceptions.md
+      - read_config: api/read_config.md
+      - cc100: api/cc100.md
+      - cc100.cc100_9301: api/cc100.cc100_9301.md
+      - cc100.cc100_9401: api/cc100.cc100_9401.md
+      - cc100.cc100_9403: api/cc100.cc100_9403.md
+      - cc100.cc100_v1: api/cc100.cc100_v1.md
+  - Examples: examples/examples.md
+  - Development: development.md
+  - Internals: internals.md
+  - Tests: tests.md

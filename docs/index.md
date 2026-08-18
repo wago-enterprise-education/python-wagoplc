@@ -1,9 +1,4 @@
----
-layout: page
-title: Python WAGO PLC Library
-lang: en
-lang-ref: index
----
+# Python WAGO PLC Library
 
 Python WAGO PLC Library is a Python interface for WAGO PLCs that lets you map controller I/O, read and write process values, and implement cyclic control logic in Python. It is designed for compact PLC applications, experiments with automation logic, and teaching environments that want to combine familiar PLC concepts with Python code.
 

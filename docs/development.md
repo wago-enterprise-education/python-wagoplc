@@ -61,24 +61,23 @@ We use [`ruff`](https://docs.astral.sh/ruff/) for linting. Before you commit, ru
 ruff check --target-version py38
 ```
 
-### API Reference with lazydocs
+### Documentation with MkDocs
 
-The API reference is generated from Python docstrings using [lazydocs](https://github.com/ml-tooling/lazydocs). See the [API reference](api/api-reference.md) for the generated docs.
+The documentation site, including the API reference, is built with [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/). API pages are rendered directly from Python docstrings using [mkdocstrings](https://mkdocstrings.github.io/); there is no generated Markdown to commit.
 
-To generate locally:
+To preview the documentation locally:
 
 ```bash
 uv sync --group docs
-uv run lazydocs \
-  --output-path docs/api \
-  --overview-file api-reference.md \
-  --src-base-url "https://github.com/wago-enterprise-education/python-wagoplc/tree/main" \
-  src/wagoplc
+uv run mkdocs serve
 ```
+
+Documentation versions are managed with [mike](https://github.com/jimporter/mike) and published to the `gh-pages` branch.
 
 #### Automated Workflow
 
-- **lazydocs generation**: Triggered on push to all branches except `main` when `src/` or `pyproject.toml` changes; artifacts available in workflow runs via `generate-lazydocs.yml`
+- **Dev docs**: Deployed as the `dev` version on every push to `main` that touches `docs/`, `src/`, or `mkdocs.yml` (`docs-deploy-dev.yml`)
+- **Release docs**: Deployed as a new version and updated as `latest` whenever a GitHub Release is created (`create-github-release.yml`)
 
 ---
 
