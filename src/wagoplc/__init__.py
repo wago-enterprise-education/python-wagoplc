@@ -1,17 +1,5 @@
-"""The wagoplc library.
-
-Packages:
-
-* cc100: all functionality specific to the CC100 controller
-
-Modules:
-
-* constants: all top-level constants
-* controller: controller superclass and I/O classes
-* exceptions: all library exceptions
-* fb: standard library function blocks
-* read_config: read the configuration file
-* tasks: task management for all controllers
+"""
+The wagoplc library.
 """
 
 from __future__ import annotations
@@ -31,14 +19,15 @@ from wagoplc.controller import (
     AIO as AIO
 )
 import wagoplc.read_config as read_config
-from wagoplc.tasks import Tasks, Scheduler
+from wagoplc.tasks import Task, Scheduler
 
-def main(tasks_object: Tasks | None = None):
+def main(task: Task | None = None, **script_vars):
     """Main entry point to invoke the scheduler.
 
-    tasks_object: a task registrator given from the main script
+    tasks: a task given from the main script
+    vars: variables given from the script as keyword arguments
     """
     sys.path.append(SCRIPT_PATH)
-    tasks, _, plc_obj = read_config.read_config(tasks_object)
-    scheduler = Scheduler(tasks, plc_obj)
+    tasks, iohandler, plc_obj = read_config.read_config(task, **script_vars)
+    scheduler = Scheduler(tasks, iohandler, plc_obj)
     scheduler.run_tasks()

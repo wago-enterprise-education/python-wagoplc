@@ -1,28 +1,18 @@
-from wagoplc import main, Tasks, DI, DO, AO
+from wagoplc import main, DI, DO, AO, Task
 import time
 
-tasks = Tasks()
+normalbetrieb = DI(1)
+wartungsbetrieb = DI(2)
+aRot = DO(1)
+aGelb = DO(2)
+aGruen = DO(3)
+bRot = DO(4)
+bGelb = AO(1)
+bGruen = AO(2)
+status = 0
+phase_wechsel_zeit = 0
+aGelb_zuletzt = False
 
-@tasks.setup
-def setup():
-    normalbetrieb = DI(1)
-    wartungsbetrieb = DI(2)
-    aRot = DO(1)
-    aGelb = DO(2)
-    aGruen = DO(3)
-    bRot = DO(4)
-    bGelb = AO(1)
-    bGruen = AO(2)
-    status = 0
-    phase_wechsel_zeit = 0
-    aGelb_zuletzt = False
-
-    return locals()
-
-@tasks.register(
-        name = "Ampelschaltung",
-        cycle_ms = 1000
-)
 def ampelschaltung(normalbetrieb, wartungsbetrieb, status, phase_wechsel_zeit, aGelb_zuletzt):
     jetzt = time.time()
     aRot = False
@@ -105,4 +95,7 @@ def ampelschaltung(normalbetrieb, wartungsbetrieb, status, phase_wechsel_zeit, a
     )
 
 if __name__ == "__main__":
-    main(tasks)
+    main(
+        Task(name="Ampelschaltung", cycle_ms=1000, entry=ampelschaltung),
+        **locals()
+    )

@@ -7,7 +7,6 @@ from wagoplc.controller import DI
 from wagoplc.exceptions import InvalidConfigError
 from wagoplc.fb import TON
 from wagoplc.read_config import read_config
-from wagoplc.tasks import Tasks
 
 def mock_get_controller(controller_id: str):
     return controller_id
@@ -35,11 +34,11 @@ class Test_config(unittest.TestCase):
         with open(self.filename, "w") as f:
             yaml.dump(data, f)
 
-        _, var_mapping, _ = read_config()
-        self.assertListEqual(list(var_mapping.keys()), ["oPower_on_TON", "iStatus", "xSwitch", "xMotor"])
-        self.assertIsInstance(var_mapping["xSwitch"], DI)
-        self.assertIsInstance(var_mapping["oPower_on_TON"], TON)
-        self.assertEqual(var_mapping["iStatus"], 0)
+        _, iohandler, _ = read_config()
+        self.assertListEqual(list(iohandler.var_mapping.keys()), ["oPower_on_TON", "iStatus", "xSwitch", "xMotor"])
+        self.assertIsInstance(iohandler.var_mapping["xSwitch"], DI)
+        self.assertIsInstance(iohandler.var_mapping["oPower_on_TON"], TON)
+        self.assertEqual(iohandler.var_mapping["iStatus"], 0)
 
     def test_non_existing_function_block(self):
         data = {"itemNumber": "751-9301", "vars": [{"name": "oHay_To_Gold_FB", "fb": "riches.Hay_To_Gold"}]}
@@ -63,17 +62,17 @@ class Test_config(unittest.TestCase):
             read_config()
         self.assertEqual(str(cm.exception), "Function 'plc.foo' for task 'task1' not defined!")
 
-        with open("plc.py", "w") as f:
-            f.write("def foo():\n\tpass")
+        def foo():
+            return {}
 
-        # Why is this needed?
-        os.path.isfile("plc.py")
+        plc = Mock()
+        plc.foo = foo
+        with patch.dict("sys.modules", plc=plc):
+            tasks, _, plc_obj = read_config()
 
-        tasks, _, plc_obj = read_config()
         self.assertEqual(plc_obj, "751-9301")
         self.assertEqual(len(tasks), 1)
         self.assertEqual(tasks[0].name, "task1")
-        os.remove("plc.py")
 
     
     def test_missing_task_params(self):
@@ -107,14 +106,8 @@ class Test_config(unittest.TestCase):
         with open("test_controller.yaml", "w") as f:
             yaml.dump(data, f)
 
-        tasks = Tasks()
-        @tasks.setup
-        def setup():
-            di1 = DI(1)
-            return locals()
-
         with self.assertRaises(InvalidConfigError) as cm:
-            read_config(tasks)
+            read_config(di1=DI(1))
 
         self.assertEqual(str(cm.exception), "Duplicate I/O mappings in configuration: {'di2': 'DI(1)', 'di1': 'DI(1)'}")
 
