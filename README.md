@@ -269,11 +269,11 @@ The WAGO CC100 VS Code extension can generate the controller config layout for s
 
 ## Documentation
 
-The official documentation is hosted on [GitHub Pages](https://wago-enterprise-education.github.io/python-wagoplc/)
+The official documentation is hosted on [GitHub Pages](https://wago-enterprise-education.github.io/python-wagoplc/).
 
 ## Getting Help
 
-For usage questions, the best place to go are the [GitHub Issues](https://github.com/wago-enterprise-education/python-wagoplc/issues)
+For usage questions, the best place to go are the [GitHub Issues](https://github.com/wago-enterprise-education/python-wagoplc/issues).
 
 ## Development
 
@@ -285,11 +285,11 @@ cd python-wagoplc
 uv sync
 ```
 
-Useful follow-up commands:
+To run the unit tests and the `ruff` linter:
 
 ```bash
-pytest
-uv run ruff check .
+python -m unittest discover -s tests
+ruff check .
 ```
 
 ## License
