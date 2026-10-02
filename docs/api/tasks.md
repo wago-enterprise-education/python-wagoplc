@@ -6,7 +6,6 @@
 Task management. 
 
 This module holds the classes responsible for task management. 
-- Tasks: manage task and variable collection in an application script 
 - Task: a single task 
 - Scheduler: task scheduler 
 
@@ -19,7 +18,7 @@ This module holds the classes responsible for task management.
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L34"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L32"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `stop_handler`
 
@@ -34,7 +33,7 @@ stop_handler(signum, frame)
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L41"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L39"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `cont_handler`
 
@@ -49,22 +48,17 @@ cont_handler(signum, frame)
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L52"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L50"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Task`
 Represent a PLC task. 
 
-
-- cycle: one task cycle 
-
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L58"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L53"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
 ```python
 __init__(
-    plc_obj,
-    var_mapping: 'dict[str, Any]',
     name: 'str',
     entry: 'Callable[, dict[str, str | int | bool]]',
     cycle_ms: 'int' = 100,
@@ -83,82 +77,10 @@ name:        task name entry:       task function cycle_ms:    call cycle time i
 
 
 
----
-
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L135"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `cycle`
-
-```python
-cycle() → None
-```
-
-Run one task cycle. 
-
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L147"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-## <kbd>class</kbd> `Tasks`
-Manage task registration per program. 
-
-This class collects all variables, the task function and, if, given, its configuration. It can be instantiated in the main script. 
-
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L155"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `__init__`
-
-```python
-__init__()
-```
-
-
-
-
-
-
-
-
----
-
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L173"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `register`
-
-```python
-register(
-    _func: 'Callable[, dict[str, str | int | bool]]' = None,
-    name: 'str' = '',
-    cycle_ms: 'int' = 100,
-    watchdog_ms: 'int' = 400000,
-    priority: 'int' = 15,
-    sensitivity: 'int' = 0
-)
-```
-
-Register a task. Only one is currently allowed. 
-
-name:        task name cycle_ms:    call cycle time in ms priority:    a priority from 1 (highest) to 15 entry:       task function watchdog_ms: maximum runtime in ms before watchdog interrupts sensitivity: sensitivity from 0 (highest) to 10 
-
----
-
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L160"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `setup`
-
-```python
-setup(func: 'Callable[[], dict[str, Any]]') → None
-```
-
-Retrieve variables from function in script. 
-
-func: a function that returns all variables as a dict 
-
-
----
-
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L210"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L109"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Scheduler`
 A task scheduler. 
@@ -166,24 +88,28 @@ A task scheduler.
 
 - run_tasks: run the collected tasks 
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L216"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L115"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
 ```python
-__init__(tasks: 'list[Task]', plc_obj: 'Controller') → None
+__init__(
+    tasks: 'list[Task]',
+    iohandler: 'IOHandler',
+    plc_obj: 'Controller'
+) → None
 ```
 
 Configure the scheduler. 
 
-tasks: list of task objects to run plc_obj: the controller object 
+:param tasks: List of Task objects to run :param plc_obj: The controller object :param var_mapping: The complete variable mapping 
 
 
 
 
 ---
 
-<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L225"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/wago-enterprise-education/python-wagoplc/tree/main/src/wagoplc/tasks.py#L126"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `run_tasks`
 

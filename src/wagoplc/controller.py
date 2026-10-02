@@ -9,10 +9,13 @@ for use by both the programmer and the library.
 """
 from __future__ import annotations
 
-from typing import Any
+import inspect
 import logging
+from typing import Any
+
 
 from wagoplc.constants import LOG_FILE
+from wagoplc.exceptions import NotDefinedError
 from wagoplc.fb import TP
 
 logger = logging.getLogger(__name__)
@@ -228,15 +231,9 @@ class IOHandler:
     - write: write to a specific output interface
     """
 
-    def __init__(self, plc_object: Controller, input_mapping: dict[str, Any], var_mapping: dict[str, Any]):
+    def __init__(self, plc_object: Controller, var_mapping: dict[str, Any]):
         self.plc_obj = plc_object
-
-        self.inputs = dict(
-            filter(
-                lambda map: isinstance(map[1], (DI, AI, PT, NI)), 
-                input_mapping.items()
-            )
-        )
+        self.var_mapping = var_mapping
         self.outputs = dict(
             filter(
                 lambda map: isinstance(map[1], (DO, AO)), 
@@ -244,29 +241,52 @@ class IOHandler:
             )
         )
 
-        self.state_vars = dict(filter(
-            lambda p: p[0] not in {**self.inputs, **self.outputs}, input_mapping.items()
-        ))
+    def set_task_vars(self, task: "Task") -> None:
+        """Set input variables and state variables for the given Task instance.
+        
+        Raise NotDefinedError if a parameter is not defined in the mapping.
 
-    def get_input_image(self) -> dict[str, Any]:
+        var_mapping: map of all user-defined variables 
+        """
+        func_params = [param.name for param in inspect.signature(task.cycle_func).parameters.values()]
+        vars = self.var_mapping.keys()
+        if not_defined := list(filter(lambda p: p not in vars, func_params)):
+            raise NotDefinedError(f"Undefined variables: {', '.join(not_defined)}")
+        def is_input(pair):
+            k, _ = pair
+            if k in func_params:
+                return True
+            return False
+        input_mapping = dict(
+            filter(is_input, self.var_mapping.items())
+        )
+
+        task.inputs = dict(
+             filter(
+                  lambda map: isinstance(map[1], (DI, AI, PT, NI)), 
+                  input_mapping.items())
+        )
+        task.state_vars = dict(
+            filter(lambda p: p[0] not in task.inputs, input_mapping.items())
+        )
+
+    def get_input_image(self, task: "Task") -> dict[str, Any]:
         self.plc_obj.read_inputs()
         input_image = {}
-        self.input_vars = set(self.inputs.keys())
-        for var, io in self.inputs.items():
+        for var, io in task.inputs.items():
             input_image[var] = self.read(io)
-        input_image.update(self.state_vars)
+        input_image.update(task.state_vars)
         return input_image
 
-    def process_output_image(self, output_image: dict[str, Any]) -> None:
+    def process_output_image(self, task: "Task", output_image: dict[str, Any]) -> None:
         for var, value in output_image.items():
-            if var in self.input_vars:
-                raise ValueError(
-                f"Variable '{var}' is an input.")
+            if var in task.inputs:
+                raise ValueError(f"Variable '{var}' is an input.")
 
             if var in self.outputs:
                 self.write(self.outputs[var], value)
             else:
-                self.state_vars[var] = value
+                task.state_vars[var] = value
         self.plc_obj.write_outputs()
 
     def update_timers(self, stop_duration: int):

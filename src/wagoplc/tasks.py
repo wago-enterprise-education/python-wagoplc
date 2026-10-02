@@ -1,7 +1,6 @@
 """Task management.
 
 This module holds the classes responsible for task management.
-- Tasks: manage task and variable collection in an application script
 - Task: a single task
 - Scheduler: task scheduler
 """
@@ -11,7 +10,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-import inspect
 import logging
 import signal
 import time
@@ -19,7 +17,7 @@ import heapq
 
 from wagoplc.constants import LOG_FILE
 from wagoplc.controller import IO, IOHandler, Controller
-from wagoplc.exceptions import NotDefinedError, WatchdogTimeoutError, InvalidConfigError
+from wagoplc.exceptions import NotDefinedError, WatchdogTimeoutError
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -50,15 +48,10 @@ signal.signal(signal.SIGCONT, cont_handler)
 
 
 class Task:
-    """Represent a PLC task.
-    
-    - cycle: one task cycle
-    """
+    """Represent a PLC task."""
 
     def __init__(
         self,
-        plc_obj,
-        var_mapping: dict[str, Any],
         name: str,
         entry: Callable[..., dict[str, str | int | bool]],
         cycle_ms: int = 100,
@@ -80,7 +73,6 @@ class Task:
         """
         self.name = name or "<unnamed task>"
         self.cycle_func = entry
-        self.plc_obj = plc_obj
         if cycle_ms < 1:
             cycle_ms = 1
         elif cycle_ms > 10000:
@@ -102,9 +94,8 @@ class Task:
 
         self.watchdog_ms = watchdog_ms * (self.sensitivity * 0.05 + 1.0)
 
-        self.iohandler = IOHandler(
-            plc_obj, self._get_input_vars(var_mapping), var_mapping
-        )
+        self.inputs: dict[str, IO] = {}
+        self.state_vars: dict[str, Any]
 
         self.next_run: float = time.time()
     
@@ -114,98 +105,6 @@ class Task:
     def __str__(self) -> str:
             return f"Task(name={self.name}, entry={self.cycle_func}, cycle_ms={self.cycle_ms}, priority={self.priority}, watchdog_ms={self.watchdog_ms}, sensitivity={self.sensitivity})"
 
-    def _get_input_vars(self, var_mapping: dict[str, Any]) -> dict[str, Any]:
-            """Compare defined variables and parameters and return input mapping.
-            
-            Raise NotDefinedError if a parameter is not defined as a variable.
-
-            var_mapping: map of user-defined variables 
-            """
-            func_params = [param.name for param in inspect.signature(self.cycle_func).parameters.values()]
-            vars = var_mapping.keys()
-            if not_defined := list(filter(lambda p: p not in vars, func_params)):
-                raise NotDefinedError(f"Undefined variables: {', '.join(not_defined)}")
-            def is_input(pair):
-                k, _ = pair
-                if k in func_params:
-                    return True
-                return False
-            return dict(filter(is_input, var_mapping.items()))
-    
-    def cycle(self) -> None:
-        """Run one task cycle."""
-        # Get input image (variables mapped to values)
-        input_image = self.iohandler.get_input_image()
-        # Get output image (variables mapped to values)
-        output_image = self.cycle_func(**input_image)
-        if not isinstance(output_image, dict):
-            raise NotDefinedError(f"Cycle function '{self.cycle_func.__name__}' did not return an output image!")
-        # Actually write outputs, return state variables
-        self.iohandler.process_output_image(output_image)
-
-
-class Tasks:
-    """Manage task registration per program.
-    
-    This class collects all variables, the task function and,
-    if, given, its configuration. It can be instantiated in the main
-    script.
-    """
-
-    def __init__(self):
-        self.task: dict[str, Any] = None
-        # Map of variables and interfaces
-        self.map: dict[str, IO] = {}
-
-    def setup(self, func: Callable[[], dict[str, Any]]) -> None:
-        """Retrieve variables from function in script.
-        
-        func: a function that returns all variables as a dict
-        """
-        def decorator_setup(func):
-            logger.debug(f"Reading configuration from script function '{func.__name__}'")
-            self.map = func()
-            if not isinstance(self.map, dict):
-                raise InvalidConfigError("Expected setup function to return a dictionary of variables!")
-
-        return decorator_setup(func)
-
-    def register(
-            self,
-            _func: Callable[..., dict[str, str | int | bool]] = None,
-            name: str = "",
-            cycle_ms: int = 100,
-            watchdog_ms: int = 400000,
-            priority: int = 15,
-            sensitivity: int = 0):
-        """Register a task. Only one is currently allowed.
-        
-        name:        task name
-        cycle_ms:    call cycle time in ms
-        priority:    a priority from 1 (highest) to 15
-        entry:       task function
-        watchdog_ms: maximum runtime in ms before watchdog interrupts
-        sensitivity: sensitivity from 0 (highest) to 10
-        """
-        if self.task:
-            raise InvalidConfigError("Only one task per program allowed!")
-        def decorator_task(func: Callable[..., Any]):
-            self.task = dict(name=name,
-                plc_obj=None,
-                var_mapping=self.map,
-                entry=func,
-                cycle_ms=cycle_ms,
-                priority=priority,
-                watchdog_ms=watchdog_ms,
-                sensitivity=sensitivity
-            )
-            logger.debug(f"Task '{name}' with script entry point '{func.__name__}' registered")
-            return func
-        
-        if _func is None:
-            return decorator_task
-        return decorator_task(_func)
-
 
 class Scheduler:
     """A task scheduler.
@@ -213,14 +112,16 @@ class Scheduler:
     - run_tasks: run the collected tasks
     """
     
-    def __init__(self, tasks: list[Task], plc_obj: Controller) -> None:
+    def __init__(self, tasks: list[Task], iohandler: IOHandler, plc_obj: Controller) -> None:
         """Configure the scheduler.
 
-        tasks: list of task objects to run
-        plc_obj: the controller object
+        :param tasks: List of Task objects to run
+        :param plc_obj: The controller object
+        :param var_mapping: The complete variable mapping
         """
         self.tasks = tasks
         self.plc_obj = plc_obj
+        self.iohandler = iohandler
 
     def run_tasks(self):
         """Scheduler to run all tasks in cycles."""
@@ -247,8 +148,17 @@ class Scheduler:
                     print(f"Running task {task.name} with priority {task.priority} at {task.next_run} (every {task.cycle_ms} ms)")
 
                     start_perf = time.perf_counter()
+
                     # Run task cycle
-                    task.cycle()
+                    # Get input image (variables mapped to values)
+                    input_image = self.iohandler.get_input_image(task)
+                    # Get output image (variables mapped to values)
+                    output_image = task.cycle_func(**input_image)
+                    if not isinstance(output_image, dict):
+                        raise NotDefinedError(f"Cycle function '{task.cycle_func.__name__}' did not return an output image!")
+                    # Actually write outputs, return state variables
+                    self.iohandler.process_output_image(task, output_image)
+
                     duration_ms = (time.perf_counter() - start_perf - stop_duration) * 1000.0
                     stop_duration = 0
                     if duration_ms > task.watchdog_ms:

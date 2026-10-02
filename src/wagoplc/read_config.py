@@ -12,7 +12,6 @@ ensure all parameters are present.
 from __future__ import annotations
 
 from schema import And, Or, Schema, SchemaError, Regex
-from typing import Any
 import importlib
 import logging
 import os
@@ -20,10 +19,10 @@ import sys
 import yaml
 
 from wagoplc.cc100 import CC100_9301, CC100_9401, CC100_9403
-from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO, IO, Controller
+from wagoplc.controller import DI, DO, AI, AO, NI, PT, DIO, AIO, IO, Controller, IOHandler
 from wagoplc.constants import YAML_CONFIG, INPUT, OUTPUT, LOG_FILE
 from wagoplc.exceptions import InvalidConfigError
-from wagoplc.tasks import Task, Tasks
+from wagoplc.tasks import Task
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -55,11 +54,12 @@ def get_controller(controller_id: str) -> Controller:
 
     return plc_obj
 
-def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, Any], Controller]:
+def read_config(task: Task | None = None, **script_vars) -> tuple[list[Task], IOHandler, Controller]:
     """Read the configuration file.
     
-    :param tasks_obj: Optional Tasks object from the application script
-    :return: The tasks, the variable mapping and the controller object.
+    :param task: Optional Task object from the application script
+    :param script_vars: Variables defined in the script as keyword arguments
+    :return: A list tasks, an IOHandler instance and a Controller instance.
     :raise FileNotFoundError: If the configuration file does not exist.
     :raise exceptions.InvalidConfigError: if the configuration does not include the itemNumber field, a function block or a task entry point do not exist, or if there are duplicates in the variable mapping.
     """
@@ -70,6 +70,8 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
     if "itemNumber" not in config:
         raise InvalidConfigError("The field 'itemNumber' is missing.")
     item_number = config["itemNumber"]
+    plc_obj = get_controller(item_number)
+    logger.info(f"Using controller with item number '{item_number}'")
     
     # Get state variables
     var_mapping = {}
@@ -129,48 +131,49 @@ def read_config(tasks_obj: Tasks | None = None) -> tuple[list[Task], dict[str, A
                             elif interface == "aio":
                                 type = INPUT if section_name == "pii" else OUTPUT
                                 var_mapping[var] = AIO(index, module, type)
-    
-    # Get task definitions
-    tasks = []
-    plc_obj = get_controller(item_number)
-    logger.info(f"Using controller with item number '{item_number}'")
 
-    # Add decorated task
-    if tasks_obj is not None:
-        if task := tasks_obj.task:
-            task.update({"plc_obj": plc_obj})
-            tasks.append(Task(**task))
-
-    if "tasks" in config:
-        validate_task(config)
-        # Filter out None values
-        for task in config["tasks"]:
-            # Filter out None values
-            task = {k: v for k, v in task.items() if v is not None}
-            entry: str = task["entry"]
-            module_name, func_name = entry.rsplit(".")
-            # Get task definitions from config and retrieve the task function
-            try:
-                module = importlib.import_module(module_name)
-                task["entry"] = getattr(module, func_name)                
-                tasks.append(Task(plc_obj, var_mapping, **task))
-                logger.debug(f"Task '{task['name']}' with script entry point '{entry}' registered")
-            except (ModuleNotFoundError, AttributeError):
-                raise InvalidConfigError(f"Function '{entry}' for task '{task['name']}' not defined!")
-    
-    if tasks_obj is not None:
-        var_mapping.update(tasks_obj.map)
+    # Script vars may overwrite config vars
+    var_mapping.update(script_vars)
     # Catch duplicate I/O mappings
-    vars = list(var_mapping.values())
+    values = list(var_mapping.values())
     duplicate_ios = {
         name: str(value) for name, value in var_mapping.items()
-        if isinstance(value, IO) and vars.count(value) > 1
+        if isinstance(value, IO) and values.count(value) > 1
     }
     if duplicate_ios:
         dups_sorted = dict(sorted(duplicate_ios.items(), key=lambda item: item[1]))
         raise InvalidConfigError(f"Duplicate I/O mappings in configuration: {dups_sorted}")
 
-    return tasks, var_mapping, plc_obj
+    iohandler = IOHandler(plc_obj, var_mapping)
+    
+    # Get task definitions
+    tasks = []
+    # Add script task
+    if task is not None:
+        iohandler.set_task_vars(task)
+        tasks.append(task)
+        logger.debug(f"Task '{task.name}' with script entry point '{task.cycle_func.__name__}' registered")
+
+    if "tasks" in config:
+        validate_task(config)
+        # Filter out None values
+        for task_config in config["tasks"]:
+            # Filter out None values
+            task_config = {k: v for k, v in task_config.items() if v is not None}
+            entry: str = task_config["entry"]
+            module_name, func_name = entry.rsplit(".")
+            # Get task definitions from config and retrieve the task function
+            try:
+                module = importlib.import_module(module_name)
+                task_config["entry"] = getattr(module, func_name)
+                task = Task(**task_config)
+                iohandler.set_task_vars(task)
+                tasks.append(task)
+                logger.debug(f"Task '{task.name}' with script entry point '{task.cycle_func.__name__}' registered")
+            except (ModuleNotFoundError, AttributeError):
+                raise InvalidConfigError(f"Function '{task_config['entry']}' for task '{task_config['name']}' not defined!")
+
+    return tasks, iohandler, plc_obj
 
 def validate_task(config) -> None:
     "Validate task schema."

@@ -5,7 +5,6 @@ Generic superclass for the older CC100 generation.
 from __future__ import annotations
 
 import logging
-import os
 
 from wagoplc.constants import LOG_FILE
 from wagoplc.controller import Controller, IO, DI, DO, AI, AO, PT
