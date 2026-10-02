@@ -51,7 +51,6 @@
 - [`fb.TP`](./fb.md#class-tp): Create an impulse.
 - [`tasks.Scheduler`](./tasks.md#class-scheduler): A task scheduler.
 - [`tasks.Task`](./tasks.md#class-task): Represent a PLC task.
-- [`tasks.Tasks`](./tasks.md#class-tasks): Manage task registration per program.
 
 ## Functions
 
